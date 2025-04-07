@@ -237,7 +237,7 @@ export function Cart() {
             <Separator />
             <div className="space-y-4 py-4">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Gesamt</span>
+                <span className="font-medium">Gesamt netto</span>
                 <span className="font-medium">{formatPrice(totalPrice)}</span>
               </div>
               <SheetFooter className="flex flex-row gap-2">

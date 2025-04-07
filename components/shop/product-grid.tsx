@@ -33,7 +33,7 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
         <Link
           href={`/shop/${product.handle}`}
           key={product.id}
-          className="group bg-white relative flex flex-col overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
+          className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="aspect-square relative overflow-hidden bg-white">
             {product.featuredImage ? (
@@ -57,9 +57,9 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
             )}
           </div>
           
-          <div className="flex flex-col p-4">
-            <h3 className="font-semibold text-sm md:text-base line-clamp-2">{product.title}</h3>
-            <div className="mt-2 text-sm">
+          <div className="flex flex-col flex-grow p-4">
+            <h3 className="font-semibold text-sm md:text-base line-clamp-2 mb-2">{product.title}</h3>
+            <div className="mt-auto pt-2">
               {product.compareAtPrice ? (
                 <div className="flex gap-2 items-center">
                   <span className="font-semibold">{formatPrice(product.price.amount)}</span>

@@ -72,16 +72,6 @@ export function ShopFilters({
     <div className="space-y-6 sticky top-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Produktanlagen & Zubehör</h2>
-        {isAnyFilterActive && (
-          <Button 
-            onClick={handleResetFilters} 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs text-gray-500 hover:text-gray-700"
-          >
-            Zurücksetzen
-          </Button>
-        )}
       </div>
 
       <div>
@@ -119,7 +109,7 @@ export function ShopFilters({
           <Filter className="h-4 w-4 mr-2" />
           Produkt Typ
         </h3>
-        <div className="space-y-1 max-h-60 overflow-y-auto pr-2">
+        <div className="space-y-1 overflow-y-auto pr-2">
           <Button
             variant={!activeProductType ? "default" : "outline"}
             size="sm"
@@ -141,6 +131,20 @@ export function ShopFilters({
           ))}
         </div>
       </div>
+      
+      {/* Filter zurücksetzen Button unterhalb aller Filter */}
+      {isAnyFilterActive && (
+        <div className="pt-4">
+          <Button 
+            onClick={handleResetFilters} 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs text-gray-500 hover:text-gray-700"
+          >
+            Filter zurücksetzen
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

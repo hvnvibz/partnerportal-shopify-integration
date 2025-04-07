@@ -200,7 +200,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="bg-[#f8f9fa] rounded-lg p-8">
+        <div className="bg-white border border-gray-200 rounded-lg p-8">
           {product.featuredImage ? (
             <div className="relative aspect-square">
               <Image
