@@ -125,6 +125,7 @@ export async function getProducts({
   reverse = false,
   query = "",
   cursor = null,
+  collectionHandle = "",
 }: {
   page?: number;
   perPage?: number;
@@ -132,140 +133,237 @@ export async function getProducts({
   reverse?: boolean;
   query?: string;
   cursor?: string | null;
+  collectionHandle?: string;
 }) {
   try {
     console.log("getProducts called with query:", query);
-    console.log("getProducts parameters:", JSON.stringify({ page, perPage, sortKey, reverse, cursor }));
+    console.log("getProducts parameters:", JSON.stringify({ page, perPage, sortKey, reverse, cursor, collectionHandle }));
     
-    // Verwende die normale Produktsuche
-    const data = await shopifyFetch({
-      query: `
-        query getProducts(
-          $perPage: Int!
-          $sortKey: ProductSortKeys
-          $reverse: Boolean
-          $query: String
-          $cursor: String
-        ) {
-          products(
-            first: $perPage
-            after: $cursor
-            sortKey: $sortKey
-            reverse: $reverse
-            query: $query
-          ) {
-            edges {
-              cursor
-              node {
-                id
-                title
-                description
-                handle
-                availableForSale
-                productType
-                tags
-                featuredImage {
-                  url
-                  altText
-                }
-                priceRange {
-                  minVariantPrice {
-                    amount
-                    currencyCode
-                  }
-                  maxVariantPrice {
-                    amount
-                    currencyCode
-                  }
-                }
-                compareAtPriceRange {
-                  minVariantPrice {
-                    amount
-                    currencyCode
-                  }
-                  maxVariantPrice {
-                    amount
-                    currencyCode
-                  }
-                }
-                variants(first: 1) {
-                  edges {
-                    node {
-                      id
-                      title
-                      sku
-                      availableForSale
-                      price {
+    let data;
+    if (collectionHandle) {
+      // Use collection-specific query
+      data = await shopifyFetch({
+        query: `
+          query getCollectionByHandle($handle: String!, $perPage: Int!, $sortKey: ProductCollectionSortKeys, $reverse: Boolean, $cursor: String) {
+            collection(handle: $handle) {
+              products(first: $perPage, after: $cursor, sortKey: $sortKey, reverse: $reverse) {
+                edges {
+                  cursor
+                  node {
+                    id
+                    title
+                    description
+                    handle
+                    availableForSale
+                    productType
+                    tags
+                    featuredImage {
+                      url
+                      altText
+                    }
+                    priceRange {
+                      minVariantPrice {
                         amount
                         currencyCode
                       }
-                      compareAtPrice {
+                      maxVariantPrice {
                         amount
                         currencyCode
+                      }
+                    }
+                    compareAtPriceRange {
+                      minVariantPrice {
+                        amount
+                        currencyCode
+                      }
+                      maxVariantPrice {
+                        amount
+                        currencyCode
+                      }
+                    }
+                    variants(first: 1) {
+                      edges {
+                        node {
+                          id
+                          title
+                          sku
+                          availableForSale
+                          price {
+                            amount
+                            currencyCode
+                          }
+                          compareAtPrice {
+                            amount
+                            currencyCode
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          handle: collectionHandle,
+          perPage,
+          sortKey,
+          reverse,
+          cursor,
+        },
+      });
+      if (!data.collection) {
+        return { products: [], hasNextPage: false, endCursor: null, totalPages: 1 };
+      }
+      const edges = data.collection.products.edges;
+      const pageInfo = data.collection.products.pageInfo;
+      const products = edges.map(({ node, cursor }: any) => {
+        const hasCompareAtPrice =
+          node.compareAtPriceRange.minVariantPrice.amount > 0 &&
+          Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+        return {
+          id: node.id,
+          title: node.title,
+          description: node.description,
+          handle: node.handle,
+          availableForSale: node.availableForSale,
+          productType: node.productType,
+          tags: node.tags,
+          featuredImage: node.featuredImage,
+          price: node.priceRange.minVariantPrice,
+          compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
+          sku: node.variants.edges[0]?.node.sku || "",
+          cursor
+        };
+      });
+      const result = {
+        products,
+        hasNextPage: pageInfo.hasNextPage,
+        endCursor: pageInfo.endCursor,
+        totalPages: Math.ceil(products.length / perPage),
+      };
+      return result;
+    } else {
+      // Verwende die normale Produktsuche
+      data = await shopifyFetch({
+        query: `
+          query getProducts(
+            $perPage: Int!
+            $sortKey: ProductSortKeys
+            $reverse: Boolean
+            $query: String
+            $cursor: String
+          ) {
+            products(
+              first: $perPage
+              after: $cursor
+              sortKey: $sortKey
+              reverse: $reverse
+              query: $query
+            ) {
+              edges {
+                cursor
+                node {
+                  id
+                  title
+                  description
+                  handle
+                  availableForSale
+                  productType
+                  tags
+                  featuredImage {
+                    url
+                    altText
+                  }
+                  priceRange {
+                    minVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                    maxVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                  compareAtPriceRange {
+                    minVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                    maxVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                  variants(first: 1) {
+                    edges {
+                      node {
+                        id
+                        title
+                        sku
+                        availableForSale
+                        price {
+                          amount
+                          currencyCode
+                        }
+                        compareAtPrice {
+                          amount
+                          currencyCode
+                        }
                       }
                     }
                   }
                 }
               }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
             }
           }
-        }
-      `,
-      variables: {
-        perPage,
-        sortKey,
-        reverse,
-        query,
-        cursor
-      },
-    });
+        `,
+        variables: {
+          perPage,
+          sortKey,
+          reverse,
+          query,
+          cursor
+        },
+      });
 
-    console.log("API response products count:", data.products?.edges?.length || 0);
-    
-    if (data.products?.edges?.length === 0) {
-      console.warn("No products found with query:", query);
-    } else {
-      // Log product titles for debugging
-      console.log("Products found:", data.products.edges.map((edge: any) => edge.node.title).join(", "));
-    }
-    
-    const products = data.products.edges.map(({ node, cursor }: any) => {
-      // Check if any variant has a compareAtPrice that's higher than its price
-      const hasCompareAtPrice =
-        node.compareAtPriceRange.minVariantPrice.amount > 0 &&
-        Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+      const products = data.products.edges.map(({ node, cursor }: any) => {
+        const hasCompareAtPrice =
+          node.compareAtPriceRange.minVariantPrice.amount > 0 &&
+          Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+        return {
+          id: node.id,
+          title: node.title,
+          description: node.description,
+          handle: node.handle,
+          availableForSale: node.availableForSale,
+          productType: node.productType,
+          tags: node.tags,
+          featuredImage: node.featuredImage,
+          price: node.priceRange.minVariantPrice,
+          compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
+          sku: node.variants.edges[0]?.node.sku || "",
+          cursor
+        };
+      });
 
-      // Get the highest compareAtPrice from all variants
-      return {
-        id: node.id,
-        title: node.title,
-        description: node.description,
-        handle: node.handle,
-        availableForSale: node.availableForSale,
-        productType: node.productType,
-        tags: node.tags,
-        featuredImage: node.featuredImage,
-        price: node.priceRange.minVariantPrice,
-        compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
-        sku: node.variants.edges[0]?.node.sku || "",
-        cursor
+      const result = {
+        products,
+        hasNextPage: data.products.pageInfo.hasNextPage,
+        endCursor: data.products.pageInfo.endCursor,
+        totalPages: Math.ceil(products.length / perPage),
       };
-    });
-
-    const result = {
-      products,
-      hasNextPage: data.products.pageInfo.hasNextPage,
-      endCursor: data.products.pageInfo.endCursor,
-      totalPages: Math.ceil(products.length / perPage), // Hinweis: Dies ist nur eine Annäherung
-    };
-    
-    console.log(`Returning ${result.products.length} products. hasNextPage: ${result.hasNextPage}`);
-    
-    return result;
+      return result;
+    }
   } catch (error) {
     console.error("Error fetching products:", error);
     throw error;

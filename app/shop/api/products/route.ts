@@ -20,11 +20,7 @@ export async function GET(request: NextRequest) {
   // Build filter query for Shopify API
   let filterQuery = ""
 
-  // Add collection filter
-  if (collectionHandle) {
-    filterQuery += `collection:${collectionHandle} `
-  }
-
+  // Remove collection filter from query string logic
   // Add product type filter
   if (productType) {
     filterQuery += `product_type:"${productType}" `
@@ -43,6 +39,7 @@ export async function GET(request: NextRequest) {
       reverse,
       query: filterQuery.trim(),
       cursor: cursor as string | null,
+      collectionHandle, // pass collectionHandle directly
     });
     
     // Return the results as JSON

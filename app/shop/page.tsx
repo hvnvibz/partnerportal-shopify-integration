@@ -63,12 +63,7 @@ export default async function ShopPage({
   // Build filter query for Shopify API
   let filterQuery = ""
 
-  // Add collection filter - with correct Shopify API syntax
-  if (collectionHandle) {
-    filterQuery += `collection:${collectionHandle} `
-    console.log("Using collection filter:", filterQuery);
-  }
-
+  // Remove collection filter from query string logic
   // Add product type filter
   if (productType) {
     filterQuery += `product_type:"${productType}" `
@@ -93,6 +88,7 @@ export default async function ShopPage({
       reverse,
       query: filterQuery.trim(),
       cursor: cursor as string | null,
+      collectionHandle, // pass collectionHandle directly
     });
     
     console.log(`Successfully fetched ${productsData?.products?.length || 0} products`);
