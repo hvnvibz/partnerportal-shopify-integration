@@ -1,25 +1,26 @@
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 
-export default function SignInPage() {
+export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setMessage(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/signin` : undefined,
+    });
     setLoading(false);
     if (error) {
       setError(error.message);
     } else {
-      router.push('/');
+      setMessage('Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet, falls die Adresse existiert.');
     }
   };
 
@@ -29,9 +30,9 @@ export default function SignInPage() {
       <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-gray-100">
         <div className="w-full max-w-xl p-12 rounded-3xl shadow-2xl bg-white/80 backdrop-blur-md border border-gray-200"
           style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-center text-blue-900 mb-6 leading-tight">Willkommen zum<br />INDUWA Partnerportal</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-center text-blue-900 mb-6 leading-tight">Passwort zurücksetzen</h1>
           <p className="text-center text-gray-700 mb-10 text-lg">
-            Entdecken Sie unsere Wasseraufbereitungsanlagen, digitalen Produkt­handbücher, Supportvideos und mehr.
+            Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen Ihres Passworts zu erhalten.
           </p>
           <form onSubmit={handleSubmit}>
             <label className="block mb-1 text-base font-semibold text-gray-800">Ihre E-Mail Adresse</label>
@@ -43,29 +44,18 @@ export default function SignInPage() {
               onChange={e => setEmail(e.target.value)}
               required
             />
-            <label className="block mb-1 text-base font-semibold text-gray-800">Ihr Passwort</label>
-            <input
-              type="password"
-              className="w-full p-3 mb-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-            <div className="flex justify-end mb-5">
-              <a href="/reset-password" className="text-sm text-blue-900 underline hover:text-blue-700">Passwort vergessen?</a>
-            </div>
             {error && <div className="mb-4 text-red-600 text-sm text-center">{error}</div>}
+            {message && <div className="mb-4 text-green-700 text-sm text-center">{message}</div>}
             <button
               type="submit"
               className="w-full bg-blue-800 text-white py-3 rounded-full font-bold text-lg hover:bg-blue-900 transition mb-2 shadow-md"
               disabled={loading}
             >
-              {loading ? 'Anmelden...' : 'Anmelden'}
+              {loading ? 'Sende E-Mail...' : 'Passwort zurücksetzen'}
             </button>
           </form>
-          <div className="mt-8 text-center text-base text-gray-700">
-            Haben Sie noch keinen Account?{' '}
-            <a href="/partneranfrage" className="text-blue-900 underline hover:text-blue-700">Jetzt anfragen</a>
+          <div className="mt-8 text-center">
+            <a href="/signin" className="text-blue-900 underline hover:text-blue-700 text-base">Zurück zum Login</a>
           </div>
         </div>
       </div>
