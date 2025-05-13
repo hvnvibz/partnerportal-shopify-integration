@@ -113,8 +113,8 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
     setSelectedVariantId(value)
   }
 
-  // For debugging: Always show upsells regardless of product type
-  const isKawkProduct = true; // product.title.includes("KAWK") || product.handle.includes("kawk")
+  // Immer Upsells anzeigen, die eigentliche Logik ist in der ProductUpsell-Komponente
+  const showUpsells = true;
 
   // Function to add item to cart
   const addToCart = () => {
@@ -222,7 +222,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
             <h1 className="text-2xl font-bold">{product.title}</h1>
             {product.id && (
               <p className="text-sm text-muted-foreground mt-2">
-                Artikelnummer: {product.id.replace("gid://shopify/Product/", "")}
+                Artikelnummer: {product.variants.edges[0]?.node.sku || product.id.replace("gid://shopify/Product/", "")}
               </p>
             )}
           </div>
@@ -266,7 +266,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
           )}
 
           {/* Upsell Section - directly below the description */}
-          {isKawkProduct && (
+          {showUpsells && (
             <ProductUpsell products={relatedProducts} mainProductId={product.id} />
           )}
 

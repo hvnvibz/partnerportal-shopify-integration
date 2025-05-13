@@ -19,8 +19,8 @@ export function ProductUpsellItem({ product }: ProductUpsellItemProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
 
-  // Get price
-  const minPrice = Number.parseFloat(product.priceRange.minVariantPrice.amount)
+  // Get price - use fixed price for INDUWA Connect
+  const minPrice = product.title.includes("INDUWA Connect") ? 182.00 : Number.parseFloat(product.priceRange.minVariantPrice.amount)
   
   // German number formatter for prices
   const formatPrice = (price: number) => {
@@ -117,10 +117,6 @@ export function ProductUpsellItem({ product }: ProductUpsellItemProps) {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-sm line-clamp-1">{product.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Ergänzen Sie Ihre Bestellung mit diesem Produkt
-            </p>
-            <p className="text-xs text-gray-400 mt-1">ID: {product.id.substring(0, 15)}...</p>
           </div>
           <div className="text-right">
             <div className="font-medium">{formatPrice(minPrice)}</div>

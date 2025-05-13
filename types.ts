@@ -3,7 +3,7 @@ export type Product = {
   title: string
   handle: string
   description: string
-  descriptionHtml: string
+  descriptionHtml?: string
   featuredImage: {
     url: string
     altText: string
@@ -23,6 +23,7 @@ export type Product = {
       node: {
         id: string
         title: string
+        sku?: string
         availableForSale: boolean
         price: {
           amount: string
@@ -48,5 +49,6 @@ export type Product = {
   onSale?: boolean
   availableForSale: boolean
   highestCompareAtPrice?: number | null
+  sku?: string
 }
 

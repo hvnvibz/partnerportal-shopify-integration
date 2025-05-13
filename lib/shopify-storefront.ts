@@ -64,6 +64,7 @@ export type ShopifyProduct = {
     currencyCode: string
   } | null
   cursor?: string | null
+  sku: string
 }
 
 export type ShopifyCollection = {
@@ -187,6 +188,24 @@ export async function getProducts({
                     currencyCode
                   }
                 }
+                variants(first: 1) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      availableForSale
+                      price {
+                        amount
+                        currencyCode
+                      }
+                      compareAtPrice {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
               }
             }
             pageInfo {
@@ -232,6 +251,7 @@ export async function getProducts({
         featuredImage: node.featuredImage,
         price: node.priceRange.minVariantPrice,
         compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
+        sku: node.variants.edges[0]?.node.sku || "",
         cursor
       };
     });
@@ -293,6 +313,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
                 node {
                   id
                   title
+                  sku
                   availableForSale
                   price {
                     amount
@@ -421,6 +442,7 @@ export async function getFallbackProducts(): Promise<ProductsResponse> {
           currencyCode: "EUR",
         },
         compareAtPrice: null,
+        sku: "",
         cursor: null
       },
     ],

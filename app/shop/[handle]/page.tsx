@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { ProductDetail } from "@/components/shop/product-detail"
-import { getProductByHandle, getProducts } from "@/lib/shopify-storefront"
+import { getProductByHandle, getProducts, type ShopifyProduct } from "@/lib/shopify-storefront"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -18,11 +18,26 @@ export default async function ProductPage({ params }: { params: { handle: string
   // Fetch the product data server-side for initial render
   const product = await getProductByHandle(params.handle)
 
-  // Fetch some related products
-  const { products: relatedProducts } = await getProducts({
+  // Fetch related products - specifically KAWK-D and INDUWA Connect products
+  const { products: relatedProductsRaw } = await getProducts({
     page: 1,
-    perPage: 4,
+    perPage: 20,
+    query: "title:*KAWK-D* OR title:*INDUWA* OR tag:*KAWK-D* OR tag:*INDUWA*",
   })
+
+  console.log("Found related products:", relatedProductsRaw.map((p: ShopifyProduct) => ({
+    title: p.title,
+    sku: p.variants?.edges[0]?.node?.sku
+  })));
+
+  // Ensure all required fields are present for the Product type
+  const relatedProducts = relatedProductsRaw.map(p => ({
+    ...p,
+    priceRange: p.priceRange || {
+      minVariantPrice: { amount: "0", currencyCode: "EUR" },
+      maxVariantPrice: { amount: "0", currencyCode: "EUR" }
+    }
+  }));
 
   if (!product) {
     return (

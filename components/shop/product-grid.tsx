@@ -58,7 +58,14 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
           </div>
           
           <div className="flex flex-col flex-grow p-4">
-            <h3 className="font-semibold text-sm md:text-base line-clamp-2 mb-2">{product.title}</h3>
+            <div className="mb-2">
+              <h3 className="font-semibold text-sm md:text-base line-clamp-2">{product.title}</h3>
+              {product.sku && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Art.-Nr.: {product.sku}
+                </p>
+              )}
+            </div>
             <div className="mt-auto pt-2">
               {product.compareAtPrice ? (
                 <div className="flex gap-2 items-center">

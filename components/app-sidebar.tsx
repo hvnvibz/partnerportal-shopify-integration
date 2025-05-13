@@ -2,7 +2,10 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen } from "lucide-react"
+import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 import {
   Sidebar,
@@ -93,6 +96,18 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings"}
+              className={`h-12 px-6 ${pathname === "/settings" ? "bg-gray-200 text-gray-800" : ""}`}
+            >
+              <Link href="/settings">
+                <Settings className="h-5 w-5" />
+                <span className="ml-3">Einstellungen</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>
