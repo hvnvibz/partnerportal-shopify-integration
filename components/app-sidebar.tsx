@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
+import AppSidebarLogout from "@/components/AppSidebarLogout"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -131,6 +132,9 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <div className="mt-auto pb-4">
+        <AppSidebarLogout />
+      </div>
     </Sidebar>
   )
 }

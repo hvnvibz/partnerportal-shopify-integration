@@ -1,6 +1,7 @@
 import type React from "react"
 import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
+import ProtectedRoute from "@/components/ProtectedRoute"
 
 import "./globals.css"
 
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        {children}
+        <ProtectedRoute>
+          {children}
+        </ProtectedRoute>
         <Toaster />
       </body>
     </html>

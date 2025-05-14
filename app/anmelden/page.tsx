@@ -1,23 +1,37 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
+  const captchaRef = useRef<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!captchaToken) {
+      setError('Bitte bestätigen Sie das Captcha.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken }
+    });
     setLoading(false);
     if (error) {
       setError(error.message);
+      // Captcha zurücksetzen, falls Fehler
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } else {
       router.push('/');
     }
@@ -53,6 +67,14 @@ export default function SignInPage() {
             />
             <div className="flex justify-end mb-5">
               <a href="/reset-password" className="text-sm text-blue-900 underline hover:text-blue-700">Passwort vergessen?</a>
+            </div>
+            <div className="mb-5 flex justify-center">
+              <HCaptcha
+                sitekey="a9283372-582e-4ee0-b196-b36448a2cbc6"
+                onVerify={setCaptchaToken}
+                ref={captchaRef}
+                theme="light"
+              />
             </div>
             {error && <div className="mb-4 text-red-600 text-sm text-center">{error}</div>}
             <button

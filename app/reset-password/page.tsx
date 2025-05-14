@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
     setError(null);
     setMessage(null);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/signin` : undefined,
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/anmelden` : undefined,
     });
     setLoading(false);
     if (error) {
@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
             </button>
           </form>
           <div className="mt-8 text-center">
-            <a href="/signin" className="text-blue-900 underline hover:text-blue-700 text-base">Zurück zum Login</a>
+            <a href="/anmelden" className="text-blue-900 underline hover:text-blue-700 text-base">Zurück zum Login</a>
           </div>
         </div>
       </div>
