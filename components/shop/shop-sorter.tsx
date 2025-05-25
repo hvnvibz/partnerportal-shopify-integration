@@ -30,8 +30,6 @@ export function ShopSorter({ activeSort }: ShopSorterProps) {
           { id: "PRICE-asc", name: "Preis, niedrig zu hoch" },
           { id: "PRICE-desc", name: "Preis, hoch zu niedrig" },
           { id: "BEST_SELLING-desc", name: "Bestseller" },
-          { id: "CREATED-desc", name: "Datum, neu zu alt" },
-          { id: "CREATED-asc", name: "Datum, alt zu neu" },
         ].map((option) => (
           <SelectItem key={option.id} value={option.id}>
             {option.name}

@@ -142,7 +142,7 @@ export function ShopContent({
         </form>
         <div className="flex items-center shrink-0">
           <span className="text-sm mr-2 text-gray-600">Sortieren:</span>
-          <Select defaultValue={sort} onValueChange={handleSortChange}>
+          <Select defaultValue={sort || "PRICE-desc"} onValueChange={handleSortChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sortieren nach" />
             </SelectTrigger>
@@ -152,7 +152,6 @@ export function ShopContent({
               <SelectItem value="PRICE-asc">Preis: Aufsteigend</SelectItem>
               <SelectItem value="PRICE-desc">Preis: Absteigend</SelectItem>
               <SelectItem value="BEST_SELLING-desc">Bestseller</SelectItem>
-              <SelectItem value="CREATED_AT-desc">Neueste</SelectItem>
             </SelectContent>
           </Select>
         </div>

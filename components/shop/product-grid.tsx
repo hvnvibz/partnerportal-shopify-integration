@@ -17,12 +17,9 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
-  const gridClass = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-  }[columns]
+  // Custom Breakpoints: xl = 1350px, 2xl = 1920px (siehe tailwind.config.js)
+  const gridClass =
+    "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
 
   // Dedupliziere Produkte anhand ihrer ID
   const uniqueProducts = [...new Map(products.map(product => [product.id, product])).values()];

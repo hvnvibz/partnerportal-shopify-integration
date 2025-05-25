@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings } from "lucide-react"
+import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings, LogOut, DoorOpen, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +41,11 @@ export function AppSidebar() {
       title: "Shop",
       icon: ShoppingBag,
       href: "/shop",
+    },
+    {
+      title: "Produktkatalog",
+      icon: FileText,
+      href: "/produktkatalog",
     },
     {
       title: "Anfrage Eigenwasser",
@@ -111,29 +116,25 @@ export function AppSidebar() {
                 isActive={pathname === item.href}
                 className={`h-12 px-6 ${pathname === item.href ? "bg-gray-200 text-gray-800" : ""}`}
               >
-                <Link href={item.href}>
+                <Link href={item.href} className="flex items-center gap-3 text-base">
                   <item.icon className="h-5 w-5" />
-                  <span className="ml-3">{item.title}</span>
+                  <span className="ml-1">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === "/settings"}
-              className={`h-12 px-6 ${pathname === "/settings" ? "bg-gray-200 text-gray-800" : ""}`}
-            >
-              <Link href="/settings">
-                <Settings className="h-5 w-5" />
-                <span className="ml-3">Einstellungen</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <div className="mt-auto pb-4">
-        <AppSidebarLogout />
+      <div className="mt-auto pb-4 border-t border-gray-200">
+        <div className="flex flex-row gap-2 px-6 pt-4 justify-end">
+          <Link
+            href="/einstellungen"
+            className={`flex items-center gap-2 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold text-base ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
+          >
+            <span className="text-base">⚙️</span> Einstellungen
+          </Link>
+          <AppSidebarLogout />
+        </div>
       </div>
     </Sidebar>
   )

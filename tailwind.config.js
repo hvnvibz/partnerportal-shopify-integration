@@ -7,6 +7,10 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
+      screens: {
+        xl: "1350px",
+        "2xl": "1920px"
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

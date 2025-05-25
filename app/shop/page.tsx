@@ -48,10 +48,10 @@ export default async function ShopPage({
   }
 }) {
   // In Next.js 13+, searchParams are already parsed and ready to use
-  const sort = searchParams.sort || "TITLE-asc"
+  const sort = searchParams.sort || "PRICE-desc"
   const [sortKey, sortDirection] = sort.split("-")
   const reverse = sortDirection === "desc"
-  const collectionHandle = searchParams.collection || ""
+  const collectionHandle = searchParams.collection || "meistverkauft-bestseller"
   const productType = searchParams.productType || ""
   const query = searchParams.query || ""
   const cursor = searchParams.cursor || null

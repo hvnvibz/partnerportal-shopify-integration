@@ -40,25 +40,165 @@ export default function DashboardPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="container mx-auto py-12">
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold mb-2">Willkommen im Partnerportal</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Ihr zentraler Zugang zu Shop, Service, Support und digitalen Handbüchern für alle INDUWA-Produkte.
-            </p>
+        <div className="container mx-auto py-12 px-0 md:pl-8 md:pr-0">
+          {/* Hero Section */}
+          <div className="flex flex-col md:flex-row items-center md:items-stretch gap-12 mb-16 overflow-x-visible relative">
+            <div className="flex-1 flex flex-col justify-center text-center md:text-left z-10 md:pl-0 pl-4">
+              <h1 className="text-4xl font-extrabold text-blue-900 mb-4 leading-tight tracking-tight">
+                Anlagen, Ersatzteile, Service, Expertise – sofort verfügbar
+              </h1>
+              <p className="text-xl text-gray-600 max-w-xl mb-6">
+                Ihr zentraler Zugang zu Shop, Service, Support und digitalen Handbüchern für alle INDUWA-Produkte.
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end items-center overflow-visible absolute right-0 top-1/2 -translate-y-1/2 h-full md:static md:translate-y-0">
+              <img
+                src="/signin-bg.avif"
+                alt="INDUWA visual"
+                className="object-contain h-64 md:h-96 w-full max-w-none"
+                style={{ objectPosition: 'center', overflow: 'visible' }}
+                loading="eager"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {tiles.map(tile => (
-              <Link
-                key={tile.title}
-                href={tile.href}
-                className={`flex flex-col items-start border rounded-2xl p-8 shadow transition ${tile.color}`}
-              >
-                {tile.icon}
-                <div className="mt-4 font-bold text-2xl">{tile.title}</div>
-                <div className="mt-2 text-muted-foreground">{tile.description}</div>
-              </Link>
-            ))}
+        </div>
+        <div className="container mx-auto px-4 md:px-8">
+          {/* Section: Shop & Wartung */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            {/* Shop Tile */}
+            <Link
+              href="/shop"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">🛒</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">INDUWA Shop</div>
+                <div className="text-gray-500 text-sm">Produkte & Zubehör bestellen</div>
+              </div>
+            </Link>
+            {/* Wartung & Service Tile */}
+            <Link
+              href="/wartung-service"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">🛠️</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Wartung & Service</div>
+                <div className="text-gray-500 text-sm">Serviceleistungen & Wartungsanfragen</div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Section: Anlagen & Services */}
+          <div className="mb-4">
+            <h2 className="uppercase tracking-widest text-xs text-gray-500 font-semibold mb-2">Weitere Services</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            {/* Produktkatalog Tile */}
+            <Link
+              href="/produktkatalog"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">📦</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">INDUWA Produktkatalog</div>
+                <div className="text-gray-500 text-sm">Blättern Sie im aktuellen Katalog</div>
+              </div>
+            </Link>
+            {/* Anfrage Eigenwasser Tile */}
+            <Link
+              href="/anfrage-eigenwasser"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">💧</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Anfrage Eigenwasser</div>
+                <div className="text-gray-500 text-sm">Individuelle Wasserlösungen anfragen</div>
+              </div>
+            </Link>
+            {/* Anfrage Enthärtung Tile */}
+            <Link
+              href="/anfrage-enthartung"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">🧂</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Anfrage Enthärtung</div>
+                <div className="text-gray-500 text-sm">Enthärtungslösungen anfragen</div>
+              </div>
+            </Link>
+            {/* Schulungsanfragen Tile */}
+            <Link
+              href="/schulungsanfragen"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">📚</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Schulungsanfragen</div>
+                <div className="text-gray-500 text-sm">Schulungen & Trainings anfragen</div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Section: Support */}
+          <div className="mb-4">
+            <h2 className="uppercase tracking-widest text-xs text-gray-500 font-semibold mb-2">Support & Hilfe</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            {/* Supportvideos Tile */}
+            <Link
+              href="/supportvideos"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">🎬</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Supportvideos</div>
+                <div className="text-gray-500 text-sm">Videoanleitungen für Ihre Produkte</div>
+              </div>
+            </Link>
+            {/* Digitale Handbücher Tile */}
+            <Link
+              href="/produkthandbuecher"
+              className="group flex flex-col justify-between rounded-2xl bg-white border border-gray-100 p-6 min-h-[180px] shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">📄</span>
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xl text-blue-900 mb-1">Digitale Handbücher</div>
+                <div className="text-gray-500 text-sm">Alle Produkthandbücher & Datenblätter</div>
+              </div>
+            </Link>
           </div>
         </div>
       </SidebarInset>
