@@ -51,7 +51,7 @@ export default async function ShopPage({
   const sort = searchParams.sort || "PRICE-desc"
   const [sortKey, sortDirection] = sort.split("-")
   const reverse = sortDirection === "desc"
-  const collectionHandle = searchParams.collection || "meistverkauft-bestseller"
+  const collectionHandle = typeof searchParams.collection !== 'undefined' ? searchParams.collection : "meistverkauft-bestseller"
   const productType = searchParams.productType || ""
   const query = searchParams.query || ""
   const cursor = searchParams.cursor || null
