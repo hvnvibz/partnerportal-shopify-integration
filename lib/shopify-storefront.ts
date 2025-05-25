@@ -144,7 +144,7 @@ export async function getProducts({
     console.log("getProducts parameters:", JSON.stringify({ page, perPage, sortKey, reverse, cursor, collectionHandle }));
     
     let data;
-    if (collectionHandle) {
+    if (collectionHandle && collectionHandle !== "") {
       // Use collection-specific query
       data = await shopifyFetch({
         query: `

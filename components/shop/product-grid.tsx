@@ -32,6 +32,12 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
           key={product.id}
           className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
         >
+          {/* Rabatt-Badge jetzt außerhalb des Bildes */}
+          {product.compareAtPrice && (
+            <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
+              {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
+            </div>
+          )}
           <div className="aspect-square relative overflow-hidden bg-white">
             {product.featuredImage ? (
               <Image
@@ -46,17 +52,11 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
                 <span className="text-gray-400">Kein Bild</span>
               </div>
             )}
-            
-            {product.compareAtPrice && (
-              <div className="absolute top-2 right-2 bg-yellow-400 text-xs font-semibold px-2 py-1 rounded">
-                {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
-              </div>
-            )}
           </div>
           
           <div className="flex flex-col flex-grow p-4">
             <div className="mb-2">
-              <h3 className="font-semibold text-sm md:text-base line-clamp-2">{product.title}</h3>
+              <h3 className="font-semibold line-clamp-2" style={{ fontSize: '0.8rem' }}>{product.title}</h3>
               {product.sku && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Art.-Nr.: {product.sku}

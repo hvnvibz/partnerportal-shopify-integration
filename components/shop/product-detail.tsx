@@ -240,14 +240,12 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
         <div className="bg-white border border-gray-200 rounded-lg p-8">
           {/* Galerie-Logik */}
           {product.images && product.images.length > 0 ? (
-            <div className="flex flex-col items-center" style={{ maxHeight: 480, height: 480, justifyContent: 'flex-start' }}>
+            <div className="flex flex-col items-center">
               <div
                 className="relative w-full flex items-center justify-center"
                 style={{
                   maxWidth: 480,
                   aspectRatio: maxRatio ? `${maxRatio}/1` : undefined,
-                  height: `calc(480px - ${(product.images.length > 1 ? 56 + 24 : 0)}px)`, // 56px Thumbnail + 24px Abstand
-                  maxHeight: `calc(480px - ${(product.images.length > 1 ? 56 + 24 : 0)}px)`
                 }}
               >
                 <Image
@@ -260,12 +258,12 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 />
               </div>
               {product.images.length > 1 && (
-                <div className="flex gap-2 justify-center mt-6" style={{ height: 56 }}>
+                <div className="flex gap-2 justify-center mt-6" style={{ height: 'auto' }}>
                   {product.images.map((img, idx) => (
                     <button
                       key={img.url}
                       className={`border rounded-md p-1 bg-white ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
-                      style={{ width: 56, height: 56 }}
+                      style={{ width: 56, height: 'auto' }}
                       onClick={() => setSelectedImageIdx(idx)}
                       aria-label={`Bild ${idx + 1} anzeigen`}
                     >

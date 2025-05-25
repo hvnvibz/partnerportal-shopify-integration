@@ -129,9 +129,10 @@ export function AppSidebar() {
         <div className="flex flex-row gap-2 px-6 pt-4 justify-end">
           <Link
             href="/einstellungen"
-            className={`flex items-center gap-2 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold text-base ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
+            className={`flex items-center gap-3 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
           >
-            <span className="text-base">⚙️</span> Einstellungen
+            <span className="h-5 w-5">⚙️</span>
+            <span className="ml-1">Einstellungen</span>
           </Link>
           <AppSidebarLogout />
         </div>

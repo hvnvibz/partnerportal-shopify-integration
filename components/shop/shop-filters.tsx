@@ -28,10 +28,8 @@ export function ShopFilters({
 
   function handleCollectionChange(collectionHandle: string) {
     const params = new URLSearchParams(searchParams.toString())
-    if (collectionHandle) {
+    if (collectionHandle !== undefined && collectionHandle !== null) {
       params.set("collection", collectionHandle)
-    } else {
-      params.delete("collection")
     }
     // Reset pagination when filter changes
     params.delete("cursor")
