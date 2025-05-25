@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { TallyForm } from "@/components/tally-form"
+import { Cart } from "@/components/shop/cart"
 
 export default function ProduktanfrageEigenwasserPage() {
   return (
@@ -19,17 +20,18 @@ export default function ProduktanfrageEigenwasserPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
+          <Breadcrumb className="flex-1">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                <BreadcrumbLink href="/">Start</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Produktanfrage Eigenwasser</BreadcrumbPage>
+                <BreadcrumbPage>Anfrage Eigenwasser</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <Cart />
         </header>
         <div className="container mx-auto py-12">
           <div className="max-w-3xl mx-auto">

@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useState } from "react"
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
+import { Cart } from "@/components/shop/cart"
 
 // Beispiel-Daten für DPHs (später aus DB oder Datei)
 const DPH_LIST = [
@@ -35,7 +37,18 @@ export default function ProdukthandbuecherUebersicht() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-2xl font-bold">Digitale Produkthandbücher</h1>
+          <Breadcrumb className="flex-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Start</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Digitale Handbücher</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <Cart />
         </header>
         <div className="container mx-auto py-12">
           <div className="mx-auto max-w-4xl">

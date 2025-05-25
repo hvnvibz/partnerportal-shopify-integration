@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Card, CardContent } from "@/components/ui/card"
+import { Cart } from "@/components/shop/cart"
 
 // YouTube video component
 function YouTubeVideo({ videoId, title }: { videoId: string; title: string }) {
@@ -130,10 +131,10 @@ export default function SupportvideosPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
+          <Breadcrumb className="flex-1">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                <BreadcrumbLink href="/">Start</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -141,6 +142,7 @@ export default function SupportvideosPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <Cart />
         </header>
         <div className="container mx-auto py-12">
           <div className="mx-auto">

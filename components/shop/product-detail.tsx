@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown } from "lucide-react"
@@ -30,6 +30,9 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
     product.variants.edges[0]?.node.id || ""
   )
   const [showFullDescription, setShowFullDescription] = useState(false)
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0)
+  const [imageRatios, setImageRatios] = useState<number[]>([])
+  const [maxRatio, setMaxRatio] = useState<number>(1)
   const { toast } = useToast()
 
   // Get the variants from the product
@@ -116,6 +119,37 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   // Immer Upsells anzeigen, die eigentliche Logik ist in der ProductUpsell-Komponente
   const showUpsells = true;
 
+  // Dynamisch Bildverhältnisse berechnen, wenn Bilder vorhanden
+  useEffect(() => {
+    if (product.images?.length && product.images.length > 0) {
+      let loaded = 0;
+      const ratios: number[] = [];
+      product.images?.forEach((img, idx) => {
+        const i = new window.Image();
+        i.onload = function () {
+          ratios[idx] = i.width / i.height;
+          loaded++;
+          if (loaded === product.images?.length) {
+            setImageRatios(ratios);
+            setMaxRatio(Math.max(...ratios));
+          }
+        };
+        i.onerror = function () {
+          ratios[idx] = 1; // fallback
+          loaded++;
+          if (loaded === product.images?.length) {
+            setImageRatios(ratios);
+            setMaxRatio(Math.max(...ratios));
+          }
+        };
+        i.src = img.url;
+      });
+    } else {
+      setImageRatios([1]);
+      setMaxRatio(1);
+    }
+  }, [product.images]);
+
   // Function to add item to cart
   const addToCart = () => {
     try {
@@ -159,6 +193,8 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
           price: variantPrice,
           quantity: quantity,
           image: product.featuredImage?.url,
+          sku: selectedVariant?.sku || product.variants.edges[0]?.node.sku || "",
+          compareAtPrice: selectedVariant?.compareAtPrice ? Number.parseFloat(selectedVariant.compareAtPrice.amount) : undefined,
         })
         console.log("Neuer Artikel zum Warenkorb hinzugefügt");
       }
@@ -171,9 +207,10 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
       window.dispatchEvent(new Event(CART_UPDATED_EVENT))
 
       // Show success toast
+      const variantName = selectedVariant?.title && selectedVariant.title !== "Default Title" ? `(${selectedVariant.title})` : "";
       toast({
         title: "Produkt hinzugefügt",
-        description: `${quantity}x ${product.title} ${selectedVariant?.title ? `(${selectedVariant.title})` : ''} wurde zum Warenkorb hinzugefügt.`,
+        description: `${quantity}x ${product.title} ${variantName} wurde zum Warenkorb hinzugefügt.`,
       })
 
       // Reset quantity
@@ -201,13 +238,57 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
 
       <div className="grid gap-8 md:grid-cols-2">
         <div className="bg-white border border-gray-200 rounded-lg p-8">
-          {product.featuredImage ? (
-            <div className="relative aspect-square">
+          {/* Galerie-Logik */}
+          {product.images && product.images.length > 0 ? (
+            <div className="flex flex-col items-center" style={{ maxHeight: 480, height: 480, justifyContent: 'flex-start' }}>
+              <div
+                className="relative w-full flex items-center justify-center"
+                style={{
+                  maxWidth: 480,
+                  aspectRatio: maxRatio ? `${maxRatio}/1` : undefined,
+                  height: `calc(480px - ${(product.images.length > 1 ? 56 + 24 : 0)}px)`, // 56px Thumbnail + 24px Abstand
+                  maxHeight: `calc(480px - ${(product.images.length > 1 ? 56 + 24 : 0)}px)`
+                }}
+              >
+                <Image
+                  src={product.images[selectedImageIdx]?.url || "/placeholder.svg"}
+                  alt={product.images[selectedImageIdx]?.altText || product.title}
+                  fill
+                  style={{ objectFit: "contain" }}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                />
+              </div>
+              {product.images.length > 1 && (
+                <div className="flex gap-2 justify-center mt-6" style={{ height: 56 }}>
+                  {product.images.map((img, idx) => (
+                    <button
+                      key={img.url}
+                      className={`border rounded-md p-1 bg-white ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
+                      style={{ width: 56, height: 56 }}
+                      onClick={() => setSelectedImageIdx(idx)}
+                      aria-label={`Bild ${idx + 1} anzeigen`}
+                    >
+                      <Image
+                        src={img.url}
+                        alt={img.altText || product.title}
+                        width={48}
+                        height={48}
+                        style={{ objectFit: "contain" }}
+                        className="rounded"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : product.featuredImage ? (
+            <div className="relative" style={{ width: "100%", maxWidth: 480, margin: "0 auto", height: 480 }}>
               <Image
                 src={product.featuredImage.url || "/placeholder.svg"}
                 alt={product.featuredImage.altText || product.title}
                 fill
-                className="object-contain"
+                style={{ objectFit: "contain" }}
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
               />

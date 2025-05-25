@@ -13,6 +13,10 @@ export type ShopifyProduct = {
     url: string
     altText: string
   } | null
+  images?: Array<{
+    url: string
+    altText: string
+  }> | null
   priceRange?: {
     minVariantPrice: {
       amount: string
@@ -386,6 +390,14 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
               url
               altText
             }
+            images(first: 10) {
+              edges {
+                node {
+                  url
+                  altText
+                }
+              }
+            }
             priceRange {
               minVariantPrice {
                 amount
@@ -461,6 +473,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
 
     return {
       ...data.product,
+      images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
       onSale,
       highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
     }

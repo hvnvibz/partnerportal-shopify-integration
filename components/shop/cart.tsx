@@ -24,6 +24,8 @@ export interface CartItem {
   price: number
   quantity: number
   image?: string
+  sku?: string
+  compareAtPrice?: number
 }
 
 // Create a custom event for cart updates
@@ -201,8 +203,16 @@ export function Cart() {
                     )}
                   </div>
                   <div className="flex flex-1 flex-col">
-                    <span className="line-clamp-1 font-medium">{item.title}</span>
-                    <span className="text-sm text-muted-foreground">{formatPrice(item.price)}</span>
+                    {item.sku && (
+                      <span className="text-xs text-muted-foreground mb-0.5">Art.-Nr.: {item.sku}</span>
+                    )}
+                    <span className="line-clamp-1 font-medium text-base md:text-base" style={{ fontSize: '70%' }}>{item.title}</span>
+                    <span className="text-sm text-muted-foreground flex items-center gap-2">
+                      {formatPrice(item.price)}
+                      {item.compareAtPrice && item.compareAtPrice > item.price && (
+                        <span className="line-through text-xs text-gray-400 ml-2">{formatPrice(item.compareAtPrice)}</span>
+                      )}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button

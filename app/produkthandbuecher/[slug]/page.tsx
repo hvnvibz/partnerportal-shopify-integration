@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Download } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { Cart } from "@/components/shop/cart"
 
 // Beispiel-Daten für DPHs (später aus DB oder Datei)
 const DPH_LIST = [
@@ -71,14 +72,14 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
+          <Breadcrumb className="flex-1">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                <BreadcrumbLink href="/">Start</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/produkthandbuecher">Digitale Produkthandbücher</BreadcrumbLink>
+                <BreadcrumbLink href="/produkthandbuecher">Digitale Handbücher</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -86,6 +87,7 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <Cart />
         </header>
         <div className="container mx-auto py-12">
           <div className="mx-auto max-w-3xl">

@@ -8,6 +8,10 @@ export type Product = {
     url: string
     altText: string
   } | null
+  images?: Array<{
+    url: string
+    altText: string
+  }> | null
   priceRange: {
     minVariantPrice: {
       amount: string
