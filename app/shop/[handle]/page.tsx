@@ -25,21 +25,51 @@ export default async function ProductPage({ params }: { params: { handle: string
     query: "title:*KAWK-D* OR title:*INDUWA* OR tag:*KAWK-D* OR tag:*INDUWA*",
   })
 
-  console.log("Found related products:", relatedProductsRaw.map((p: ShopifyProduct) => ({
+  console.log("Found related products:", relatedProductsRaw.map((p: any) => ({
     title: p.title,
-    sku: p.variants?.edges[0]?.node?.sku
+    sku: p.sku || p.variants?.edges[0]?.node?.sku || "-"
   })));
 
   // Ensure all required fields are present for the Product type
-  const relatedProducts = relatedProductsRaw.map(p => ({
+  let relatedProducts: import("@/types").Product[] = relatedProductsRaw.map((p: import("@/lib/shopify-storefront").ShopifyProduct) => ({
     ...p,
     priceRange: p.priceRange || {
       minVariantPrice: { amount: "0", currencyCode: "EUR" },
       maxVariantPrice: { amount: "0", currencyCode: "EUR" }
-    }
+    },
+    variants: p.variants || { edges: [] },
+    induwaConnect: Boolean(p.induwaConnect),
   }));
 
+  // Upsell-Logik für INDUWA Connect
+  const UPSALE_PRODUCT_ID = "gid://shopify/Product/9261144146248";
+  if (product?.induwaConnect) {
+    // Produkt mit der ID hinzufügen, falls nicht schon enthalten
+    const alreadyIncluded = relatedProducts.some((p: import("@/types").Product) => p.id === UPSALE_PRODUCT_ID);
+    if (!alreadyIncluded) {
+      const upsellProduct = await getProductByHandle("9261144146248");
+      if (upsellProduct) {
+        relatedProducts = [
+          ...relatedProducts,
+          {
+            ...upsellProduct,
+            priceRange: upsellProduct.priceRange || {
+              minVariantPrice: { amount: "0", currencyCode: "EUR" },
+              maxVariantPrice: { amount: "0", currencyCode: "EUR" }
+            },
+            variants: upsellProduct.variants || { edges: [] },
+            induwaConnect: Boolean(upsellProduct.induwaConnect),
+          }
+        ];
+      }
+    }
+  } else {
+    // Produkt mit der ID entfernen, falls enthalten
+    relatedProducts = relatedProducts.filter((p: import("@/types").Product) => p.id !== UPSALE_PRODUCT_ID);
+  }
+
   if (!product) {
+    relatedProducts = [];
     return (
       <SidebarProvider>
         <AppSidebar />
@@ -97,7 +127,18 @@ export default async function ProductPage({ params }: { params: { handle: string
         </header>
         <div className="p-4">
           <Suspense fallback={<div>Loading product...</div>}>
-            <ProductDetail product={product} relatedProducts={relatedProducts} />
+            <ProductDetail 
+              product={{
+                ...product,
+                priceRange: product.priceRange || {
+                  minVariantPrice: { amount: "0", currencyCode: "EUR" },
+                  maxVariantPrice: { amount: "0", currencyCode: "EUR" }
+                },
+                variants: product.variants || { edges: [] },
+                induwaConnect: Boolean(product.induwaConnect),
+              }}
+              relatedProducts={relatedProducts}
+            />
           </Suspense>
         </div>
       </SidebarInset>

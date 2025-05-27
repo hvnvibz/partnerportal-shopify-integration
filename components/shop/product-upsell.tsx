@@ -1,4 +1,4 @@
-import { ProductUpsellItem } from "@/components/shop/product-upsell-item"
+import { ProductUpsellItem, ProductUpsellAddButton } from "@/components/shop/product-upsell-item"
 import type { Product } from "@/types"
 
 interface ProductUpsellProps {
@@ -72,9 +72,30 @@ export function ProductUpsell({ products, mainProductId }: ProductUpsellProps) {
     return null;
   }
 
+  // Preislogik wie im ProductUpsellItem
+  let displayPrice = null;
+  if (displayProduct.title.includes("INDUWA Connect")) {
+    displayPrice = 182.00;
+  } else if (displayProduct.priceRange?.minVariantPrice?.amount) {
+    displayPrice = Number(displayProduct.priceRange.minVariantPrice.amount);
+  }
+
   return (
     <div className="mt-6 border rounded-lg p-6 bg-gray-50">
-      <ProductUpsellItem product={displayProduct} />
+      <div className="flex items-center gap-4 justify-between">
+        <div className="flex items-center gap-2">
+          {displayProduct.featuredImage && (
+            <div className="h-16 w-16 flex items-center justify-center rounded-md border bg-[#f8f9fa] overflow-hidden">
+              <img src={displayProduct.featuredImage.url} alt={displayProduct.featuredImage.altText || displayProduct.title} width={48} height={48} />
+            </div>
+          )}
+          <div className="font-medium text-sm break-words max-w-xs">{displayProduct.title}</div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="font-bold text-base whitespace-nowrap">{displayPrice !== null ? `${displayPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : ''}</div>
+          <ProductUpsellAddButton product={displayProduct} />
+        </div>
+      </div>
     </div>
   )
 } 

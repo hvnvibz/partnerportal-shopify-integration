@@ -54,5 +54,6 @@ export type Product = {
   availableForSale: boolean
   highestCompareAtPrice?: number | null
   sku?: string
+  induwaConnect?: boolean
 }
 

@@ -17,6 +17,7 @@ import {
 import type { Product } from "@/types"
 import { useToast } from "@/components/ui/use-toast"
 import { type CartItem, CART_UPDATED_EVENT } from "@/components/shop/cart"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 interface ProductDetailProps {
   product: Product
@@ -70,7 +71,6 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
   // Function to clean up description HTML
   const cleanDescription = (html: string) => {
     if (!html) return ""
-
     // Remove CSS class definitions and other problematic elements
     return html
       .replace(/{[^}]*}/g, "") // Remove CSS blocks
@@ -81,35 +81,6 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
 
   // Get the clean description
   const cleanDescriptionHtml = product.descriptionHtml ? cleanDescription(product.descriptionHtml) : product.description
-
-  // Truncate description for display (first 4 lines)
-  const truncateText = (text: string) => {
-    const lines = text.split('\n').filter(line => line.trim() !== '');
-    const firstFourLines = lines.slice(0, 4).join('\n');
-    return firstFourLines;
-  }
-
-  // Get plain text version of the description
-  const stripHtml = (html: string) => {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.body.textContent || '';
-  }
-
-  // Create truncated text version (client-side only)
-  const getDescription = () => {
-    if (typeof window === 'undefined' || !cleanDescriptionHtml) return { short: '', full: '' };
-    
-    const fullText = cleanDescriptionHtml;
-    // Simple approach - split by paragraph tags
-    const paragraphs = fullText.split(/<\/?p[^>]*>/g).filter(p => p.trim());
-    const shortText = paragraphs.slice(0, 2).join(' ');
-    
-    return {
-      short: shortText,
-      full: fullText,
-      hasMore: paragraphs.length > 2
-    };
-  }
 
   // Handle variant selection
   const handleVariantChange = (value: string) => {
@@ -240,48 +211,48 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
         <div className="bg-white border border-gray-200 rounded-lg p-8">
           {/* Galerie-Logik */}
           {product.images && product.images.length > 0 ? (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center" style={{ minWidth: 320, maxWidth: 400, margin: '0 auto' }}>
               <div
-                className="relative w-full flex items-center justify-center"
+                className="relative flex items-center justify-center"
                 style={{
-                  maxWidth: 480,
-                  aspectRatio: maxRatio ? `${maxRatio}/1` : undefined,
+                  width: 320,
+                  height: 320,
+                  margin: '0 auto',
                 }}
               >
                 <Image
                   src={product.images[selectedImageIdx]?.url || "/placeholder.svg"}
                   alt={product.images[selectedImageIdx]?.altText || product.title}
-                  fill
-                  style={{ objectFit: "contain" }}
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  style={{ objectFit: "contain", width: '100%', height: '100%', borderRadius: 8 }}
+                  width={320}
+                  height={320}
+                  sizes="320px"
                   priority
                 />
               </div>
-              {product.images.length > 1 && (
-                <div className="flex gap-2 justify-center mt-6" style={{ height: 'auto' }}>
-                  {product.images.map((img, idx) => (
-                    <button
-                      key={img.url}
-                      className={`border rounded-md p-1 bg-white ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
-                      style={{ width: 56, height: 'auto' }}
-                      onClick={() => setSelectedImageIdx(idx)}
-                      aria-label={`Bild ${idx + 1} anzeigen`}
-                    >
-                      <Image
-                        src={img.url}
-                        alt={img.altText || product.title}
-                        width={48}
-                        height={48}
-                        style={{ objectFit: "contain" }}
-                        className="rounded"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-2 justify-center mt-6 w-full" style={{ minHeight: 67, alignItems: 'flex-end' }}>
+                {product.images.map((img, idx) => (
+                  <button
+                    key={img.url}
+                    className={`border rounded-md p-1 bg-white ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
+                    style={{ width: 67, aspectRatio: '1/1', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}
+                    onClick={() => setSelectedImageIdx(idx)}
+                    aria-label={`Bild ${idx + 1} anzeigen`}
+                  >
+                    <Image
+                      src={img.url}
+                      alt={img.altText || product.title}
+                      width={58}
+                      height={58}
+                      style={{ objectFit: "contain", width: '100%', height: '100%' }}
+                      className="rounded"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           ) : product.featuredImage ? (
-            <div className="relative" style={{ width: "100%", maxWidth: 480, margin: "0 auto", height: 480 }}>
+            <div className="relative" style={{ width: "100%", minHeight: 400, minWidth: 400, maxWidth: 480, margin: "0 auto", height: 480 }}>
               <Image
                 src={product.featuredImage.url || "/placeholder.svg"}
                 alt={product.featuredImage.altText || product.title}
@@ -292,7 +263,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
               />
             </div>
           ) : (
-            <div className="aspect-square bg-muted flex items-center justify-center">No image available</div>
+            <div className="aspect-square bg-muted flex items-center justify-center" style={{ minHeight: 400, minWidth: 400 }}>No image available</div>
           )}
         </div>
 
@@ -318,30 +289,23 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
             )}
           </div>
 
-          {/* Truncated Product Description with "mehr anzeigen" button */}
+          {/* Accordion für Produktbeschreibung */}
           {cleanDescriptionHtml && (
-            <div className="border rounded-md p-4">
-              <div className="prose prose-sm max-w-none product-description">
-                <div 
-                  dangerouslySetInnerHTML={{ 
-                    __html: showFullDescription 
-                      ? cleanDescriptionHtml 
-                      : cleanDescriptionHtml.split('</p>').slice(0, 4).join('</p>') + '</p>' 
-                  }} 
-                  className="leading-[1.1] text-[0.85rem] [&>p]:mb-[0.3rem]"
-                />
-                {!showFullDescription && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="mt-2 text-blue-600 p-0 h-auto hover:bg-transparent hover:underline"
-                    onClick={() => setShowFullDescription(true)}
-                  >
-                    Mehr anzeigen
-                  </Button>
-                )}
-              </div>
-            </div>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="desc">
+                <AccordionTrigger>Produktbeschreibung</AccordionTrigger>
+                <AccordionContent>
+                  <div className="prose prose-sm max-w-none product-description">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: cleanDescriptionHtml
+                      }} 
+                      className="leading-[1.1] text-[0.85rem] [&>p]:mb-[0.3rem]"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
 
           {/* Upsell Section - directly below the description */}

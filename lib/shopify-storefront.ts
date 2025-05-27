@@ -69,6 +69,7 @@ export type ShopifyProduct = {
   } | null
   cursor?: string | null
   sku: string
+  induwaConnect?: boolean | string
 }
 
 export type ShopifyCollection = {
@@ -437,6 +438,9 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
               }
             }
             availableForSale
+            metafield(namespace: "custom", key: "induwa_connect") {
+              value
+            }
           }
         }
       `,
@@ -476,6 +480,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
       images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
       onSale,
       highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
+      induwaConnect: data.product.metafield?.value === "true" || data.product.metafield?.value === true,
     }
   } catch (error) {
     console.error(`Error fetching product with handle ${handle}:`, error)
