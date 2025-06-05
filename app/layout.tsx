@@ -2,6 +2,7 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 
@@ -23,6 +24,7 @@ export default function RootLayout({
           {children}
         </ProtectedRoute>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   )
