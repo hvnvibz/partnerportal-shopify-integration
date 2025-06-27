@@ -1,100 +1,81 @@
-import { ProductUpsellItem, ProductUpsellAddButton } from "@/components/shop/product-upsell-item"
 import type { Product } from "@/types"
+import { ProductUpsellAddButton } from "@/components/shop/product-upsell-item"
+import { useState } from "react"
 
 interface ProductUpsellProps {
   products: Product[]
   mainProductId: string
 }
 
-export function ProductUpsell({ products, mainProductId }: ProductUpsellProps) {
-  // Debug: Ausgabe der Produkte und SKUs
-  console.log("ProductUpsell - Alle verfügbaren Produkte:", products.map(p => ({
-    title: p.title,
-    id: p.id,
-    isKawkD: p.title.includes("KAWK-D"),
-    isInduwa: p.title.includes("INDUWA Connect")
-  })));
-  
-  if (!products || products.length === 0) {
-    console.log("ProductUpsell - Keine Produkte gefunden");
-    return null;
-  }
-  
-  // Abrufen des aktuellen Produkts (Hauptprodukt)
-  const mainProduct = products.find(p => p.id === mainProductId);
-  const isMainProductKawkD = mainProduct?.title.includes("KAWK-D") || false;
-  
-  console.log("ProductUpsell - Hauptprodukt:", {
-    title: mainProduct?.title,
-    id: mainProduct?.id,
-    isKawkD: isMainProductKawkD
-  });
-  
-  // Finde das INDUWA Connect Produkt
-  const induwaConnectProduct = products.find(
-    product => product.title.includes("INDUWA Connect")
-  );
-  
-  console.log("ProductUpsell - INDUWA Connect Produkt gefunden?", {
-    found: !!induwaConnectProduct,
-    title: induwaConnectProduct?.title
-  });
-  
-  // KAWK Produkte (aber nicht das Hauptprodukt)
-  const kawkProducts = products
-    .filter(product => product.id !== mainProductId)
-    .filter(product => product.title.includes("KAWK"));
-  
-  console.log("ProductUpsell - Gefundene KAWK Produkte:", kawkProducts.map(p => ({
-    title: p.title,
-    id: p.id,
-    isKawkD: p.title.includes("KAWK-D")
-  })));
-  
-  // Wähle das passende Upselling-Produkt basierend auf dem Produkttitel
-  let displayProduct: Product | null = null;
-  
-  if (isMainProductKawkD && induwaConnectProduct) {
-    // Für KAWK-D Produkte, zeige INDUWA Connect
-    displayProduct = induwaConnectProduct;
-    console.log("ProductUpsell - Zeige INDUWA Connect als Upsell");
-  } else if (kawkProducts.length > 0) {
-    // Für andere KAWK Produkte, zeige das erste passende KAWK Produkt
-    displayProduct = kawkProducts[0];
-    console.log("ProductUpsell - Zeige KAWK Produkt als Upsell:", {
-      title: kawkProducts[0].title
-    });
-  }
-  
-  // Zeige kein Upselling wenn kein passendes Produkt gefunden wurde
-  if (!displayProduct) {
-    console.log("ProductUpsell - Kein passendes Produkt für Upselling gefunden");
-    return null;
+export default function ProductUpsell({ products, mainProductId }: ProductUpsellProps) {
+  // Trenne die Produkte nach Metafeld (angenommen: die ersten beiden sind aus upselling_1a, der Rest sind "normale" Upsells)
+  const upsell1aProducts = products.slice(0, 2)
+  const otherUpsellProducts = products.slice(2)
+
+  // State für Radiobutton-Auswahl und "im Warenkorb"-Status
+  const [selectedProductId, setSelectedProductId] = useState(upsell1aProducts[0]?.id || "")
+  const [addedProductId, setAddedProductId] = useState<string | null>(null)
+
+  // Handler für Hinzufügen (simuliert, da keine echte Cart-API)
+  function handleAdd(product: Product) {
+    setAddedProductId(product.id)
+    // Hier ggf. echte Cart-Logik aufrufen
   }
 
-  // Preislogik wie im ProductUpsellItem
-  let displayPrice = null;
-  if (displayProduct.title.includes("INDUWA Connect")) {
-    displayPrice = 182.00;
-  } else if (displayProduct.priceRange?.minVariantPrice?.amount) {
-    displayPrice = Number(displayProduct.priceRange.minVariantPrice.amount);
-  }
+  if (!products || products.length === 0) return null
 
   return (
     <div className="mt-6 border rounded-lg p-6 bg-gray-50">
-      <div className="flex items-center gap-4 justify-between">
-        <div className="flex items-center gap-2">
-          {displayProduct.featuredImage && (
-            <div className="h-16 w-16 flex items-center justify-center rounded-md border bg-[#f8f9fa] overflow-hidden">
-              <img src={displayProduct.featuredImage.url} alt={displayProduct.featuredImage.altText || displayProduct.title} width={48} height={48} />
+      {/* ODER-GRUPPE: 2-spaltig, Radiobuttons */}
+      {upsell1aProducts.length > 0 && (
+        <fieldset
+          className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-0 rounded ${addedProductId ? 'opacity-50 pointer-events-none' : ''}`}
+          disabled={!!addedProductId}
+          style={{ paddingLeft: 0, paddingRight: 0 }}
+        >
+          <legend className="mb-4 font-semibold text-sm text-gray-700 pl-4">Wähle eine Option</legend>
+          {upsell1aProducts.map((product, idx) => {
+            const isActive = selectedProductId === product.id;
+            return (
+              <div
+                key={product.id}
+                className={`flex flex-col items-start border rounded p-4 gap-2 cursor-pointer bg-white transition-colors duration-150 ${isActive ? 'border-[#60a5fa] ring-2 ring-[#60a5fa] text-black' : 'border-gray-300 text-gray-400'}`}
+                onClick={() => !addedProductId && setSelectedProductId(product.id)}
+                style={{ minHeight: '100px', marginLeft: idx === 0 ? '0.25rem' : 0 }}
+              >
+                <span className="font-medium text-[0.85rem] break-words max-w-xs">{product.title}</span>
+                <div className="flex flex-row items-center justify-between w-full mt-4 gap-2">
+                  <span className="font-bold text-[0.85rem] leading-none">
+                    {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  </span>
+                  {isActive && !addedProductId && (
+                    <ProductUpsellAddButton product={product} onAdd={() => setAddedProductId(product.id)} />
+                  )}
+                  {addedProductId === product.id && (
+                    <span className="text-green-600 text-xs font-semibold ml-2">Im Warenkorb</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </fieldset>
+      )}
+      {/* NORMALE UPSELLS */}
+      <div className="pl-4">
+        {otherUpsellProducts.map((product) => (
+          <div
+            key={product.id}
+            className="flex items-center justify-between gap-4 py-2 border-b last:border-b-0 min-h-[48px]"
+          >
+            <div className="flex-1 font-medium text-[0.85rem] break-words max-w-xs">{product.title}</div>
+            <div className="flex flex-col items-end justify-center min-h-[40px] mr-4">
+              <span className="font-bold text-[0.85rem] leading-none">
+                {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+              </span>
             </div>
-          )}
-          <div className="font-medium text-sm break-words max-w-xs">{displayProduct.title}</div>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="font-bold text-base whitespace-nowrap">{displayPrice !== null ? `${displayPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : ''}</div>
-          <ProductUpsellAddButton product={displayProduct} />
-        </div>
+            <ProductUpsellAddButton product={product} />
+          </div>
+        ))}
       </div>
     </div>
   )

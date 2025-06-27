@@ -33,9 +33,9 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
           className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
         >
           {/* Rabatt-Badge jetzt außerhalb des Bildes */}
-          {product.compareAtPrice && (
+          {product.compareAtPriceRange && (
             <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
-              {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
+              {Math.round((1 - Number(product.priceRange.minVariantPrice.amount) / Number(product.compareAtPriceRange.minVariantPrice.amount)) * 100)}% Wiederverkaufsrabatt
             </div>
           )}
           <div className="aspect-square relative overflow-hidden bg-white">
@@ -64,15 +64,15 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
               )}
             </div>
             <div className="mt-auto pt-2">
-              {product.compareAtPrice ? (
+              {product.compareAtPriceRange ? (
                 <div className="flex gap-2 items-center">
-                  <span className="font-semibold">{formatPrice(product.price.amount)}</span>
+                  <span className="font-semibold">{formatPrice(product.priceRange.minVariantPrice.amount)}</span>
                   <span className="text-gray-500 line-through text-xs">
-                    {formatPrice(product.compareAtPrice.amount)}
+                    {formatPrice(product.compareAtPriceRange.minVariantPrice.amount)}
                   </span>
                 </div>
               ) : (
-                <span className="font-semibold">{formatPrice(product.price.amount)}</span>
+                <span className="font-semibold">{formatPrice(product.priceRange.minVariantPrice.amount)}</span>
               )}
             </div>
           </div>

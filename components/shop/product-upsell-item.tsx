@@ -201,7 +201,7 @@ export function ProductUpsellItem({ product, hidePrice, hideImage, hideTitle }: 
   )
 }
 
-export function ProductUpsellAddButton({ product }: { product: Product }) {
+export function ProductUpsellAddButton({ product, onAdd }: { product: Product, onAdd?: (product: Product) => void }) {
   const [isSelected, setIsSelected] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
@@ -282,6 +282,9 @@ export function ProductUpsellAddButton({ product }: { product: Product }) {
         title: "Produkt hinzugefügt",
         description: `${product.title} wurde zum Warenkorb hinzugefügt.`,
       })
+      if (onAdd) {
+        onAdd(product)
+      }
       setIsSelected(true)
       setTimeout(() => {
         setIsSelected(false)
@@ -321,4 +324,79 @@ export function ProductUpsellAddButton({ product }: { product: Product }) {
       )}
     </Button>
   )
+}
+
+// Hilfsfunktion für Add-to-Cart mit Menge
+export async function addProductToCart(product: Product, quantity: number = 1, toast?: ReturnType<typeof useToast>["toast"]) {
+  // Get price - use fixed price for INDUWA Connect
+  const minPrice = product.title.includes("INDUWA Connect") ? 182.00 : Number.parseFloat(product.priceRange.minVariantPrice.amount)
+  // Get current cart from localStorage
+  const storedCart = localStorage.getItem("cart")
+  let cartItems: CartItem[] = []
+  if (storedCart) {
+    try {
+      cartItems = JSON.parse(storedCart)
+    } catch (error) {
+      cartItems = []
+    }
+  }
+  let firstVariant: {
+    id: string;
+    title: string;
+    sku?: string;
+    availableForSale: boolean;
+    price: { amount: string; currencyCode: string };
+    compareAtPrice: { amount: string; currencyCode: string } | null;
+  } | undefined = product.variants.edges[0]?.node;
+  if (!firstVariant?.id) {
+    let variantIdFromApi: string | undefined = undefined;
+    try {
+      let handle = product.handle;
+      if (handle) {
+        const apiProduct = await getProductByHandle(handle);
+        const variantNode = apiProduct?.variants?.edges[0]?.node;
+        firstVariant = variantNode && variantNode.id ? variantNode : undefined;
+        variantIdFromApi = firstVariant?.id;
+      }
+    } catch (err) {}
+    if (!variantIdFromApi || !firstVariant) {
+      toast?.({
+        title: "Fehler",
+        description: "Dieses Produkt kann nicht in den Warenkorb gelegt werden (keine Variante gefunden).",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }
+  if (!firstVariant || !firstVariant.id) {
+    toast?.({
+      title: "Fehler",
+      description: "Dieses Produkt kann nicht in den Warenkorb gelegt werden (keine Variante gefunden).",
+      variant: "destructive",
+    });
+    return false;
+  }
+  const existingItemIndex = cartItems.findIndex(
+    (item) => item.variantId === firstVariant.id
+  )
+  if (existingItemIndex >= 0) {
+    cartItems[existingItemIndex].quantity += quantity
+  } else {
+    cartItems.push({
+      id: product.id,
+      variantId: firstVariant.id,
+      title: product.title,
+      price: minPrice,
+      quantity,
+      image: product.featuredImage?.url,
+      sku: firstVariant.sku || product.sku || undefined,
+    })
+  }
+  localStorage.setItem("cart", JSON.stringify(cartItems))
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT))
+  toast?.({
+    title: "Produkt hinzugefügt",
+    description: `${quantity}x ${product.title} wurde zum Warenkorb hinzugefügt.`,
+  })
+  return true;
 } 

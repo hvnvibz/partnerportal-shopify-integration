@@ -175,7 +175,7 @@ export function Cart() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md">
+      <SheetContent className="w-full sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>Warenkorb</SheetTitle>
         </SheetHeader>

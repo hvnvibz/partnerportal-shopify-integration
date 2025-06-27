@@ -55,5 +55,12 @@ export type Product = {
   highestCompareAtPrice?: number | null
   sku?: string
   induwaConnect?: boolean
+  upselling_1a?: string | null
+  upselling_2?: string | null
+  productType?: string
+  cross_selling_1?: string | null
+  cross_selling_2?: string | null
+  cross_selling_3?: string | null
+  hide_from_listing?: boolean
 }
 

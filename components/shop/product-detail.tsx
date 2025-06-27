@@ -6,7 +6,7 @@ import Link from "next/link"
 import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductGrid } from "@/components/shop/product-grid"
-import { ProductUpsell } from "@/components/shop/product-upsell"
+import ProductUpsell from "@/components/shop/product-upsell"
 import {
   Select,
   SelectContent,
@@ -18,13 +18,16 @@ import type { Product } from "@/types"
 import { useToast } from "@/components/ui/use-toast"
 import { type CartItem, CART_UPDATED_EVENT } from "@/components/shop/cart"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import ProductCrossSell from "@/components/shop/product-cross-sell"
 
 interface ProductDetailProps {
   product: Product
   relatedProducts: Product[]
+  upsellProducts?: Product[]
+  crossSellProducts?: Product[]
 }
 
-export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
+export function ProductDetail({ product, relatedProducts, upsellProducts, crossSellProducts }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [selectedVariantId, setSelectedVariantId] = useState(
@@ -87,8 +90,10 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
     setSelectedVariantId(value)
   }
 
-  // Immer Upsells anzeigen, die eigentliche Logik ist in der ProductUpsell-Komponente
-  const showUpsells = true;
+  const showUpsells = Array.isArray(upsellProducts) && upsellProducts.length > 0;
+
+  // Cross-Sell-Produkte: aus Prop oder leer
+  const crossSell = Array.isArray(crossSellProducts) ? crossSellProducts : [];
 
   // Dynamisch Bildverhältnisse berechnen, wenn Bilder vorhanden
   useEffect(() => {
@@ -308,9 +313,11 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
             </Accordion>
           )}
 
-          {/* Upsell Section - directly below the description */}
+          {/* Upsell Section - direkt unter der Beschreibung, nur wenn Produkte vorhanden */}
           {showUpsells && (
-            <ProductUpsell products={relatedProducts} mainProductId={product.id} />
+            <div className="mt-8">
+              <ProductUpsell products={upsellProducts!} mainProductId={product.id} />
+            </div>
           )}
 
           {/* Variant Selection Dropdown */}
@@ -375,11 +382,18 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
         </div>
       </div>
 
+      {/* Cross-Selling Bereich als eigene Section vor Related Products */}
+      {crossSell.length > 0 && (
+        <section className="mt-16 mb-8">
+          <ProductCrossSell products={crossSell} />
+        </section>
+      )}
+
       {/* Related Products Section - immer anzeigen */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
-          <h2 className="text-xl font-bold mb-8">Weitere Produkte entdecken</h2>
-          <ProductGrid products={relatedProducts} columns={4} />
+          <h2 className="font-bold text-2xl text-black mb-8 pl-6">Weitere Produkte entdecken</h2>
+          <ProductGrid products={relatedProducts.filter(p => !p.hide_from_listing)} columns={4} />
         </div>
       )}
     </div>

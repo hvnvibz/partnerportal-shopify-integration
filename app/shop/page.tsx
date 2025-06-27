@@ -51,9 +51,10 @@ export default async function ShopPage({
   const sort = searchParams.sort || "PRICE-desc"
   const [sortKey, sortDirection] = sort.split("-")
   const reverse = sortDirection === "desc"
-  const collectionHandle = Object.prototype.hasOwnProperty.call(searchParams, 'collection') ? (searchParams.collection ?? '') : 'meistverkauft-bestseller'
-  const productType = searchParams.productType || ""
   const query = searchParams.query || ""
+  const hasQuery = !!query
+  const collectionHandle = hasQuery ? "" : (Object.prototype.hasOwnProperty.call(searchParams, 'collection') ? (searchParams.collection ?? '') : 'meistverkauft-bestseller')
+  const productType = searchParams.productType || ""
   const cursor = searchParams.cursor || null
 
   // Fetch collections and product types for the filter sidebar
@@ -69,9 +70,9 @@ export default async function ShopPage({
     filterQuery += `product_type:"${productType}" `
   }
 
-  // Add search query
+  // Add search query (inkl. SKU)
   if (query) {
-    filterQuery += `(title:*${query}* OR tag:*${query}*) `
+    filterQuery += `(title:*${query}* OR tag:*${query}* OR variants.sku:${query}) `
   }
 
   console.log("Final Filter Query:", filterQuery.trim());

@@ -70,6 +70,13 @@ export type ShopifyProduct = {
   cursor?: string | null
   sku: string
   induwaConnect?: boolean | string
+  upselling_1a?: string | null
+  upselling_2?: string | null
+  cross_selling_1?: string | null
+  cross_selling_2?: string | null
+  cross_selling_3?: string | null
+  hide_from_listing?: boolean | string
+  highestCompareAtPrice?: number | null
 }
 
 export type ShopifyCollection = {
@@ -204,6 +211,12 @@ export async function getProducts({
                         }
                       }
                     }
+                    metafields(identifiers: [
+                      { namespace: "custom", key: "hide_from_listing" }
+                    ]) {
+                      key
+                      value
+                    }
                   }
                 }
                 pageInfo {
@@ -231,6 +244,13 @@ export async function getProducts({
         const hasCompareAtPrice =
           node.compareAtPriceRange.minVariantPrice.amount > 0 &&
           Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+        // Metafields extrahieren
+        const metafields = Array.isArray(node.metafields)
+          ? node.metafields.reduce((acc: any, mf: any) => {
+              if (mf && mf.key) acc[mf.key] = mf.value;
+              return acc;
+            }, {})
+          : {};
         return {
           id: node.id,
           title: node.title,
@@ -243,6 +263,7 @@ export async function getProducts({
           price: node.priceRange.minVariantPrice,
           compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
           sku: node.variants.edges[0]?.node.sku || "",
+          hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
           cursor
         };
       });
@@ -323,6 +344,12 @@ export async function getProducts({
                       }
                     }
                   }
+                  metafields(identifiers: [
+                    { namespace: "custom", key: "hide_from_listing" }
+                  ]) {
+                    key
+                    value
+                  }
                 }
               }
               pageInfo {
@@ -345,6 +372,13 @@ export async function getProducts({
         const hasCompareAtPrice =
           node.compareAtPriceRange.minVariantPrice.amount > 0 &&
           Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+        // Metafields extrahieren
+        const metafields = Array.isArray(node.metafields)
+          ? node.metafields.reduce((acc: any, mf: any) => {
+              if (mf && mf.key) acc[mf.key] = mf.value;
+              return acc;
+            }, {})
+          : {};
         return {
           id: node.id,
           title: node.title,
@@ -357,6 +391,7 @@ export async function getProducts({
           price: node.priceRange.minVariantPrice,
           compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
           sku: node.variants.edges[0]?.node.sku || "",
+          hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
           cursor
         };
       });
@@ -438,7 +473,16 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
               }
             }
             availableForSale
-            metafield(namespace: "custom", key: "induwa_connect") {
+            metafields(identifiers: [
+              { namespace: "custom", key: "induwa_connect" },
+              { namespace: "custom", key: "upselling_1a" },
+              { namespace: "custom", key: "upselling_2" },
+              { namespace: "custom", key: "cross_selling_1" },
+              { namespace: "custom", key: "cross_selling_2" },
+              { namespace: "custom", key: "cross_selling_3" },
+              { namespace: "custom", key: "hide_from_listing" }
+            ]) {
+              key
               value
             }
           }
@@ -475,16 +519,164 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
         Number(data.product.compareAtPriceRange.minVariantPrice.amount) >
           Number(data.product.priceRange.minVariantPrice.amount))
 
+    // Metafelder extrahieren
+    const metafields = Array.isArray(data.product.metafields)
+      ? data.product.metafields.reduce((acc: any, node: any) => {
+          if (node && node.key) acc[node.key] = node.value;
+          return acc;
+        }, {})
+      : {};
+
     return {
       ...data.product,
       images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
       onSale,
       highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
-      induwaConnect: data.product.metafield?.value === "true" || data.product.metafield?.value === true,
+      induwaConnect: metafields['induwa_connect'] === "true" || metafields['induwa_connect'] === true,
+      upselling_1a: metafields['upselling_1a'] || null,
+      upselling_2: metafields['upselling_2'] || null,
+      cross_selling_1: metafields['cross_selling_1'] || null,
+      cross_selling_2: metafields['cross_selling_2'] || null,
+      cross_selling_3: metafields['cross_selling_3'] || null,
+      hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
     }
   } catch (error) {
     console.error(`Error fetching product with handle ${handle}:`, error)
     return null
+  }
+}
+
+// Get a single product by Shopify GID
+export async function getProductById(id: string): Promise<ShopifyProduct | null> {
+  try {
+    const data = await shopifyFetch({
+      query: `
+        query getProductById($id: ID!) {
+          product(id: $id) {
+            id
+            title
+            handle
+            description
+            descriptionHtml
+            featuredImage {
+              url
+              altText
+            }
+            images(first: 10) {
+              edges {
+                node {
+                  url
+                  altText
+                }
+              }
+            }
+            priceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+              maxVariantPrice {
+                amount
+                currencyCode
+              }
+            }
+            compareAtPriceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+              maxVariantPrice {
+                amount
+                currencyCode
+              }
+            }
+            variants(first: 100) {
+              edges {
+                node {
+                  id
+                  title
+                  sku
+                  availableForSale
+                  price {
+                    amount
+                    currencyCode
+                  }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+            }
+            availableForSale
+            metafields(identifiers: [
+              { namespace: "custom", key: "induwa_connect" },
+              { namespace: "custom", key: "upselling_1a" },
+              { namespace: "custom", key: "upselling_2" },
+              { namespace: "custom", key: "cross_selling_1" },
+              { namespace: "custom", key: "cross_selling_2" },
+              { namespace: "custom", key: "cross_selling_3" },
+              { namespace: "custom", key: "hide_from_listing" }
+            ]) {
+              key
+              value
+            }
+          }
+        }
+      `,
+      variables: { id },
+    });
+
+    if (!data.product) {
+      console.log(`Product with id ${id} not found`);
+      return null;
+    }
+
+    // Die gleiche Metafeld-Extraktion wie in getProductByHandle
+    const metafields = Array.isArray(data.product.metafields)
+      ? data.product.metafields.reduce((acc: any, node: any) => {
+          if (node && node.key) acc[node.key] = node.value;
+          return acc;
+        }, {})
+      : {};
+
+    // Check if any variant has a compareAtPrice that's higher than its price
+    const hasCompareAtPrice = data.product.variants.edges.some(
+      ({ node: variant }: any) =>
+        variant.compareAtPrice && Number(variant.compareAtPrice.amount) > Number(variant.price.amount),
+    );
+
+    // Get the highest compareAtPrice from all variants
+    let highestCompareAtPrice = 0;
+    data.product.variants.edges.forEach(({ node: variant }: any) => {
+      if (variant.compareAtPrice && Number(variant.compareAtPrice.amount) > highestCompareAtPrice) {
+        highestCompareAtPrice = Number(variant.compareAtPrice.amount);
+      }
+    });
+
+    // Determine if the product is on sale
+    const onSale =
+      hasCompareAtPrice ||
+      (data.product.compareAtPriceRange &&
+        Number(data.product.compareAtPriceRange.minVariantPrice.amount) >
+          Number(data.product.priceRange.minVariantPrice.amount));
+
+    return {
+      ...data.product,
+      images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
+      onSale,
+      highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
+      induwaConnect: metafields['induwa_connect'] === "true" || metafields['induwa_connect'] === true,
+      upselling_1a: metafields['upselling_1a'] || null,
+      upselling_2: metafields['upselling_2'] || null,
+      cross_selling_1: metafields['cross_selling_1'] || null,
+      cross_selling_2: metafields['cross_selling_2'] || null,
+      cross_selling_3: metafields['cross_selling_3'] || null,
+      hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
+    };
+  } catch (error) {
+    console.error(`Error fetching product with id ${id}:`, error);
+    return null;
   }
 }
 

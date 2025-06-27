@@ -33,7 +33,7 @@ export function ShopContent({
   sort,
 }: ShopContentProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams() || { toString: () => "", get: () => undefined };
   const [searchValue, setSearchValue] = useState(query)
   
   // Zustand für die Ansammlung von Produkten über mehrere Seiten hinweg
@@ -52,7 +52,7 @@ export function ShopContent({
   }, [initialProducts, initialHasNextPage, initialEndCursor, initialNextPageUrl])
 
   function handleSortChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams((searchParams?.toString?.() ?? ""))
     
     if (value !== "TITLE-asc") {
       params.set("sort", value)
@@ -69,7 +69,7 @@ export function ShopContent({
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams((searchParams?.toString?.() ?? ""))
     
     if (searchValue) {
       params.set("query", searchValue)
@@ -95,23 +95,25 @@ export function ShopContent({
       const response = await fetch(`/shop/api/products?${new URLSearchParams({
         sort,
         ...(query ? { query } : {}),
-        ...(searchParams.get('collection') ? { collection: searchParams.get('collection')! } : {}),
-        ...(searchParams.get('productType') ? { productType: searchParams.get('productType')! } : {}),
+        ...((searchParams?.get?.('collection')) ? { collection: searchParams.get('collection')! } : {}),
+        ...((searchParams?.get?.('productType')) ? { productType: searchParams.get('productType')! } : {}),
         ...(endCursor ? { cursor: endCursor } : {})
       })}`);
       
       const data = await response.json();
       
       if (data.products && data.products.length > 0) {
-        // Füge neue Produkte am Ende hinzu
-        setAllProducts(prev => [...prev, ...data.products]);
-        
+        // Füge neue Produkte am Ende hinzu und dedupliziere nach Produkt-ID
+        setAllProducts(prev => {
+          const all = [...prev, ...data.products];
+          const unique = all.filter((p, idx, arr) => arr.findIndex(x => x.id === p.id) === idx);
+          return unique;
+        });
         // Aktualisiere Pagination-Status
         setHasNextPage(data.hasNextPage);
         setEndCursor(data.endCursor);
-        
         // Erstelle URL für die nächste Seite (für's UI, wir rufen aber direkt die API auf)
-        const nextParams = new URLSearchParams(searchParams.toString());
+        const nextParams = new URLSearchParams((searchParams?.toString?.() ?? ""));
         if (data.endCursor) {
           nextParams.set("cursor", data.endCursor);
         }
@@ -159,7 +161,7 @@ export function ShopContent({
 
       {Array.isArray(allProducts) && allProducts.length > 0 ? (
         <div className="relative pb-8">
-          <ProductGrid products={allProducts} />
+          <ProductGrid products={allProducts.filter(p => p.hide_from_listing !== true)} />
           
           {/* "Weitere Produkte laden" Button */}
           <div className="w-full flex justify-center mt-8">
