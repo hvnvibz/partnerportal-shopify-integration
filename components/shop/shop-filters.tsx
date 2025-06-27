@@ -24,7 +24,7 @@ export function ShopFilters({
   activeSort,
 }: ShopFiltersProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams() || { toString: () => "", get: () => undefined };
 
   function handleCollectionChange(collectionHandle: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -35,6 +35,8 @@ export function ShopFilters({
     params.delete("cursor")
     params.delete("page")
     params.delete("previousCursor")
+    // Entferne Such-Query, wenn ein Filter gesetzt wird
+    params.delete("query")
     router.push(`/shop?${params.toString()}`)
   }
 
@@ -49,6 +51,8 @@ export function ShopFilters({
     params.delete("cursor")
     params.delete("page")
     params.delete("previousCursor")
+    // Entferne Such-Query, wenn ein Filter gesetzt wird
+    params.delete("query")
     router.push(`/shop?${params.toString()}`)
   }
 

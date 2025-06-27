@@ -34,28 +34,33 @@ function mergeSearchParams(params: URLSearchParams, updates: Record<string, stri
   return merged;
 }
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: {
-    page?: string
-    sort?: string
-    collection?: string
-    productType?: string
-    query?: string
-    cursor?: string
-    previousCursor?: string
-  }
-}) {
-  // In Next.js 13+, searchParams are already parsed and ready to use
-  const sort = searchParams.sort || "PRICE-desc"
-  const [sortKey, sortDirection] = sort.split("-")
-  const reverse = sortDirection === "desc"
-  const query = searchParams.query || ""
-  const hasQuery = !!query
-  const collectionHandle = hasQuery ? "" : (Object.prototype.hasOwnProperty.call(searchParams, 'collection') ? (searchParams.collection ?? '') : 'meistverkauft-bestseller')
-  const productType = searchParams.productType || ""
-  const cursor = searchParams.cursor || null
+export default async function ShopPage({ searchParams }: { searchParams: any }) {
+  // searchParams asynchron auflösen (Next.js 14/15)
+  const params = typeof searchParams?.then === "function" ? await searchParams : searchParams;
+
+  // Defensive: Unterstütze beide Varianten (URLSearchParams oder Plain Object)
+  let getParam = (key: string, fallback: string = ""): string => {
+    if (params && typeof params.get === "function") {
+      return params.get(key) ?? fallback;
+    }
+    if (params && typeof params[key] === "string") {
+      return params[key];
+    }
+    if (params && Array.isArray(params[key])) {
+      return params[key][0];
+    }
+    return fallback;
+  };
+
+  const sort = getParam("sort", "PRICE-desc");
+  const [sortKey, sortDirection] = sort.split("-");
+  const reverse = sortDirection === "desc";
+  const query = getParam("query", "");
+  const hasQuery = !!query;
+  const collectionHandle = hasQuery ? "" : getParam("collection", "meistverkauft-bestseller");
+  const productType = getParam("productType", "");
+  const cursorRaw = getParam("cursor");
+  const cursor = cursorRaw && cursorRaw !== "undefined" && cursorRaw !== "null" && cursorRaw !== "" ? cursorRaw : undefined;
 
   // Fetch collections and product types for the filter sidebar
   const collections = await getCollections()
@@ -88,11 +93,11 @@ export default async function ShopPage({
       sortKey: sortKey.toUpperCase() as any,
       reverse,
       query: filterQuery.trim(),
-      cursor: cursor as string | null,
+      cursor: cursor as string | undefined,
       collectionHandle, // pass collectionHandle directly
     });
     
-    console.log(`Successfully fetched ${productsData?.products?.length || 0} products`);
+    console.log("ShopPage: productsData", productsData);
   } catch (error) {
     console.error("Error fetching products:", error)
     productsData = await getFallbackProducts()
@@ -105,12 +110,18 @@ export default async function ShopPage({
     endCursor = null 
   } = productsData || {}
 
+  console.log("ShopPage: products", products);
+
   // Generate the URL for client-side "Load more" button
-  const nextPageParams = new URLSearchParams(searchParams.toString())
-  
-  if (endCursor) {
-    nextPageParams.set("cursor", endCursor)
-  }
+  const nextPageParams = new URLSearchParams(
+    ["sort", "collection", "productType", "query", "cursor", "previousCursor"]
+      .map((key) => {
+        const value = getParam(key);
+        return value ? `${key}=${encodeURIComponent(value)}` : null;
+      })
+      .filter(Boolean)
+      .join('&')
+  );
   
   const nextPageUrl = `/shop?${nextPageParams.toString()}`
 
