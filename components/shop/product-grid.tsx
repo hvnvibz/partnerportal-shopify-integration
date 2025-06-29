@@ -39,12 +39,16 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
             key={product.id}
             className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
           >
-            {/* Rabatt-Badge jetzt außerhalb des Bildes */}
-            {product.compareAtPrice && product.compareAtPrice.amount && (
-              <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
-                {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
-              </div>
-            )}
+            {/* Wrapper für Sale-Tag mit fixer Mindesthöhe */}
+            <div className="min-h-[2.2rem] flex items-start bg-transparent">
+              {product.compareAtPrice && product.compareAtPrice.amount ? (
+                <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
+                  {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
+                </div>
+              ) : (
+                <div className="invisible mt-3 mx-3 mb-2" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>&nbsp;</div>
+              )}
+            </div>
             <div className="aspect-square relative overflow-hidden bg-white">
               {product.featuredImage ? (
                 <Image

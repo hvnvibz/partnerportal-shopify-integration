@@ -41,20 +41,20 @@ export default async function ProductPage({ params }: { params: { handle: string
       availableForSale: p.availableForSale,
       highestCompareAtPrice: typeof p.highestCompareAtPrice === 'number' ? p.highestCompareAtPrice : null,
       sku: typeof p.sku === 'string' ? p.sku : '',
-      induwaConnect: Boolean(p.induwaConnect),
-      upselling_1a: p.upselling_1a,
-      upselling_2: p.upselling_2,
       productType: p.productType,
       cross_selling_1: p.cross_selling_1,
       cross_selling_2: p.cross_selling_2,
       cross_selling_3: p.cross_selling_3,
       hide_from_listing,
+      // Upselling-Metafields übernehmen
+      upselling_1a: p.upselling_1a,
+      upselling_2a: p.upselling_2a,
+      upselling_single: p.upselling_single,
     };
   }
 
   let productRaw = await getProductByHandle(params.handle);
   let product = productRaw ? toProduct(productRaw) : undefined;
-  console.log("[DEBUG] Produkt geladen:", product);
 
   // Fetch related products - specifically KAWK-D and INDUWA Connect products
   const { products: relatedProductsRaw } = await getProducts({
@@ -63,60 +63,55 @@ export default async function ProductPage({ params }: { params: { handle: string
     query: "title:*KAWK-D* OR title:*INDUWA* OR tag:*KAWK-D* OR tag:*INDUWA*",
   })
 
-  console.log("Found related products:", relatedProductsRaw.map((p: any) => ({
-    title: p.title,
-    sku: p.sku || p.variants?.edges[0]?.node?.sku || "-"
-  })));
-
   let relatedProducts: import("@/types").Product[] = relatedProductsRaw
     .map(toProduct)
     .filter((p: import("@/types").Product) => p.hide_from_listing !== true);
 
-  // Upsell-Logik für INDUWA Connect
-  const UPSALE_PRODUCT_ID = "gid://shopify/Product/9261144146248";
-  if (product?.induwaConnect) {
-    // Produkt mit der ID hinzufügen, falls nicht schon enthalten
-    const alreadyIncluded = relatedProducts.some((p: import("@/types").Product) => p.id === UPSALE_PRODUCT_ID);
-    if (!alreadyIncluded) {
-      const upsellProductRaw = await getProductByHandle("9261144146248");
-      if (upsellProductRaw) {
-        const upsellProduct = toProduct(upsellProductRaw);
-        relatedProducts = [
-          ...relatedProducts,
-          {
-            ...upsellProduct,
-            priceRange: upsellProduct.priceRange || {
-              minVariantPrice: { amount: "0", currencyCode: "EUR" },
-              maxVariantPrice: { amount: "0", currencyCode: "EUR" }
-            },
-            variants: upsellProduct.variants || { edges: [] },
-            induwaConnect: Boolean(upsellProduct.induwaConnect),
-          }
-        ];
-      }
-    }
-  } else {
-    // Produkt mit der ID entfernen, falls enthalten
-    relatedProducts = relatedProducts.filter((p: import("@/types").Product) => p.id !== UPSALE_PRODUCT_ID);
-  }
-
   // Upsell-Produkte anhand der Metafelder laden (GIDs und Arrays unterstützen)
-  let upsellProducts: import("@/types").Product[] = [];
-  let upsellIds: string[] = [];
+  let upsell1aIds: string[] = [];
+  let upsell2aIds: string[] = [];
+  let upsellingSingleId: string | null = null;
+
+  // upselling_1a (Array oder String)
   if (product?.upselling_1a) {
     try {
       const val = JSON.parse(product.upselling_1a);
-      if (Array.isArray(val)) upsellIds.push(...val);
-      else if (typeof val === 'string') upsellIds.push(val);
+      if (Array.isArray(val)) upsell1aIds.push(...val);
+      else if (typeof val === 'string') upsell1aIds.push(val);
     } catch {
-      upsellIds.push(product.upselling_1a);
+      upsell1aIds.push(product.upselling_1a);
     }
   }
-  if (product?.upselling_2) upsellIds.push(product.upselling_2);
-  if (upsellIds.length > 0) {
-    console.log("[DEBUG] Upsell GIDs:", upsellIds);
-    const loadedUpsells = await Promise.all(
-      upsellIds.map(async (gid) => {
+  // upselling_2a (Array oder String)
+  if (product?.upselling_2a) {
+    try {
+      const val = JSON.parse(product.upselling_2a);
+      if (Array.isArray(val)) upsell2aIds.push(...val);
+      else if (typeof val === 'string') upsell2aIds.push(val);
+    } catch {
+      upsell2aIds.push(product.upselling_2a);
+    }
+  }
+  // upselling_single (Einzelprodukt)
+  if (product?.upselling_single) {
+    upsellingSingleId = product.upselling_single;
+  }
+
+  // Filtere leere Strings, null, undefined, offensichtlichen Müll
+  upsell1aIds = upsell1aIds.filter(id => typeof id === 'string' && id.trim().length > 0 && id.startsWith('gid://shopify/Product/'));
+  upsell2aIds = upsell2aIds.filter(id => typeof id === 'string' && id.trim().length > 0 && id.startsWith('gid://shopify/Product/'));
+  if (typeof upsellingSingleId !== 'string' || upsellingSingleId.trim().length === 0 || !upsellingSingleId.startsWith('gid://shopify/Product/')) {
+    upsellingSingleId = null;
+  }
+
+  // Produkte laden
+  let upsell1aProducts: import("@/types").Product[] = [];
+  let upsell2aProducts: import("@/types").Product[] = [];
+  let upsellingSingleProduct: import("@/types").Product | null = null;
+  // 1a-Produkte laden (max. 2)
+  if (upsell1aIds.length > 0) {
+    const loaded = await Promise.all(
+      upsell1aIds.slice(0, 2).map(async (gid) => {
         if (!gid) return null;
         const p = await getProductById(gid);
         if (!p) return null;
@@ -127,37 +122,36 @@ export default async function ProductPage({ params }: { params: { handle: string
           hide_from_listing = p.hide_from_listing === 'true' ? true : undefined;
         }
         if (hide_from_listing) return null;
-        return {
-          id: p.id,
-          title: p.title,
-          handle: p.handle,
-          description: p.description,
-          descriptionHtml: p.descriptionHtml,
-          featuredImage: p.featuredImage,
-          images: p.images,
-          priceRange: p.priceRange || {
-            minVariantPrice: { amount: "0", currencyCode: "EUR" },
-            maxVariantPrice: { amount: "0", currencyCode: "EUR" }
-          },
-          variants: p.variants || { edges: [] },
-          compareAtPriceRange: p.compareAtPriceRange,
-          onSale: p.onSale,
-          availableForSale: p.availableForSale,
-          highestCompareAtPrice: typeof p.highestCompareAtPrice === 'number' ? p.highestCompareAtPrice : null,
-          sku: typeof p.sku === 'string' ? p.sku : '',
-          induwaConnect: Boolean(p.induwaConnect),
-          upselling_1a: p.upselling_1a,
-          upselling_2: p.upselling_2,
-          productType: p.productType,
-          cross_selling_1: p.cross_selling_1,
-          cross_selling_2: p.cross_selling_2,
-          cross_selling_3: p.cross_selling_3,
-          hide_from_listing,
-        } as import("@/types").Product;
+        return toProduct(p);
       })
     );
-    upsellProducts = loadedUpsells.filter(Boolean) as import("@/types").Product[];
-    console.log("[DEBUG] Upsell Products final:", upsellProducts);
+    upsell1aProducts = loaded.filter(Boolean) as import("@/types").Product[];
+  }
+  // 2a-Produkte laden (max. 2)
+  if (upsell2aIds.length > 0) {
+    const loaded = await Promise.all(
+      upsell2aIds.slice(0, 2).map(async (gid) => {
+        if (!gid) return null;
+        const p = await getProductById(gid);
+        if (!p) return null;
+        let hide_from_listing: boolean | undefined = undefined;
+        if (typeof p.hide_from_listing === 'boolean') {
+          hide_from_listing = p.hide_from_listing ? true : undefined;
+        } else if (typeof p.hide_from_listing === 'string') {
+          hide_from_listing = p.hide_from_listing === 'true' ? true : undefined;
+        }
+        if (hide_from_listing) return null;
+        return toProduct(p);
+      })
+    );
+    upsell2aProducts = loaded.filter(Boolean) as import("@/types").Product[];
+  }
+  // Single-Produkt laden
+  if (upsellingSingleId) {
+    const p = await getProductById(upsellingSingleId);
+    if (p && !(typeof p.hide_from_listing === 'boolean' ? p.hide_from_listing : p.hide_from_listing === 'true')) {
+      upsellingSingleProduct = toProduct(p);
+    }
   }
 
   // Cross-Sell-Produkte anhand der Metafelder laden (GIDs und Arrays unterstützen)
@@ -187,33 +181,7 @@ export default async function ProductPage({ params }: { params: { handle: string
           hide_from_listing = p.hide_from_listing === 'true' ? true : undefined;
         }
         if (hide_from_listing) return null;
-        return {
-          id: p.id,
-          title: p.title,
-          handle: p.handle,
-          description: p.description,
-          descriptionHtml: p.descriptionHtml,
-          featuredImage: p.featuredImage,
-          images: p.images,
-          priceRange: p.priceRange || {
-            minVariantPrice: { amount: "0", currencyCode: "EUR" },
-            maxVariantPrice: { amount: "0", currencyCode: "EUR" }
-          },
-          variants: p.variants || { edges: [] },
-          compareAtPriceRange: p.compareAtPriceRange,
-          onSale: p.onSale,
-          availableForSale: p.availableForSale,
-          highestCompareAtPrice: typeof p.highestCompareAtPrice === 'number' ? p.highestCompareAtPrice : null,
-          sku: typeof p.sku === 'string' ? p.sku : '',
-          induwaConnect: Boolean(p.induwaConnect),
-          upselling_1a: p.upselling_1a,
-          upselling_2: p.upselling_2,
-          productType: p.productType,
-          cross_selling_1: p.cross_selling_1,
-          cross_selling_2: p.cross_selling_2,
-          cross_selling_3: p.cross_selling_3,
-          hide_from_listing,
-        } as import("@/types").Product;
+        return toProduct(p);
       })
     );
     crossSellProducts = loadedCrossSells.filter(Boolean) as import("@/types").Product[];
@@ -252,13 +220,6 @@ export default async function ProductPage({ params }: { params: { handle: string
     )
   }
 
-  // Vor dem Rendern der Produktdetail-Komponente
-  if (Array.isArray(upsellProducts)) {
-    console.log("[DEBUG] page.tsx: upsellProducts.length", upsellProducts.length, upsellProducts.map(p => p?.title));
-  } else {
-    console.log("[DEBUG] page.tsx: upsellProducts ist kein Array", upsellProducts);
-  }
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -293,10 +254,11 @@ export default async function ProductPage({ params }: { params: { handle: string
                   maxVariantPrice: { amount: "0", currencyCode: "EUR" }
                 },
                 variants: product.variants || { edges: [] },
-                induwaConnect: Boolean(product.induwaConnect),
               }}
               relatedProducts={relatedProducts}
-              upsellProducts={upsellProducts}
+              upsell1aProducts={upsell1aProducts}
+              upsell2aProducts={upsell2aProducts}
+              singleUpsellProduct={upsellingSingleProduct}
               crossSellProducts={crossSellProducts}
             />
           </Suspense>

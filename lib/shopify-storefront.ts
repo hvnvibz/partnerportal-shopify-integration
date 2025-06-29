@@ -69,9 +69,9 @@ export type ShopifyProduct = {
   } | null
   cursor?: string | null
   sku: string
-  induwaConnect?: boolean | string
   upselling_1a?: string | null
-  upselling_2?: string | null
+  upselling_2a?: string | null
+  upselling_single?: string | null
   cross_selling_1?: string | null
   cross_selling_2?: string | null
   cross_selling_3?: string | null
@@ -96,8 +96,6 @@ export type ProductsResponse = {
 // Helper function to make GraphQL requests to Shopify
 async function shopifyFetch({ query, variables }: { query: string; variables?: any }) {
   try {
-    console.log("Shopify API variables:", JSON.stringify(variables));
-    
     const response = await fetch(SHOPIFY_STOREFRONT_API_ENDPOINT, {
       method: "POST",
       headers: {
@@ -115,16 +113,11 @@ async function shopifyFetch({ query, variables }: { query: string; variables?: a
     const json = await response.json()
 
     if (json.errors) {
-      console.log("Shopify API errors:", JSON.stringify(json.errors));
       throw new Error(json.errors.map((e: any) => e.message).join("\n"))
     }
 
-    console.log("Shopify API response (first level):", 
-      Object.keys(json.data).map(key => `${key}: ${!!json.data[key]}`).join(", "));
-
     return json.data
   } catch (error) {
-    console.error("Error fetching from Shopify:", error)
     throw error
   }
 }
@@ -148,9 +141,6 @@ export async function getProducts({
   collectionHandle?: string;
 }) {
   try {
-    console.log("getProducts called with query:", query);
-    console.log("getProducts parameters:", JSON.stringify({ page, perPage, sortKey, reverse, cursor, collectionHandle }));
-    
     let data;
     if (collectionHandle && collectionHandle !== "") {
       // Use collection-specific query
@@ -372,10 +362,10 @@ export async function getProducts({
         const hasCompareAtPrice =
           node.compareAtPriceRange.minVariantPrice.amount > 0 &&
           Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
-        // Metafields extrahieren
+        // Metafelder extrahieren (nulls filtern!)
         const metafields = Array.isArray(node.metafields)
-          ? node.metafields.reduce((acc: any, mf: any) => {
-              if (mf && mf.key) acc[mf.key] = mf.value;
+          ? node.metafields.filter(Boolean).reduce((acc: any, node: any) => {
+              if (node && node.key) acc[node.key] = node.value;
               return acc;
             }, {})
           : {};
@@ -405,7 +395,6 @@ export async function getProducts({
       return result;
     }
   } catch (error) {
-    console.error("Error fetching products:", error);
     throw error;
   }
 }
@@ -474,9 +463,9 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
             }
             availableForSale
             metafields(identifiers: [
-              { namespace: "custom", key: "induwa_connect" },
               { namespace: "custom", key: "upselling_1a" },
-              { namespace: "custom", key: "upselling_2" },
+              { namespace: "custom", key: "upselling_2a" },
+              { namespace: "custom", key: "upselling_single" },
               { namespace: "custom", key: "cross_selling_1" },
               { namespace: "custom", key: "cross_selling_2" },
               { namespace: "custom", key: "cross_selling_3" },
@@ -494,7 +483,6 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
     })
 
     if (!data.product) {
-      console.log(`Product with handle ${handle} not found`)
       return null
     }
 
@@ -519,9 +507,9 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
         Number(data.product.compareAtPriceRange.minVariantPrice.amount) >
           Number(data.product.priceRange.minVariantPrice.amount))
 
-    // Metafelder extrahieren
+    // Metafelder extrahieren (nulls filtern!)
     const metafields = Array.isArray(data.product.metafields)
-      ? data.product.metafields.reduce((acc: any, node: any) => {
+      ? data.product.metafields.filter(Boolean).reduce((acc: any, node: any) => {
           if (node && node.key) acc[node.key] = node.value;
           return acc;
         }, {})
@@ -532,16 +520,15 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
       images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
       onSale,
       highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
-      induwaConnect: metafields['induwa_connect'] === "true" || metafields['induwa_connect'] === true,
       upselling_1a: metafields['upselling_1a'] || null,
-      upselling_2: metafields['upselling_2'] || null,
+      upselling_2a: metafields['upselling_2a'] || null,
+      upselling_single: metafields['upselling_single'] || null,
       cross_selling_1: metafields['cross_selling_1'] || null,
       cross_selling_2: metafields['cross_selling_2'] || null,
       cross_selling_3: metafields['cross_selling_3'] || null,
       hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
     }
   } catch (error) {
-    console.error(`Error fetching product with handle ${handle}:`, error)
     return null
   }
 }
@@ -610,9 +597,9 @@ export async function getProductById(id: string): Promise<ShopifyProduct | null>
             }
             availableForSale
             metafields(identifiers: [
-              { namespace: "custom", key: "induwa_connect" },
               { namespace: "custom", key: "upselling_1a" },
-              { namespace: "custom", key: "upselling_2" },
+              { namespace: "custom", key: "upselling_2a" },
+              { namespace: "custom", key: "upselling_single" },
               { namespace: "custom", key: "cross_selling_1" },
               { namespace: "custom", key: "cross_selling_2" },
               { namespace: "custom", key: "cross_selling_3" },
@@ -628,7 +615,6 @@ export async function getProductById(id: string): Promise<ShopifyProduct | null>
     });
 
     if (!data.product) {
-      console.log(`Product with id ${id} not found`);
       return null;
     }
 
@@ -666,16 +652,15 @@ export async function getProductById(id: string): Promise<ShopifyProduct | null>
       images: data.product.images?.edges?.map((e: any) => ({ url: e.node.url, altText: e.node.altText })) || null,
       onSale,
       highestCompareAtPrice: highestCompareAtPrice > 0 ? highestCompareAtPrice : null,
-      induwaConnect: metafields['induwa_connect'] === "true" || metafields['induwa_connect'] === true,
       upselling_1a: metafields['upselling_1a'] || null,
-      upselling_2: metafields['upselling_2'] || null,
+      upselling_2a: metafields['upselling_2a'] || null,
+      upselling_single: metafields['upselling_single'] || null,
       cross_selling_1: metafields['cross_selling_1'] || null,
       cross_selling_2: metafields['cross_selling_2'] || null,
       cross_selling_3: metafields['cross_selling_3'] || null,
       hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
     };
   } catch (error) {
-    console.error(`Error fetching product with id ${id}:`, error);
     return null;
   }
 }
@@ -702,7 +687,6 @@ export async function getCollections(): Promise<ShopifyCollection[]> {
 
     return data.collections.edges.map(({ node }: any) => node)
   } catch (error) {
-    console.error("Error fetching collections:", error)
     return []
   }
 }
@@ -724,7 +708,6 @@ export async function getProductTypes(): Promise<string[]> {
 
     return data.productTypes.edges.map(({ node }: any) => node).filter(Boolean)
   } catch (error) {
-    console.error("Error fetching product types:", error)
     return []
   }
 }

@@ -23,11 +23,13 @@ import ProductCrossSell from "@/components/shop/product-cross-sell"
 interface ProductDetailProps {
   product: Product
   relatedProducts: Product[]
-  upsellProducts?: Product[]
+  upsell1aProducts?: Product[]
+  upsell2aProducts?: Product[]
+  singleUpsellProduct?: Product | null
   crossSellProducts?: Product[]
 }
 
-export function ProductDetail({ product, relatedProducts, upsellProducts, crossSellProducts }: ProductDetailProps) {
+export function ProductDetail({ product, relatedProducts, upsell1aProducts, upsell2aProducts, singleUpsellProduct, crossSellProducts }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [selectedVariantId, setSelectedVariantId] = useState(
@@ -90,7 +92,12 @@ export function ProductDetail({ product, relatedProducts, upsellProducts, crossS
     setSelectedVariantId(value)
   }
 
-  const showUpsells = Array.isArray(upsellProducts) && upsellProducts.length > 0;
+  // Upsell-Module anzeigen, wenn mindestens eines befüllt ist
+  const showUpsells = (
+    (Array.isArray(upsell1aProducts) && upsell1aProducts.length > 0) ||
+    (Array.isArray(upsell2aProducts) && upsell2aProducts.length > 0) ||
+    !!singleUpsellProduct
+  );
 
   // Cross-Sell-Produkte: aus Prop oder leer
   const crossSell = Array.isArray(crossSellProducts) ? crossSellProducts : [];
@@ -212,7 +219,7 @@ export function ProductDetail({ product, relatedProducts, upsellProducts, crossS
         </Link>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-[45%_55%]">
         <div className="bg-white border border-gray-200 rounded-lg p-8">
           {/* Galerie-Logik */}
           {product.images && product.images.length > 0 ? (
@@ -316,7 +323,12 @@ export function ProductDetail({ product, relatedProducts, upsellProducts, crossS
           {/* Upsell Section - direkt unter der Beschreibung, nur wenn Produkte vorhanden */}
           {showUpsells && (
             <div className="mt-8">
-              <ProductUpsell products={upsellProducts!} mainProductId={product.id} />
+              <ProductUpsell 
+                upsell1aProducts={upsell1aProducts || []}
+                upsell2aProducts={upsell2aProducts || []}
+                singleUpsellProduct={singleUpsellProduct}
+                mainProductId={product.id} 
+              />
             </div>
           )}
 

@@ -23,8 +23,8 @@ export function ProductUpsellItem({ product, hidePrice, hideImage, hideTitle }: 
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
 
-  // Get price - use fixed price for INDUWA Connect
-  const minPrice = product.title.includes("INDUWA Connect") ? 182.00 : Number.parseFloat(product.priceRange.minVariantPrice.amount)
+  // Preisermittlung ohne INDUWA Connect-Sonderfall
+  const minPrice = Number.parseFloat(product.priceRange.minVariantPrice.amount)
   
   // German number formatter for prices
   const formatPrice = (price: number) => {
@@ -201,13 +201,13 @@ export function ProductUpsellItem({ product, hidePrice, hideImage, hideTitle }: 
   )
 }
 
-export function ProductUpsellAddButton({ product, onAdd }: { product: Product, onAdd?: (product: Product) => void }) {
+export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName }: { product: Product, onAdd?: (product: Product) => void, buttonTextClassName?: string }) {
   const [isSelected, setIsSelected] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
 
-  // Get price - use fixed price for INDUWA Connect
-  const minPrice = product.title.includes("INDUWA Connect") ? 182.00 : Number.parseFloat(product.priceRange.minVariantPrice.amount)
+  // Preisermittlung ohne INDUWA Connect-Sonderfall
+  const minPrice = Number.parseFloat(product.priceRange.minVariantPrice.amount)
 
   // Function to add item to cart
   const addToCart = async () => {
@@ -312,15 +312,15 @@ export function ProductUpsellAddButton({ product, onAdd }: { product: Product, o
       disabled={isAddingToCart}
     >
       {isSelected ? (
-        <>
-          <Check className="mr-1 h-4 w-4" />
+        <span className={`flex flex-row items-center gap-1 ${buttonTextClassName || ''}`}>
+          <Check className="mr-1 text-[1em]" />
           Hinzugefügt
-        </>
+        </span>
       ) : (
-        <>
-          <Plus className="mr-1 h-4 w-4" />
+        <span className={`flex flex-row items-center gap-1 ${buttonTextClassName || ''}`}>
+          <Plus className="mr-1 text-[1em]" />
           Hinzufügen
-        </>
+        </span>
       )}
     </Button>
   )
@@ -328,8 +328,8 @@ export function ProductUpsellAddButton({ product, onAdd }: { product: Product, o
 
 // Hilfsfunktion für Add-to-Cart mit Menge
 export async function addProductToCart(product: Product, quantity: number = 1, toast?: ReturnType<typeof useToast>["toast"]) {
-  // Get price - use fixed price for INDUWA Connect
-  const minPrice = product.title.includes("INDUWA Connect") ? 182.00 : Number.parseFloat(product.priceRange.minVariantPrice.amount)
+  // Preisermittlung ohne INDUWA Connect-Sonderfall
+  const minPrice = Number.parseFloat(product.priceRange.minVariantPrice.amount)
   // Get current cart from localStorage
   const storedCart = localStorage.getItem("cart")
   let cartItems: CartItem[] = []

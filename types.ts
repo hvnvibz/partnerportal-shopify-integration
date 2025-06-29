@@ -57,6 +57,8 @@ export type Product = {
   induwaConnect?: boolean
   upselling_1a?: string | null
   upselling_2?: string | null
+  upselling_2a?: string | null
+  upselling_single?: string | null
   productType?: string
   cross_selling_1?: string | null
   cross_selling_2?: string | null
