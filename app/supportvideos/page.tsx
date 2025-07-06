@@ -21,7 +21,9 @@ export default function SupportvideosPage() {
   useEffect(() => {
     fetch('/api/supportvideos')
       .then(res => res.json())
-      .then(setVideos);
+      .then(data => {
+        setVideos(Array.isArray(data) ? data : []);
+      });
   }, []);
 
   let filteredVideos = videos;
@@ -84,16 +86,20 @@ export default function SupportvideosPage() {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-              {filteredVideos.map((video) => (
-                <VideoCard
-                  key={video.videoId}
-                  videoId={video.videoId}
-                  title={video.title}
-                  kategorie={video.kategorie}
-                  dauer={video.dauer}
-                  videoUrl={video.videoUrl}
-                />
-              ))}
+              {filteredVideos.length === 0 ? (
+                <div className="col-span-full text-center text-muted-foreground">Keine Videos gefunden oder ein Fehler ist aufgetreten.</div>
+              ) : (
+                filteredVideos.map((video) => (
+                  <VideoCard
+                    key={video.videoId}
+                    videoId={video.videoId}
+                    title={video.title}
+                    kategorie={video.kategorie}
+                    dauer={video.dauer}
+                    videoUrl={video.videoUrl}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
