@@ -1,4 +1,3 @@
-"use client"
 // Diese Datei wird zur Übersichtsseite umgebaut. Die Detailansicht wird nach [slug]/page.tsx verschoben. 
 
 import { AppSidebar } from "@/components/app-sidebar"

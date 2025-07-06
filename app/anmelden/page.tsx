@@ -1,7 +1,6 @@
-"use client";
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabaseClient';
+// import { useState, useRef } from 'react';
+// import { useRouter } from 'next/navigation';
+// import { supabase } from '../../lib/supabaseClient';
 // import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignInPage() {

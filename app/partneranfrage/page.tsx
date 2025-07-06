@@ -1,6 +1,3 @@
-"use client";
-import { useEffect } from 'react';
-
 export default function PartneranfragePage() {
   useEffect(() => {
     // Dynamically load the Tally embed script
