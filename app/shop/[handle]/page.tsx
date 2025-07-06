@@ -275,3 +275,12 @@ export default async function ProductPage({ params }: { params: { handle: string
   )
 }
 
+export async function generateMetadata({ params }: { params: { handle: string } }) {
+  const { handle } = params;
+  // Optional: Hole Produktdaten für besseren Title
+  return {
+    title: `Produkt: ${handle} – Partnerportal INDUWA`,
+    description: `Details und Informationen zum Produkt ${handle} im Partnerportal INDUWA.`,
+  };
+}
+

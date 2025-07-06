@@ -61,4 +61,9 @@ export default function ProduktanfrageEigenwasserPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Anfrage Eigenwasser – Partnerportal INDUWA",
+  description: "Stellen Sie eine Anfrage für Eigenwasser-Lösungen bei INDUWA.",
+}; 

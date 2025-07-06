@@ -61,4 +61,9 @@ export default function WartungServicePage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Wartung & Service – Partnerportal INDUWA",
+  description: "Informationen und Anfragen zu Wartung und Service für INDUWA-Anlagen.",
+}; 

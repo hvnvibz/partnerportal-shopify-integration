@@ -48,4 +48,9 @@ export default function ProduktkatalogPage() {
       </SidebarInset>
     </SidebarProvider>
   );
-} 
+}
+
+export const metadata = {
+  title: "Produktkatalog – Partnerportal INDUWA",
+  description: "Durchstöbern Sie den Produktkatalog von INDUWA und finden Sie die passenden Produkte für Ihre Anforderungen.",
+}; 

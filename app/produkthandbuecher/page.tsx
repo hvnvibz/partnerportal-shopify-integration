@@ -85,4 +85,9 @@ export default function ProdukthandbuecherUebersicht() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Produkthandbücher – Partnerportal INDUWA",
+  description: "Finden und laden Sie Produkthandbücher für INDUWA-Anlagen und Produkte herunter.",
+}; 

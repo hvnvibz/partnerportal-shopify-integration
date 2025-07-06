@@ -71,4 +71,9 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
-} 
+}
+
+export const metadata = {
+  title: "Passwort zurücksetzen – Partnerportal INDUWA",
+  description: "Setzen Sie Ihr Passwort für das Partnerportal INDUWA zurück.",
+}; 

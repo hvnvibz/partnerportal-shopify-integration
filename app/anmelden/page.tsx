@@ -104,4 +104,9 @@ export default function SignInPage() {
       </div>
     </div>
   );
-} 
+}
+
+export const metadata = {
+  title: "Anmelden – Partnerportal INDUWA",
+  description: "Melden Sie sich im Partnerportal INDUWA an, um Zugriff auf exklusive Inhalte und Services zu erhalten.",
+}; 

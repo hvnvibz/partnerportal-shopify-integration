@@ -204,4 +204,9 @@ export default function DashboardPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Partnerportal INDUWA – Ihr Zugang zu Produkten, Support & mehr",
+  description: "Das Partnerportal für INDUWA-Partner: Produkte, Support, Anfragen und mehr.",
+}; 

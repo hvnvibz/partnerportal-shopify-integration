@@ -62,4 +62,9 @@ export default function ProduktanfrageEnthartungPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Anfrage Enthärtung – Partnerportal INDUWA",
+  description: "Stellen Sie eine Anfrage für Enthärtungsanlagen bei INDUWA.",
+}; 

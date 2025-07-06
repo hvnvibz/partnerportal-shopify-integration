@@ -61,4 +61,9 @@ export default function SchulungsanfragenPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Schulungsanfragen – Partnerportal INDUWA",
+  description: "Stellen Sie eine Schulungsanfrage für INDUWA-Produkte und -Anlagen.",
+}; 

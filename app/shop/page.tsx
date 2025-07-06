@@ -178,3 +178,8 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
   )
 }
 
+export const metadata = {
+  title: "Shop – Partnerportal INDUWA",
+  description: "Entdecken Sie alle Produkte im Shop des Partnerportals INDUWA.",
+};
+

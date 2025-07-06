@@ -106,4 +106,9 @@ export default function SupportvideosPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
+
+export const metadata = {
+  title: "Supportvideos – Partnerportal INDUWA",
+  description: "Supportvideos für Ihre Wasseraufbereitungsanlagen: Tipps, Wartung, Inbetriebnahme und mehr.",
+}; 
