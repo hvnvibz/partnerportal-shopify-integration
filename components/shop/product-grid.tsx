@@ -17,10 +17,6 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
-  console.log("ProductGrid products:", products);
-  if (products.length > 0) {
-    console.log("Beispielprodukt:", products[0]);
-  }
   // Custom Breakpoints: xl = 1350px, 2xl = 1920px (siehe tailwind.config.js)
   const gridClass =
     "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"

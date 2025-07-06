@@ -36,7 +36,7 @@ export default function ProduktanfrageEnthartungPage() {
         <div className="container mx-auto py-12">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <p className="text-lg text-blue-600 font-medium mb-4">Wasserenthärtung</p>
+              <p className="text-lg text-blue-900 font-medium mb-4">Wasserenthärtung</p>
               <h1 className="text-4xl font-bold mb-4">
                 Sorgenfreie Enthärtung von Wasser – Für jeden Bedarf die passende Antwort
               </h1>

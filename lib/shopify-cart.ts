@@ -82,7 +82,9 @@ export async function createCart(input: CartCreateInput) {
     })
 
     // Logge die vollständige Antwort für Debugging-Zwecke
-    console.log("Shopify API Antwort Status:", response.status);
+    if (process.env.NODE_ENV === "development") {
+      console.log("Shopify API Antwort Status:", response.status);
+    }
     
     if (!response.ok) {
       // Versuche, die Fehlerinformationen zu extrahieren
@@ -92,22 +94,30 @@ export async function createCart(input: CartCreateInput) {
       } catch (e) {
         errorText = "Fehlertext konnte nicht gelesen werden";
       }
-      console.error("Shopify API Fehler:", errorText);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Shopify API Fehler:", errorText);
+      }
       throw new Error(`HTTP error! status: ${response.status}. Details: ${errorText}`)
     }
 
     const responseData = await response.json()
-    console.log("Shopify API Antwort:", JSON.stringify(responseData, null, 2));
+    if (process.env.NODE_ENV === "development") {
+      console.log("Shopify API Antwort:", JSON.stringify(responseData, null, 2));
+    }
     
     const { data, errors } = responseData
 
     if (errors) {
-      console.error("Shopify GraphQL errors:", errors)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Shopify GraphQL errors:", errors)
+      }
       throw new Error(`Shopify cart creation failed: ${errors[0].message}`)
     }
 
     if (data?.cartCreate?.userErrors?.length > 0) {
-      console.error("Cart user errors:", data.cartCreate.userErrors)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Cart user errors:", data.cartCreate.userErrors)
+      }
       throw new Error(`Cart creation failed: ${data.cartCreate.userErrors[0].message}`)
     }
 
@@ -117,7 +127,9 @@ export async function createCart(input: CartCreateInput) {
 
     return data.cartCreate.cart
   } catch (error) {
-    console.error("Error creating cart:", error)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error creating cart:", error)
+    }
     throw error
   }
 } 

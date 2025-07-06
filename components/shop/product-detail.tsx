@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { type CartItem, CART_UPDATED_EVENT } from "@/components/shop/cart"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import ProductCrossSell from "@/components/shop/product-cross-sell"
+import RelatedProducts from "@/components/shop/related-products"
 
 interface ProductDetailProps {
   product: Product
@@ -137,12 +138,13 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
   const addToCart = () => {
     try {
       setIsAddingToCart(true)
-      
-      console.log("Produkt hinzufügen:", { 
-        productId: product.id, 
-        variantId: selectedVariantId,
-        variantInfo: selectedVariant
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("Produkt hinzufügen:", { 
+          productId: product.id, 
+          variantId: selectedVariantId,
+          variantInfo: selectedVariant
+        });
+      }
 
       // Get current cart from localStorage
       const storedCart = localStorage.getItem("cart")
@@ -151,9 +153,13 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
       if (storedCart) {
         try {
           cartItems = JSON.parse(storedCart)
-          console.log("Bestehende Warenkorb-Artikel:", cartItems);
+          if (process.env.NODE_ENV === "development") {
+            console.log("Bestehende Warenkorb-Artikel:", cartItems);
+          }
         } catch (error) {
-          console.error("Error parsing cart data:", error)
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error parsing cart data:", error)
+          }
           cartItems = []
         }
       }
@@ -166,7 +172,9 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
       if (existingItemIndex >= 0) {
         // Update quantity if product already exists
         cartItems[existingItemIndex].quantity += quantity
-        console.log("Artikel bereits im Warenkorb, Menge aktualisiert:", cartItems[existingItemIndex]);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Artikel bereits im Warenkorb, Menge aktualisiert:", cartItems[existingItemIndex]);
+        }
       } else {
         // Add new item to cart
         cartItems.push({
@@ -179,12 +187,16 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
           sku: selectedVariant?.sku || product.variants.edges[0]?.node.sku || "",
           compareAtPrice: selectedVariant?.compareAtPrice ? Number.parseFloat(selectedVariant.compareAtPrice.amount) : undefined,
         })
-        console.log("Neuer Artikel zum Warenkorb hinzugefügt");
+        if (process.env.NODE_ENV === "development") {
+          console.log("Neuer Artikel zum Warenkorb hinzugefügt");
+        }
       }
 
       // Save updated cart to localStorage
       localStorage.setItem("cart", JSON.stringify(cartItems))
-      console.log("Warenkorb gespeichert:", cartItems);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Warenkorb gespeichert:", cartItems);
+      }
 
       // Dispatch custom event to notify cart component
       window.dispatchEvent(new Event(CART_UPDATED_EVENT))
@@ -199,7 +211,9 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
       // Reset quantity
       setQuantity(1)
     } catch (error) {
-      console.error("Error adding to cart:", error)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error adding to cart:", error)
+      }
       toast({
         title: "Fehler",
         description: "Das Produkt konnte nicht zum Warenkorb hinzugefügt werden.",
@@ -402,12 +416,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
       )}
 
       {/* Related Products Section - immer anzeigen */}
-      {relatedProducts.length > 0 && (
-        <div className="mt-16">
-          <h2 className="font-bold text-2xl text-black mb-8 pl-6">Weitere Produkte entdecken</h2>
-          <ProductGrid products={relatedProducts.filter(p => !p.hide_from_listing)} columns={4} />
-        </div>
-      )}
+      <RelatedProducts products={relatedProducts} columns={4} />
     </div>
   )
 }

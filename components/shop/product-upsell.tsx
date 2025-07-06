@@ -10,13 +10,6 @@ interface ProductUpsellProps {
 }
 
 export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, singleUpsellProduct, mainProductId }: ProductUpsellProps) {
-  // Debug-Ausgabe
-  if (typeof window !== 'undefined') {
-    console.log('[DEBUG ProductUpsell] upsell1aProducts:', upsell1aProducts);
-    console.log('[DEBUG ProductUpsell] upsell2aProducts:', upsell2aProducts);
-    console.log('[DEBUG ProductUpsell] singleUpsellProduct:', singleUpsellProduct);
-  }
-
   // State für Radiobutton-Auswahl und "im Warenkorb"-Status für 1a
   const [selectedProductId1a, setSelectedProductId1a] = useState(upsell1aProducts.length > 0 ? upsell1aProducts[0].id : "")
   const [addedProductId1a, setAddedProductId1a] = useState<string | null>(null)

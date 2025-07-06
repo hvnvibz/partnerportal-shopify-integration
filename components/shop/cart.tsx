@@ -37,6 +37,7 @@ export function Cart() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const { toast } = useToast()
+  const [cartNote, setCartNote] = useState("")
 
   // Function to load cart from localStorage
   const loadCart = () => {
@@ -108,7 +109,9 @@ export function Cart() {
     setIsCheckingOut(true)
 
     try {
-      console.log("Starte Checkout mit Artikeln:", cartItems);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Starte Checkout mit Artikeln:", cartItems);
+      }
       
       // Sende den Warenkorb an die API-Route
       const response = await fetch("/api/checkout", {
@@ -120,20 +123,26 @@ export function Cart() {
           items: cartItems,
           // Optional: Rabattcodes hinzufügen
           // discounts: ["RABATTCODE"],
-          // Optional: Hinweise zum Warenkorb
-          // notes: "Lieferhinweise...",
+          // Notizfeld übergeben
+          note: cartNote,
         }),
       })
 
       // Log response status for debugging
-      console.log("Checkout API Antwort Status:", response.status);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Checkout API Antwort Status:", response.status);
+      }
       
       let data;
       try {
         data = await response.json();
-        console.log("Checkout API Antwort:", data);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Checkout API Antwort:", data);
+        }
       } catch (jsonError) {
-        console.error("Fehler beim Parsen der API-Antwort:", jsonError);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Fehler beim Parsen der API-Antwort:", jsonError);
+        }
         throw new Error("Die Serverantwort konnte nicht verarbeitet werden");
       }
 
@@ -142,7 +151,9 @@ export function Cart() {
       }
 
       if (data?.url) {
-        console.log("Leite weiter zur Checkout-URL:", data.url);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Leite weiter zur Checkout-URL:", data.url);
+        }
         // Redirect zur Shopify Checkout-Seite
         window.location.href = data.url;
         
@@ -152,7 +163,9 @@ export function Cart() {
         throw new Error("Keine Checkout-URL erhalten");
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Checkout error:", error);
+      }
       toast({
         title: "Checkout-Fehler",
         description: error.message || "Es gab ein Problem beim Checkout",
@@ -175,7 +188,7 @@ export function Cart() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-xl">
+      <SheetContent className="w-full sm:max-w-3xl">
         <SheetHeader>
           <SheetTitle>Warenkorb</SheetTitle>
         </SheetHeader>
@@ -246,6 +259,17 @@ export function Cart() {
             </div>
             <Separator />
             <div className="space-y-4 py-4">
+              {/* Notizfeld für den Warenkorb */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="cart-note" className="font-medium text-sm">Notiz zur Bestellung</label>
+                <textarea
+                  id="cart-note"
+                  className="border rounded-md p-2 text-sm min-h-[60px]"
+                  placeholder="Haben Sie einen Hinweis, Projektnummer oder Kommissionsnamen für uns?"
+                  value={cartNote}
+                  onChange={e => setCartNote(e.target.value)}
+                />
+              </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Gesamt netto</span>
                 <span className="font-medium">{formatPrice(totalPrice)}</span>

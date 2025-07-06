@@ -13,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Cart } from "@/components/shop/cart"
+import type { Product } from "@/types"
 
 export default async function ProductPage({ params }: { params: { handle: string } }) {
   // Fetch the product data server-side for initial render
@@ -53,19 +54,25 @@ export default async function ProductPage({ params }: { params: { handle: string
     };
   }
 
+  // params.handle ist jetzt synchron verfügbar
   let productRaw = await getProductByHandle(params.handle);
   let product = productRaw ? toProduct(productRaw) : undefined;
 
-  // Fetch related products - specifically KAWK-D and INDUWA Connect products
-  const { products: relatedProductsRaw } = await getProducts({
-    page: 1,
-    perPage: 20,
-    query: "title:*KAWK-D* OR title:*INDUWA* OR tag:*KAWK-D* OR tag:*INDUWA*",
-  })
-
-  let relatedProducts: import("@/types").Product[] = relatedProductsRaw
-    .map(toProduct)
-    .filter((p: import("@/types").Product) => p.hide_from_listing !== true);
+  // Fetch related products - hole alle Produkte und filtere im Code nach Kategorie
+  let relatedProducts: Product[] = [];
+  if (product && product.productType) {
+    const { products: allProductsRaw } = await getProducts({
+      page: 1,
+      perPage: 100,
+    });
+    relatedProducts = allProductsRaw
+      .map(toProduct)
+      .filter((p: Product) =>
+        p.hide_from_listing !== true &&
+        p.handle !== product.handle &&
+        p.productType?.trim().toLowerCase() === product.productType?.trim().toLowerCase()
+      );
+  }
 
   // Upsell-Produkte anhand der Metafelder laden (GIDs und Arrays unterstützen)
   let upsell1aIds: string[] = [];
@@ -105,9 +112,9 @@ export default async function ProductPage({ params }: { params: { handle: string
   }
 
   // Produkte laden
-  let upsell1aProducts: import("@/types").Product[] = [];
-  let upsell2aProducts: import("@/types").Product[] = [];
-  let upsellingSingleProduct: import("@/types").Product | null = null;
+  let upsell1aProducts: Product[] = [];
+  let upsell2aProducts: Product[] = [];
+  let upsellingSingleProduct: Product | null = null;
   // 1a-Produkte laden (max. 2)
   if (upsell1aIds.length > 0) {
     const loaded = await Promise.all(
@@ -125,7 +132,7 @@ export default async function ProductPage({ params }: { params: { handle: string
         return toProduct(p);
       })
     );
-    upsell1aProducts = loaded.filter(Boolean) as import("@/types").Product[];
+    upsell1aProducts = loaded.filter(Boolean) as Product[];
   }
   // 2a-Produkte laden (max. 2)
   if (upsell2aIds.length > 0) {
@@ -144,7 +151,7 @@ export default async function ProductPage({ params }: { params: { handle: string
         return toProduct(p);
       })
     );
-    upsell2aProducts = loaded.filter(Boolean) as import("@/types").Product[];
+    upsell2aProducts = loaded.filter(Boolean) as Product[];
   }
   // Single-Produkt laden
   if (upsellingSingleId) {
@@ -155,7 +162,7 @@ export default async function ProductPage({ params }: { params: { handle: string
   }
 
   // Cross-Sell-Produkte anhand der Metafelder laden (GIDs und Arrays unterstützen)
-  let crossSellProducts: import("@/types").Product[] = [];
+  let crossSellProducts: Product[] = [];
   let crossSellIds: string[] = [];
   if (product?.cross_selling_1) {
     try {
@@ -184,7 +191,7 @@ export default async function ProductPage({ params }: { params: { handle: string
         return toProduct(p);
       })
     );
-    crossSellProducts = loadedCrossSells.filter(Boolean) as import("@/types").Product[];
+    crossSellProducts = loadedCrossSells.filter(Boolean) as Product[];
   }
 
   if (!product) {

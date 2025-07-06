@@ -5,7 +5,9 @@ export async function POST(req: Request) {
   try {
     const { items, discounts, notes } = await req.json()
 
-    console.log("Checkout API: Empfangene Warenkorbdaten:", JSON.stringify(items, null, 2));
+    if (process.env.NODE_ENV === "development") {
+      console.log("Checkout API: Empfangene Warenkorbdaten:", JSON.stringify(items, null, 2));
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -26,7 +28,9 @@ export async function POST(req: Request) {
         merchandiseId = `gid://shopify/ProductVariant/${merchandiseId.replace("gid://shopify/ProductVariant/", "")}`;
       }
       
-      console.log(`Artikel: ${item.title}, VariantID formatiert: ${merchandiseId}`);
+      if (process.env.NODE_ENV === "development") {
+        console.log(`Artikel: ${item.title}, VariantID formatiert: ${merchandiseId}`);
+      }
       
       return {
         merchandiseId,
@@ -35,11 +39,13 @@ export async function POST(req: Request) {
     });
 
     // Erstelle Cart mit der Shopify Storefront API
-    console.log("Sende an Shopify: ", JSON.stringify({
-      lines,
-      discountCodes: discounts,
-      note: notes,
-    }, null, 2));
+    if (process.env.NODE_ENV === "development") {
+      console.log("Sende an Shopify: ", JSON.stringify({
+        lines,
+        discountCodes: discounts,
+        note: notes,
+      }, null, 2));
+    }
 
     const cart = await createCart({
       lines,
@@ -47,7 +53,9 @@ export async function POST(req: Request) {
       note: notes,
     })
 
-    console.log("Checkout erfolgreich, URL:", cart.checkoutUrl);
+    if (process.env.NODE_ENV === "development") {
+      console.log("Checkout erfolgreich, URL:", cart.checkoutUrl);
+    }
 
     // Sende die Checkout-URL und Cart-ID für die Client-seitige Weiterleitung
     return NextResponse.json({
@@ -56,7 +64,9 @@ export async function POST(req: Request) {
       cartId: cart.id,
     })
   } catch (error: any) {
-    console.error("Fehler beim Erstellen des Carts:", error)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Fehler beim Erstellen des Carts:", error)
+    }
     return NextResponse.json(
       { error: error.message || "Fehler beim Erstellen des Carts" },
       { status: 500 }
