@@ -1,3 +1,4 @@
+"use client";
 // Diese Datei wird zur Übersichtsseite umgebaut. Die Detailansicht wird nach [slug]/page.tsx verschoben. 
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -83,10 +84,5 @@ export default function ProdukthandbuecherUebersicht() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
-}
-
-export const metadata = {
-  title: "Produkthandbücher – Partnerportal INDUWA",
-  description: "Finden und laden Sie Produkthandbücher für INDUWA-Anlagen und Produkte herunter.",
-}; 
+  );
+} 

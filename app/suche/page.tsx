@@ -16,9 +16,4 @@ export default function SuchePage() {
       </SidebarInset>
     </SidebarProvider>
   )
-}
-
-export const metadata = {
-  title: "Suche – Partnerportal INDUWA",
-  description: "Suchen Sie nach Produkten, Handbüchern und Supportinhalten im Partnerportal INDUWA.",
-}; 
+} 

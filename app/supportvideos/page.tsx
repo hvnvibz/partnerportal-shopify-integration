@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from 'react';
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -106,9 +106,4 @@ export default function SupportvideosPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-}
-
-export const metadata = {
-  title: "Supportvideos – Partnerportal INDUWA",
-  description: "Supportvideos für Ihre Wasseraufbereitungsanlagen: Tipps, Wartung, Inbetriebnahme und mehr.",
-}; 
+} 

@@ -1,3 +1,6 @@
+"use client";
+import { useEffect } from "react";
+
 export default function PartneranfragePage() {
   useEffect(() => {
     // Dynamically load the Tally embed script
@@ -41,9 +44,4 @@ export default function PartneranfragePage() {
       </div>
     </div>
   );
-}
-
-export const metadata = {
-  title: "Partneranfrage – Partnerportal INDUWA",
-  description: "Stellen Sie eine Partneranfrage bei INDUWA und profitieren Sie von exklusiven Vorteilen.",
-}; 
+} 
