@@ -1,6 +1,7 @@
-// import { useState, useRef } from 'react';
-// import { useRouter } from 'next/navigation';
-// import { supabase } from '../../lib/supabaseClient';
+"use client";
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabaseClient';
 // import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignInPage() {
@@ -105,7 +106,4 @@ export default function SignInPage() {
   );
 }
 
-export const metadata = {
-  title: "Anmelden – Partnerportal INDUWA",
-  description: "Melden Sie sich im Partnerportal INDUWA an, um Zugriff auf exklusive Inhalte und Services zu erhalten.",
-}; 
+export const dynamic = "force-dynamic"; 
