@@ -268,7 +268,11 @@ export function Cart() {
                   placeholder="Haben Sie einen Hinweis, Projektnummer oder Kommissionsnamen für uns?"
                   value={cartNote}
                   onChange={e => setCartNote(e.target.value)}
+                  maxLength={26}
                 />
+                <div className="text-xs text-gray-500 text-right">
+                  {cartNote.length}/26 Zeichen
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Gesamt netto</span>

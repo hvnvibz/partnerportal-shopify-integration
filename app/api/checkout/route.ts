@@ -3,7 +3,7 @@ import { createCart } from "@/lib/shopify-cart"
 
 export async function POST(req: Request) {
   try {
-    const { items, discounts, notes } = await req.json()
+    const { items, discounts, note } = await req.json()
 
     if (process.env.NODE_ENV === "development") {
       console.log("Checkout API: Empfangene Warenkorbdaten:", JSON.stringify(items, null, 2));
@@ -43,14 +43,17 @@ export async function POST(req: Request) {
       console.log("Sende an Shopify: ", JSON.stringify({
         lines,
         discountCodes: discounts,
-        note: notes,
+        note: note,
       }, null, 2));
     }
+
+    // Notiz auf 26 Zeichen begrenzen
+    const safeNote = typeof note === "string" ? note.slice(0, 26) : "";
 
     const cart = await createCart({
       lines,
       discountCodes: discounts,
-      note: notes,
+      note: safeNote,
     })
 
     if (process.env.NODE_ENV === "development") {
