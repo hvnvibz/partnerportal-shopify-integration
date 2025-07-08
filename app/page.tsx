@@ -1,7 +1,9 @@
+"use client";
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { ShoppingBag, Wrench, Video, FileText } from "lucide-react"
+import { useUser } from "@/lib/useUser";
 
 const tiles = [
   {
@@ -35,6 +37,7 @@ const tiles = [
 ]
 
 export default function DashboardPage() {
+  const { profile, loading } = useUser();
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -42,7 +45,17 @@ export default function DashboardPage() {
         <div className="container mx-auto py-12 px-0 md:pl-8 md:pr-0">
           {/* Hero Section */}
           <div className="flex flex-col md:flex-row items-center md:items-stretch gap-12 mb-16 overflow-x-visible relative">
-            <div className="flex-1 flex flex-col justify-center text-center md:text-left z-10 md:pl-0 pl-4">
+            <div className="flex-1 flex flex-col justify-center text-center md:text-left z-10 md:pl-0 pl-4 md:justify-start md:mt-0 mt-[-2.5rem]">
+              {/* Personalisierte Ansprache */}
+              {!loading && profile?.display_name && (
+                <div
+                  className="mb-6 px-4 py-2 inline-block border-2 border-blue-600 rounded-xl bg-white/80 shadow-sm"
+                  style={{ marginBottom: '4.8rem' }}
+                >
+                  <span className="text-xl text-blue-900 font-normal" style={{ fontSize: '1.25rem' }}>Willkommen Firma </span>
+                  <span className="text-xl text-blue-900 font-bold" style={{ fontSize: '1.25rem' }}>{profile.display_name}</span>
+                </div>
+              )}
               <h1 className="text-4xl font-extrabold text-blue-900 mb-4 leading-tight tracking-tight">
                 Anlagen, Ersatzteile, Service, Expertise – sofort verfügbar
               </h1>
@@ -203,9 +216,4 @@ export default function DashboardPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-}
-
-export const metadata = {
-  title: "Partnerportal INDUWA – Ihr Zugang zu Produkten, Support & mehr",
-  description: "Das Partnerportal für INDUWA-Partner: Produkte, Support, Anfragen und mehr.",
-}; 
+} 

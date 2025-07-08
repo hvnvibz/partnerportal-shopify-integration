@@ -50,36 +50,9 @@ export default function ProdukthandbuecherUebersicht() {
           </Breadcrumb>
           <Cart />
         </header>
-        <div className="container mx-auto py-12">
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Alle digitalen Produkthandbücher</h2>
-                <p className="text-muted-foreground">Suchen Sie nach einem Produkt und öffnen Sie das jeweilige Handbuch.</p>
-              </div>
-              <Input
-                type="search"
-                placeholder="Suche nach Produkt..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full md:w-80"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {filtered.length === 0 && (
-                <div className="col-span-full text-center text-gray-500">Kein Handbuch gefunden.</div>
-              )}
-              {filtered.map(dph => (
-                <Link
-                  key={dph.slug}
-                  href={`/produkthandbuecher/${dph.slug}`}
-                  className="block border rounded-lg p-6 shadow hover:shadow-lg transition bg-white h-full"
-                >
-                  <div className="font-semibold text-lg mb-2">{dph.title}</div>
-                  <div className="text-blue-700 underline">Handbuch öffnen</div>
-                </Link>
-              ))}
-            </div>
+        <div className="container mx-auto py-12 flex items-center justify-center min-h-[40vh]">
+          <div className="text-center text-xl text-gray-600 font-semibold">
+            Diese Funktion wird in Kürze freigeschaltet.
           </div>
         </div>
       </SidebarInset>

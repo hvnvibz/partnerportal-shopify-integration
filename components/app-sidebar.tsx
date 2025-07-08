@@ -18,11 +18,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import AppSidebarLogout from "@/components/AppSidebarLogout"
+import { useUser } from "@/lib/useUser";
 
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [search, setSearch] = useState("")
+  const { user } = useUser();
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -106,6 +108,7 @@ export function AppSidebar() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </form>
         </div>
+        {/* E-Mail-Adresse oben entfernt */}
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -127,13 +130,19 @@ export function AppSidebar() {
       </SidebarContent>
       <div className="mt-auto pb-4 border-t border-gray-200">
         <div className="flex flex-row gap-2 px-6 pt-4 justify-end">
-          <Link
-            href="/einstellungen"
-            className={`flex items-center gap-3 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
-          >
-            <span className="h-5 w-5">⚙️</span>
-            <span className="ml-1">Einstellungen</span>
-          </Link>
+          <div className="flex flex-col flex-1 items-start">
+            <Link
+              href="/einstellungen"
+              className={`flex items-center gap-0 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              {/* Icon entfernt */}
+              <span className="ml-0">Einstellungen</span>
+            </Link>
+            {user?.email && (
+              <div className="ml-3 text-xs text-gray-500 truncate pt-1 text-left w-full">{user.email}</div>
+            )}
+          </div>
           <AppSidebarLogout />
         </div>
       </div>
