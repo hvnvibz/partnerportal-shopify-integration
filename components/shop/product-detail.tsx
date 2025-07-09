@@ -298,7 +298,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
             <h1 className="text-2xl font-bold">{product.title}</h1>
             {product.id && (
               <p className="text-sm text-muted-foreground mt-2">
-                Artikelnummer: {product.variants.edges[0]?.node.sku || product.id.replace("gid://shopify/Product/", "")}
+                Artikelnummer: {selectedVariant?.sku || product.id.replace("gid://shopify/Product/", "")}
               </p>
             )}
           </div>

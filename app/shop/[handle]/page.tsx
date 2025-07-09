@@ -277,10 +277,17 @@ export default async function ProductPage({ params }: { params: { handle: string
 
 export async function generateMetadata({ params }: { params: { handle: string } }) {
   const { handle } = params;
-  // Optional: Hole Produktdaten für besseren Title
+  // Hole Produktdaten für besseren Title
+  let productTitle = handle;
+  try {
+    const productRaw = await (await import("@/lib/shopify-storefront")).getProductByHandle(handle);
+    if (productRaw && productRaw.title) {
+      productTitle = productRaw.title;
+    }
+  } catch {}
   return {
-    title: `Produkt: ${handle} – Partnerportal INDUWA`,
-    description: `Details und Informationen zum Produkt ${handle} im Partnerportal INDUWA.`,
+    title: `${productTitle} | INDUWA Partnerportal`,
+    description: `Details und Informationen zum Produkt ${productTitle} im Partnerportal INDUWA.`,
   };
 }
 
