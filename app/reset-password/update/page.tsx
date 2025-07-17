@@ -25,18 +25,44 @@ function UpdatePasswordForm() {
         console.log('Type:', type);
         
         if (accessToken && type === 'recovery') {
-          // Setze die Session mit dem Access-Token
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: '',
-          });
+          // Prüfe zuerst, ob bereits eine Session existiert
+          const { data: { session } } = await supabase.auth.getSession();
           
-          if (error) {
-            console.error('Token-Fehler:', error);
-            setError(`Token-Fehler: ${error.message}`);
-          } else if (data.session) {
-            console.log('Session erfolgreich gesetzt');
+          if (session) {
+            console.log('Session bereits vorhanden');
             setTokenProcessed(true);
+            setProcessingToken(false);
+          } else {
+            // Warte auf PASSWORD_RECOVERY Event
+            console.log('Warte auf PASSWORD_RECOVERY Event...');
+            
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+              console.log('Auth state change:', event);
+              
+              if (event === 'PASSWORD_RECOVERY') {
+                console.log('PASSWORD_RECOVERY Event empfangen');
+                setTokenProcessed(true);
+                setProcessingToken(false);
+                subscription.unsubscribe();
+              } else if (event === 'SIGNED_IN') {
+                console.log('SIGNED_IN Event empfangen');
+                setTokenProcessed(true);
+                setProcessingToken(false);
+                subscription.unsubscribe();
+              }
+            });
+            
+            // Timeout nach 5 Sekunden
+            setTimeout(() => {
+              if (!tokenProcessed) {
+                console.log('Timeout - Token konnte nicht verarbeitet werden');
+                setError('Token konnte nicht verarbeitet werden. Bitte fordern Sie einen neuen Link an.');
+                setProcessingToken(false);
+                subscription.unsubscribe();
+              }
+            }, 5000);
+            
+            return; // Nicht setProcessingToken(false) hier setzen
           }
         } else {
           console.log('Kein gültiger Token gefunden');
@@ -52,7 +78,7 @@ function UpdatePasswordForm() {
     };
 
     processToken();
-  }, [searchParams]);
+  }, [searchParams, tokenProcessed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
