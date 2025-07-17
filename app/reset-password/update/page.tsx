@@ -91,18 +91,38 @@ function UpdatePasswordForm() {
     setLoading(true);
     
     try {
+      console.log('Versuche Passwort zu aktualisieren...');
+      
+      // Prüfe zuerst, ob die Session noch gültig ist
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Session ist nicht mehr gültig. Bitte fordern Sie einen neuen Reset-Link an.");
+        return;
+      }
+      
+      console.log('Session ist gültig, aktualisiere Passwort...');
+      
       const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
-        setError(error.message);
+        console.error('updateUser Fehler:', error);
+        setError(`Fehler beim Aktualisieren des Passworts: ${error.message}`);
       } else {
+        console.log('Passwort erfolgreich aktualisiert');
         setMessage("Das Passwort wurde erfolgreich geändert. Sie werden zur Login-Seite weitergeleitet.");
         setTimeout(() => {
           router.push("/anmelden");
         }, 2000);
       }
     } catch (err) {
-      setError("Ein unerwarteter Fehler ist aufgetreten.");
+      console.error('Unerwarteter Fehler beim updateUser:', err);
+      
+      // Spezifische Behandlung für Netzwerk-Fehler
+      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        setError("Netzwerk-Fehler: Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+      } else {
+        setError("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+      }
     } finally {
       setLoading(false);
     }
