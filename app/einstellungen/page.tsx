@@ -83,9 +83,4 @@ export default function EinstellungenPage() {
       </SidebarInset>
     </SidebarProvider>
   );
-}
-
-export const metadata = {
-  title: "Einstellungen – Partnerportal INDUWA",
-  description: "Verwalten Sie Ihre persönlichen Einstellungen im Partnerportal INDUWA.",
-}; 
+} 
