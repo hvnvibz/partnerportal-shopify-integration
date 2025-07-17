@@ -28,7 +28,31 @@ export default function SignInPage() {
     });
     setLoading(false);
     if (error) {
-      setError(error.message);
+      // Übersetze Supabase-Fehlermeldungen ins Deutsche
+      let germanError = error.message;
+      
+      switch (error.message) {
+        case 'Invalid login credentials':
+          germanError = 'Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.';
+          break;
+        case 'Email not confirmed':
+          germanError = 'E-Mail-Adresse nicht bestätigt. Bitte bestätigen Sie Ihre E-Mail-Adresse.';
+          break;
+        case 'Too many requests':
+          germanError = 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
+          break;
+        case 'User not found':
+          germanError = 'Benutzer nicht gefunden. Bitte überprüfen Sie Ihre E-Mail-Adresse.';
+          break;
+        case 'Invalid email or password':
+          germanError = 'Ungültige E-Mail oder Passwort. Bitte überprüfen Sie Ihre Eingaben.';
+          break;
+        default:
+          // Für unbekannte Fehler die ursprüngliche Meldung verwenden
+          germanError = `Anmeldefehler: ${error.message}`;
+      }
+      
+      setError(germanError);
       // setCaptchaToken(null);
       // captchaRef.current?.resetCaptcha();
     } else {
