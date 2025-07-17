@@ -33,43 +33,32 @@ function UpdatePasswordForm() {
             setTokenProcessed(true);
             setProcessingToken(false);
           } else {
-            // Warte auf PASSWORD_RECOVERY Event
-            console.log('Warte auf PASSWORD_RECOVERY Event...');
+            // Versuche den Token mit verifyOtp zu verarbeiten
+            console.log('Versuche Token mit verifyOtp zu verarbeiten...');
             
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-              console.log('Auth state change:', event);
-              
-              if (event === 'PASSWORD_RECOVERY') {
-                console.log('PASSWORD_RECOVERY Event empfangen');
-                setTokenProcessed(true);
-                setProcessingToken(false);
-                subscription.unsubscribe();
-              } else if (event === 'SIGNED_IN') {
-                console.log('SIGNED_IN Event empfangen');
-                setTokenProcessed(true);
-                setProcessingToken(false);
-                subscription.unsubscribe();
-              }
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: accessToken,
+              type: 'recovery'
             });
             
-            // Timeout nach 5 Sekunden
-            setTimeout(() => {
-              if (!tokenProcessed) {
-                console.log('Timeout - Token konnte nicht verarbeitet werden');
-                setError('Token konnte nicht verarbeitet werden. Bitte fordern Sie einen neuen Link an.');
-                setProcessingToken(false);
-                subscription.unsubscribe();
-              }
-            }, 5000);
+            if (error) {
+              console.error('verifyOtp Fehler:', error);
+              setError(`Token-Fehler: ${error.message}`);
+            } else if (data.session) {
+              console.log('Session erfolgreich mit verifyOtp gesetzt');
+              setTokenProcessed(true);
+            } else {
+              console.log('Keine Session nach verifyOtp erhalten');
+              setError('Token konnte nicht verarbeitet werden');
+            }
             
-            return; // Nicht setProcessingToken(false) hier setzen
+            setProcessingToken(false);
           }
         } else {
           console.log('Kein gültiger Token gefunden');
           setError('Kein gültiger Token in der URL gefunden');
+          setProcessingToken(false);
         }
-        
-        setProcessingToken(false);
       } catch (err) {
         console.error('Fehler beim Verarbeiten des Tokens:', err);
         setError('Fehler beim Verarbeiten des Tokens');
@@ -78,7 +67,7 @@ function UpdatePasswordForm() {
     };
 
     processToken();
-  }, [searchParams, tokenProcessed]);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
