@@ -3,14 +3,19 @@ import { useUser } from "@/lib/useUser";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const PUBLIC_PATHS = ["/anmelden", "/reset-password"];
+const PUBLIC_PATHS = ["/anmelden", "/reset-password", "/reset-password/update"];
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
 
-  const isPublic = PUBLIC_PATHS.includes(pathname);
+  // Für alle /reset-password-Routen: immer öffentlich, keine User-Prüfung!
+  if (pathname.startsWith("/reset-password")) {
+    return <>{children}</>;
+  }
+
+  const isPublic = PUBLIC_PATHS.some(path => pathname === path || pathname === path + "/");
 
   useEffect(() => {
     if (!loading && !user && !isPublic) {
