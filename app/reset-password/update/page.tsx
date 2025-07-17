@@ -110,9 +110,23 @@ function UpdatePasswordForm() {
       } else {
         console.log('Passwort erfolgreich aktualisiert');
         setMessage("Das Passwort wurde erfolgreich geändert. Sie werden zur Login-Seite weitergeleitet.");
-        setTimeout(() => {
-          router.push("/anmelden");
-        }, 2000);
+        
+        // Sichere Weiterleitung: Session zurücksetzen und dann weiterleiten
+        try {
+          await supabase.auth.signOut();
+          console.log('Session zurückgesetzt, leite weiter...');
+          
+          // Verwende window.location für einen sauberen Redirect
+          setTimeout(() => {
+            window.location.href = "/anmelden";
+          }, 2000);
+        } catch (redirectError) {
+          console.error('Fehler bei der Weiterleitung:', redirectError);
+          // Fallback: Router verwenden
+          setTimeout(() => {
+            router.push("/anmelden");
+          }, 2000);
+        }
       }
     } catch (err) {
       console.error('Unerwarteter Fehler beim updateUser:', err);
