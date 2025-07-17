@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -163,5 +163,38 @@ export default function UpdatePasswordPage() {
         />
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-gray-100">
+        <div className="w-full max-w-xl p-12 rounded-3xl shadow-2xl bg-white/80 backdrop-blur-md border border-gray-200"
+          style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}>
+          <div className="text-center">
+            <p className="text-gray-700 mb-4">Lade Seite...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+      <div className="hidden md:block w-1/2 h-full relative">
+        <img
+          src="/signin-bg.avif"
+          alt="INDUWA background"
+          className="object-cover w-full h-full min-h-screen rounded-l-3xl"
+          style={{ objectPosition: 'center' }}
+          loading="eager"
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <UpdatePasswordForm />
+    </Suspense>
   );
 } 
