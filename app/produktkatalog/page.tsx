@@ -37,7 +37,7 @@ export default function ProduktkatalogPage() {
                 scrolling="no"
                 frameBorder="0"
                 allowTransparency
-                allowFullScreen={true}
+                allowFullScreen
                 title="INDUWA Produktkatalog 2025"
               />
             </div>

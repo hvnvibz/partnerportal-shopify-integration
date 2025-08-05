@@ -134,6 +134,10 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
     }
   }, [product.images]);
 
+  // Bildlogik für Variante
+  const variantImage = selectedVariant?.image?.url;
+  const mainImage = variantImage || product.images?.[selectedImageIdx]?.url || product.featuredImage?.url || "/placeholder.svg";
+
   // Function to add item to cart
   const addToCart = () => {
     try {
@@ -247,8 +251,8 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                 }}
               >
                 <Image
-                  src={product.images[selectedImageIdx]?.url || "/placeholder.svg"}
-                  alt={product.images[selectedImageIdx]?.altText || product.title}
+                  src={mainImage}
+                  alt={selectedVariant?.image?.altText || product.images?.[selectedImageIdx]?.altText || product.title}
                   style={{ objectFit: "contain", width: '100%', height: '100%', borderRadius: 8 }}
                   width={320}
                   height={320}

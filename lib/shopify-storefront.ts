@@ -458,6 +458,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
                     amount
                     currencyCode
                   }
+                  image { url altText }
                 }
               }
             }
@@ -592,6 +593,7 @@ export async function getProductById(id: string): Promise<ShopifyProduct | null>
                     amount
                     currencyCode
                   }
+                  image { url altText }
                 }
               }
             }

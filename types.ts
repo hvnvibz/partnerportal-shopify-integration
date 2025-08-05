@@ -37,6 +37,10 @@ export type Product = {
           amount: string
           currencyCode: string
         } | null
+        image?: {
+          url: string
+          altText: string
+        } | null
       }
     }>
   }
