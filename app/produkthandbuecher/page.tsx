@@ -157,7 +157,7 @@ export default function ProdukthandbuecherUebersicht() {
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
                     <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden flex flex-row">
                       {handbook.titelbild && (
-                        <div className="w-1/3 aspect-square overflow-hidden bg-blue-50 flex items-center justify-center p-4">
+                        <div className="w-48 aspect-square overflow-hidden bg-blue-50 flex items-center justify-center p-4 flex-shrink-0">
                           <img 
                             src={handbook.titelbild} 
                             alt={handbook.title}
@@ -166,9 +166,9 @@ export default function ProdukthandbuecherUebersicht() {
                           />
                         </div>
                       )}
-                      <div className="flex-1 flex flex-col">
+                      <div className="flex-1 flex flex-col min-w-0">
                         <CardHeader className="flex-shrink-0">
-                          <CardTitle className="text-base">{handbook.title}</CardTitle>
+                          <CardTitle className="text-base break-words">{handbook.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col flex-1">
                           <div className="flex-1">
