@@ -73,11 +73,13 @@ export default function ProdukthandbuecherUebersicht() {
       })
   }, [])
 
-  const filtered = handbooks.filter(handbook => 
-    handbook.title.toLowerCase().includes(search.toLowerCase()) ||
-    handbook.beschreibung?.toLowerCase().includes(search.toLowerCase()) ||
-    handbook.produktkategorie?.toLowerCase().includes(search.toLowerCase())
-  )
+      const filtered = handbooks
+        .filter(handbook => 
+          handbook.title.toLowerCase().includes(search.toLowerCase()) ||
+          handbook.beschreibung?.toLowerCase().includes(search.toLowerCase()) ||
+          handbook.produktkategorie?.toLowerCase().includes(search.toLowerCase())
+        )
+        .sort((a, b) => a.title.localeCompare(b.title, 'de'))
 
   return (
     <SidebarProvider>
