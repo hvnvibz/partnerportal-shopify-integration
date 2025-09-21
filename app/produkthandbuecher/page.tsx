@@ -178,9 +178,9 @@ export default function ProdukthandbuecherUebersicht() {
                               </div>
                             )}
                           </div>
-                          <div className="mt-auto pt-4">
-                            <p className="text-sm text-gray-600 text-right">{handbook.beschreibung}</p>
-                          </div>
+                              <div className="mt-auto pt-4">
+                                <p className="text-xs text-gray-600 text-right whitespace-nowrap overflow-hidden text-ellipsis">{handbook.beschreibung}</p>
+                              </div>
                         </CardContent>
                       </div>
                     </Card>
