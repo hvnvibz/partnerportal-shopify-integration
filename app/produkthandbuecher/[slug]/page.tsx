@@ -474,55 +474,6 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
                 </AccordionItem>
               )}
 
-              {/* Metadaten */}
-              <AccordionItem value="metadata" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-gray-600" />
-                    <span className="font-semibold">Metadaten & Informationen</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {handbook.collectionId && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Collection ID:</strong> {handbook.collectionId}
-                      </div>
-                    )}
-                    {handbook.localeId && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Locale ID:</strong> {handbook.localeId}
-                      </div>
-                    )}
-                    {handbook.itemId && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Item ID:</strong> {handbook.itemId}
-                      </div>
-                    )}
-                    {handbook.createdOn && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Erstellt am:</strong> {handbook.createdOn}
-                      </div>
-                    )}
-                    {handbook.updatedOn && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Aktualisiert am:</strong> {handbook.updatedOn}
-                      </div>
-                    )}
-                    {handbook.publishedOn && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <strong>Veröffentlicht am:</strong> {handbook.publishedOn}
-                      </div>
-                    )}
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <strong>Status:</strong> 
-                      {handbook.archived && <Badge variant="destructive" className="ml-2">Archiviert</Badge>}
-                      {handbook.draft && <Badge variant="secondary" className="ml-2">Entwurf</Badge>}
-                      {!handbook.archived && !handbook.draft && <Badge variant="default" className="ml-2">Aktiv</Badge>}
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
             </Accordion>
 
             {/* Zurück Button */}
