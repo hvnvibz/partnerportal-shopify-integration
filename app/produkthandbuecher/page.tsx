@@ -170,13 +170,17 @@ export default function ProdukthandbuecherUebersicht() {
                           <CardTitle className="text-lg">{handbook.title}</CardTitle>
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600 mb-3">{handbook.beschreibung}</p>
-                        {handbook.produktkategorie && (
-                          <div className="text-xs text-blue-600 font-medium">
-                            {handbook.produktkategorie}
-                          </div>
-                        )}
+                      <CardContent className="flex flex-col h-full">
+                        <div className="flex-1">
+                          {handbook.produktkategorie && (
+                            <div className="text-xs text-blue-600 font-medium mb-3">
+                              {handbook.produktkategorie}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-auto">
+                          <p className="text-sm text-gray-600 text-right">{handbook.beschreibung}</p>
+                        </div>
                       </CardContent>
                     </Card>
                   </Link>
