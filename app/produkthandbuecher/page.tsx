@@ -13,6 +13,7 @@ import { FileText, Search } from "lucide-react"
 interface Handbook {
   title: string;
   slug: string;
+  titelbild?: string;
   beschreibung?: string;
   produktkategorie?: string;
   collectionId?: string;
@@ -152,7 +153,17 @@ export default function ProdukthandbuecherUebersicht() {
               ) : (
                 filtered.map((handbook) => (
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
+                      {handbook.titelbild && (
+                        <div className="aspect-video w-full overflow-hidden">
+                          <img 
+                            src={handbook.titelbild} 
+                            alt={handbook.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                       <CardHeader>
                         <div className="flex items-center gap-3">
                           <FileText className="h-6 w-6 text-blue-600" />
