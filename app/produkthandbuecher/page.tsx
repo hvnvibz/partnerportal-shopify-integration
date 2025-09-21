@@ -153,7 +153,7 @@ export default function ProdukthandbuecherUebersicht() {
               ) : (
                 filtered.map((handbook) => (
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
+                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden flex flex-col">
                       {handbook.titelbild && (
                         <div className="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center">
                           <img 
@@ -164,13 +164,13 @@ export default function ProdukthandbuecherUebersicht() {
                           />
                         </div>
                       )}
-                      <CardHeader>
+                      <CardHeader className="flex-shrink-0">
                         <div className="flex items-center gap-3">
                           <FileText className="h-6 w-6 text-blue-600" />
                           <CardTitle className="text-lg">{handbook.title}</CardTitle>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex flex-col h-full">
+                      <CardContent className="flex flex-col flex-1">
                         <div className="flex-1">
                           {handbook.produktkategorie && (
                             <div className="text-xs text-blue-600 font-medium mb-3">
@@ -178,7 +178,7 @@ export default function ProdukthandbuecherUebersicht() {
                             </div>
                           )}
                         </div>
-                        <div className="mt-auto">
+                        <div className="mt-auto pt-4">
                           <p className="text-sm text-gray-600 text-right">{handbook.beschreibung}</p>
                         </div>
                       </CardContent>
