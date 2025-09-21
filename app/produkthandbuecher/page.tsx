@@ -167,10 +167,7 @@ export default function ProdukthandbuecherUebersicht() {
                         </div>
                       )}
                       <CardHeader className="flex-shrink-0">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-6 w-6 text-blue-600" />
-                          <CardTitle className="text-lg">{handbook.title}</CardTitle>
-                        </div>
+                        <CardTitle className="text-base">{handbook.title}</CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-col flex-1">
                         <div className="flex-1">
