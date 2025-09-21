@@ -155,9 +155,9 @@ export default function ProdukthandbuecherUebersicht() {
               ) : (
                 filtered.map((handbook) => (
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden flex flex-col">
+                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden flex flex-row">
                       {handbook.titelbild && (
-                        <div className="aspect-video w-full overflow-hidden bg-blue-50 flex items-center justify-center p-4">
+                        <div className="w-1/3 aspect-square overflow-hidden bg-blue-50 flex items-center justify-center p-4">
                           <img 
                             src={handbook.titelbild} 
                             alt={handbook.title}
@@ -166,21 +166,23 @@ export default function ProdukthandbuecherUebersicht() {
                           />
                         </div>
                       )}
-                      <CardHeader className="flex-shrink-0">
-                        <CardTitle className="text-base">{handbook.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex flex-col flex-1">
-                        <div className="flex-1">
-                          {handbook.produktkategorie && (
-                            <div className="text-xs text-blue-600 font-medium mb-3">
-                              {handbook.produktkategorie}
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-auto pt-4">
-                          <p className="text-sm text-gray-600 text-right">{handbook.beschreibung}</p>
-                        </div>
-                      </CardContent>
+                      <div className="flex-1 flex flex-col">
+                        <CardHeader className="flex-shrink-0">
+                          <CardTitle className="text-base">{handbook.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col flex-1">
+                          <div className="flex-1">
+                            {handbook.produktkategorie && (
+                              <div className="text-xs text-blue-600 font-medium mb-3">
+                                {handbook.produktkategorie}
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-auto pt-4">
+                            <p className="text-sm text-gray-600 text-right">{handbook.beschreibung}</p>
+                          </div>
+                        </CardContent>
+                      </div>
                     </Card>
                   </Link>
                 ))
