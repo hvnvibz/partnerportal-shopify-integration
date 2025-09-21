@@ -1,34 +1,82 @@
 "use client";
-// Diese Datei wird zur Übersichtsseite umgebaut. Die Detailansicht wird nach [slug]/page.tsx verschoben. 
-
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Cart } from "@/components/shop/cart"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileText, Search } from "lucide-react"
 
-// Beispiel-Daten für DPHs (später aus DB oder Datei)
-const DPH_LIST = [
-  {
-    slug: "kawk-enthaertungsanlage",
-    title: "KAWK Enthärtungsanlage",
-  },
-  {
-    slug: "kawk-d-stadtwasser-enthaertungsanlage",
-    title: "KAWK-D Stadtwasser-Enthärtungsanlage",
-  },
-  {
-    slug: "nitratreduzierungsanlage-kawn",
-    title: "Nitratreduzierungsanlage Typ KAWN",
-  },
-]
+interface Handbook {
+  title: string;
+  slug: string;
+  beschreibung?: string;
+  produktkategorie?: string;
+  collectionId?: string;
+  localeId?: string;
+  itemId?: string;
+  archived?: boolean;
+  draft?: boolean;
+  videoUrls?: {
+    video1?: string;
+    video2?: string;
+    video3?: string;
+    video4?: string;
+    video5?: string;
+    video6?: string;
+  };
+  handbuchUrls?: {
+    einbauanleitung1?: string;
+    einbauanleitung1Google?: string;
+    einbauanleitung2?: string;
+    schriftlicheAnleitung?: string;
+    schriftlicheAnleitungGoogle?: string;
+  };
+  datenblattUrls?: {
+    alt?: string;
+    alteVersion?: string;
+    neueVersion?: string;
+    technische?: string;
+  };
+  wartungUrls?: {
+    plan?: string;
+    klein?: string;
+    gross?: string;
+    jaehrlich?: string;
+  };
+}
 
 export default function ProdukthandbuecherUebersicht() {
   const [search, setSearch] = useState("")
-  const filtered = DPH_LIST.filter(dph => dph.title.toLowerCase().includes(search.toLowerCase()))
+  const [handbooks, setHandbooks] = useState<Handbook[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/produkthandbuecher')
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error)
+        } else {
+          setHandbooks(Array.isArray(data) ? data : [])
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        setError('Fehler beim Laden der Handbücher')
+        setLoading(false)
+      })
+  }, [])
+
+  const filtered = handbooks.filter(handbook => 
+    handbook.title.toLowerCase().includes(search.toLowerCase()) ||
+    handbook.beschreibung?.toLowerCase().includes(search.toLowerCase()) ||
+    handbook.produktkategorie?.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <SidebarProvider>
@@ -50,10 +98,83 @@ export default function ProdukthandbuecherUebersicht() {
           </Breadcrumb>
           <Cart />
         </header>
-        <div className="container mx-auto py-12 flex items-center justify-center min-h-[40vh]">
-          <div className="text-center text-xl text-gray-600 font-semibold">
-            Diese Funktion wird in Kürze freigeschaltet.
+        
+        <div className="container mx-auto py-12">
+          <div className="text-center mb-12">
+            <p className="text-lg text-blue-900 font-medium mb-4">Produktdokumentation</p>
+            <h1 className="text-4xl font-bold mb-4">
+              Digitale Produkthandbücher
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Hier finden Sie alle wichtigen Handbücher, Datenblätter und Wartungsinformationen für Ihre INDUWA Wasseraufbereitungsanlagen.
+            </p>
           </div>
+
+          {/* Suchfeld */}
+          <div className="relative mb-8 max-w-md mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Handbücher durchsuchen..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="text-lg text-gray-600">Lade Handbücher...</div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <div className="text-lg text-red-600 mb-4">Fehler beim Laden der Handbücher</div>
+              <div className="text-sm text-gray-600">{error}</div>
+              <div className="mt-4 text-sm text-gray-500">
+                Bitte überprüfen Sie die Notion-Datenbank-Konfiguration.
+              </div>
+            </div>
+          )}
+
+          {/* Handbücher Grid */}
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-lg text-gray-600">
+                    {search ? 'Keine Handbücher gefunden, die Ihrer Suche entsprechen.' : 'Keine Handbücher verfügbar.'}
+                  </div>
+                </div>
+              ) : (
+                filtered.map((handbook) => (
+                  <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
+                    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-6 w-6 text-blue-600" />
+                          <CardTitle className="text-lg">{handbook.title}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {handbook.beschreibung && (
+                          <p className="text-sm text-gray-600 mb-3">{handbook.beschreibung}</p>
+                        )}
+                        {handbook.produktkategorie && (
+                          <div className="text-xs text-blue-600 font-medium">
+                            {handbook.produktkategorie}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>

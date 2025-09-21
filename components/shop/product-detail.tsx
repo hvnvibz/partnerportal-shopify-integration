@@ -91,6 +91,8 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
   // Handle variant selection
   const handleVariantChange = (value: string) => {
     setSelectedVariantId(value)
+    // Reset gallery selection when variant changes
+    setSelectedImageIdx(0)
   }
 
   // Upsell-Module anzeigen, wenn mindestens eines befüllt ist
@@ -136,7 +138,8 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
 
   // Bildlogik für Variante
   const variantImage = selectedVariant?.image?.url;
-  const mainImage = variantImage || product.images?.[selectedImageIdx]?.url || product.featuredImage?.url || "/placeholder.svg";
+  // Galerie-Auswahl hat Vorrang vor Varianten-Bildern
+  const mainImage = product.images?.[selectedImageIdx]?.url || variantImage || product.featuredImage?.url || "/placeholder.svg";
 
   // Function to add item to cart
   const addToCart = () => {

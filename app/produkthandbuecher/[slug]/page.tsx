@@ -1,3 +1,4 @@
+"use client";
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -14,31 +15,66 @@ import { FileText, Download } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Cart } from "@/components/shop/cart"
+import { useState, useEffect } from "react"
 
-// Beispiel-Daten für DPHs (später aus DB oder Datei)
-const DPH_LIST = [
-  {
-    slug: "kawk-enthaertungsanlage",
-    title: "KAWK Enthärtungsanlage",
-    videoId: "BbFQwiyGSw",
-    handbuch: "/handbuch-kawk.pdf",
-    datenblatt: "/datenblatt-kawk.pdf"
-  },
-  {
-    slug: "kawk-d-stadtwasser-enthaertungsanlage",
-    title: "KAWK-D Stadtwasser-Enthärtungsanlage",
-    videoId: "BbFQwiyGSw",
-    handbuch: "/handbuch-kawk-d.pdf",
-    datenblatt: "/datenblatt-kawk-d.pdf"
-  },
-  {
-    slug: "nitratreduzierungsanlage-kawn",
-    title: "Nitratreduzierungsanlage Typ KAWN",
-    videoId: "BbFQwiyGSw",
-    handbuch: "/handbuch-kawn.pdf",
-    datenblatt: "/datenblatt-kawn.pdf"
-  },
-]
+interface Handbook {
+  title: string;
+  slug: string;
+  videoId?: string;
+  videoUrl?: string;
+  handbuchUrl?: string;
+  datenblattUrl?: string;
+  wartungUrl?: string;
+  beschreibung?: string;
+  produktkategorie?: string;
+  collectionId?: string;
+  localeId?: string;
+  itemId?: string;
+  archived?: boolean;
+  draft?: boolean;
+  videoUrls?: {
+    video1?: string;
+    video2?: string;
+    video3?: string;
+    video4?: string;
+    video5?: string;
+    video6?: string;
+  };
+  handbuchUrls?: {
+    einbauanleitung1?: string;
+    einbauanleitung1Google?: string;
+    einbauanleitung2?: string;
+    schriftlicheAnleitung?: string;
+    schriftlicheAnleitungGoogle?: string;
+  };
+  datenblattUrls?: {
+    alt?: string;
+    alteVersion?: string;
+    neueVersion?: string;
+    technische?: string;
+  };
+  wartungUrls?: {
+    plan?: string;
+    klein?: string;
+    gross?: string;
+    jaehrlich?: string;
+  };
+  ekfKomponenten?: {
+    kompressor?: string;
+    oxidator?: string;
+    dpr?: string;
+    rsl?: string;
+  };
+  okfKomponenten?: {
+    niveausteuerung?: string;
+    rueckspuelautomatik?: string;
+    komplettsteuerung?: string;
+  };
+  wartungsinformationenFreischalten?: boolean;
+  createdOn?: string;
+  updatedOn?: string;
+  publishedOn?: string;
+}
 
 function YouTubeVideo({ videoId, title }: { videoId: string; title: string }) {
   return (
@@ -62,8 +98,70 @@ function YouTubeVideo({ videoId, title }: { videoId: string; title: string }) {
 }
 
 export default function ProdukthandbuchDetail({ params }: { params: { slug: string } }) {
-  const dph = DPH_LIST.find((d) => d.slug === params.slug)
-  if (!dph) return notFound()
+  const [handbook, setHandbook] = useState<Handbook | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/produkthandbuecher')
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error)
+        } else {
+          const foundHandbook = data.find((h: Handbook) => h.slug === params.slug)
+          if (foundHandbook) {
+            setHandbook(foundHandbook)
+          } else {
+            setError('Handbuch nicht gefunden')
+          }
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        setError('Fehler beim Laden des Handbuchs')
+        setLoading(false)
+      })
+  }, [params.slug])
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb className="flex-1">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Start</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/produkthandbuecher">Digitale Handbücher</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Lade...</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Cart />
+          </header>
+          <div className="container mx-auto py-12 flex items-center justify-center min-h-[40vh]">
+            <div className="text-center text-xl text-gray-600 font-semibold">
+              Lade Handbuch...
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
+  }
+
+  if (error || !handbook) {
+    return notFound()
+  }
 
   return (
     <SidebarProvider>
@@ -83,7 +181,7 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{dph.title}</BreadcrumbPage>
+                <BreadcrumbPage>{handbook.title}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -94,44 +192,57 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
             <div className="text-center mb-12">
               <p className="text-lg text-blue-600 font-medium mb-4">Handbuch & Datenblatt</p>
               <h1 className="text-4xl font-bold mb-4">
-                {dph.title}
+                {handbook.title}
               </h1>
+              {handbook.beschreibung && (
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  {handbook.beschreibung}
+                </p>
+              )}
             </div>
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Videoanleitung</h2>
-              <YouTubeVideo videoId={dph.videoId} title={dph.title} />
-            </section>
+            {handbook.videoId && (
+              <section className="mb-10">
+                <h2 className="text-2xl font-semibold mb-4">Videoanleitung</h2>
+                <YouTubeVideo videoId={handbook.videoId} title={handbook.title} />
+              </section>
+            )}
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Schriftliche Anleitung</h2>
-              <div className="flex items-center gap-4">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <Link href={dph.handbuch} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                  Handbuch als PDF anzeigen <Download className="h-4 w-4" />
-                </Link>
-              </div>
-            </section>
+            {handbook.handbuchUrl && (
+              <section className="mb-10">
+                <h2 className="text-2xl font-semibold mb-4">Schriftliche Anleitung</h2>
+                <div className="flex items-center gap-4">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <Link href={handbook.handbuchUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
+                    Handbuch als PDF anzeigen <Download className="h-4 w-4" />
+                  </Link>
+                </div>
+              </section>
+            )}
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Produktdatenblatt</h2>
-              <div className="flex items-center gap-4">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <Link href={dph.datenblatt} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                  Datenblatt als PDF anzeigen <Download className="h-4 w-4" />
-                </Link>
-              </div>
-            </section>
+            {handbook.datenblattUrl && (
+              <section className="mb-10">
+                <h2 className="text-2xl font-semibold mb-4">Produktdatenblatt</h2>
+                <div className="flex items-center gap-4">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <Link href={handbook.datenblattUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
+                    Datenblatt als PDF anzeigen <Download className="h-4 w-4" />
+                  </Link>
+                </div>
+              </section>
+            )}
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Wartungsinformation (PDF)</h2>
-              <div className="flex items-center gap-4">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <Link href={`/wartung-${dph.slug}.pdf`} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                  Wartungsinformation als PDF anzeigen <Download className="h-4 w-4" />
-                </Link>
-              </div>
-            </section>
+            {handbook.wartungUrl && (
+              <section className="mb-10">
+                <h2 className="text-2xl font-semibold mb-4">Wartungsinformation</h2>
+                <div className="flex items-center gap-4">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <Link href={handbook.wartungUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
+                    Wartungsinformation als PDF anzeigen <Download className="h-4 w-4" />
+                  </Link>
+                </div>
+              </section>
+            )}
 
             <section className="mb-10">
               <h2 className="text-2xl font-semibold mb-4">Weitere Fragen?</h2>
