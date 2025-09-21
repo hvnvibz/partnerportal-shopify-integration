@@ -155,11 +155,11 @@ export default function ProdukthandbuecherUebersicht() {
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
                     <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
                       {handbook.titelbild && (
-                        <div className="aspect-video w-full overflow-hidden">
+                        <div className="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center">
                           <img 
                             src={handbook.titelbild} 
                             alt={handbook.title}
-                            className="w-full h-full object-cover"
+                            className="max-w-full max-h-full object-contain"
                             loading="lazy"
                           />
                         </div>
@@ -171,9 +171,7 @@ export default function ProdukthandbuecherUebersicht() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        {handbook.beschreibung && (
-                          <p className="text-sm text-gray-600 mb-3">{handbook.beschreibung}</p>
-                        )}
+                        <p className="text-sm text-gray-600 mb-3">{handbook.beschreibung}</p>
                         {handbook.produktkategorie && (
                           <div className="text-xs text-blue-600 font-medium">
                             {handbook.produktkategorie}

@@ -10,8 +10,11 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { Card, CardContent } from "@/components/ui/card"
-import { FileText, Download } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { FileText, Download, Play, Wrench, FileDown, Video, Settings, Calendar } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Cart } from "@/components/shop/cart"
@@ -20,6 +23,7 @@ import { useState, useEffect } from "react"
 interface Handbook {
   title: string;
   slug: string;
+  titelbild?: string;
   videoId?: string;
   videoUrl?: string;
   handbuchUrl?: string;
@@ -84,17 +88,36 @@ function YouTubeVideo({ videoId, title }: { videoId: string; title: string }) {
           <iframe
             src={`https://www.youtube.com/embed/${videoId}`}
             title={title}
+            className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            className="w-full h-full border-0"
           />
-        </div>
-        <div className="p-4">
-          <h3 className="font-medium text-lg">{title}</h3>
         </div>
       </CardContent>
     </Card>
-  )
+  );
+}
+
+function DownloadButton({ url, title, icon: Icon }: { url: string; title: string; icon: any }) {
+  return (
+    <Button asChild variant="outline" className="w-full justify-start">
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        <Icon className="mr-2 h-4 w-4" />
+        {title}
+      </a>
+    </Button>
+  );
+}
+
+function LinkButton({ url, title, icon: Icon }: { url: string; title: string; icon: any }) {
+  return (
+    <Button asChild variant="outline" className="w-full justify-start">
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        <Icon className="mr-2 h-4 w-4" />
+        {title}
+      </a>
+    </Button>
+  );
 }
 
 export default function ProdukthandbuchDetail({ params }: { params: { slug: string } }) {
@@ -143,15 +166,15 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Lade...</BreadcrumbPage>
+                  <BreadcrumbPage>Laden...</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
             <Cart />
           </header>
-          <div className="container mx-auto py-12 flex items-center justify-center min-h-[40vh]">
-            <div className="text-center text-xl text-gray-600 font-semibold">
-              Lade Handbuch...
+          <div className="container mx-auto py-12">
+            <div className="text-center">
+              <div className="text-lg text-gray-600">Lade Handbuch...</div>
             </div>
           </div>
         </SidebarInset>
@@ -160,7 +183,42 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
   }
 
   if (error || !handbook) {
-    return notFound()
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb className="flex-1">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Start</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/produkthandbuecher">Digitale Handbücher</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Fehler</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Cart />
+          </header>
+          <div className="container mx-auto py-12">
+            <div className="text-center">
+              <div className="text-lg text-red-600 mb-4">Fehler beim Laden des Handbuchs</div>
+              <div className="text-sm text-gray-600">{error}</div>
+              <Link href="/produkthandbuecher" className="inline-block mt-4 text-blue-600 hover:underline">
+                ← Zurück zur Übersicht
+              </Link>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
   }
 
   return (
@@ -187,77 +245,294 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
           </Breadcrumb>
           <Cart />
         </header>
+        
         <div className="container mx-auto py-12">
-          <div className="mx-auto max-w-3xl">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
             <div className="text-center mb-12">
-              <p className="text-lg text-blue-600 font-medium mb-4">Handbuch & Datenblatt</p>
-              <h1 className="text-4xl font-bold mb-4">
-                {handbook.title}
-              </h1>
-              {handbook.beschreibung && (
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  {handbook.beschreibung}
-                </p>
-              )}
+              <h1 className="text-4xl font-bold mb-4">{handbook.title}</h1>
+              <p className="text-xl text-muted-foreground">
+                Vollständige Produktdokumentation und Handbücher
+              </p>
             </div>
 
-            {handbook.videoId && (
-              <section className="mb-10">
-                <h2 className="text-2xl font-semibold mb-4">Videoanleitung</h2>
-                <YouTubeVideo videoId={handbook.videoId} title={handbook.title} />
-              </section>
+            {/* Titelbild */}
+            {handbook.titelbild && (
+              <Card className="mb-8">
+                <CardContent className="p-6">
+                  <div className="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center rounded-lg">
+                    <img 
+                      src={handbook.titelbild} 
+                      alt={handbook.title}
+                      className="max-w-full max-h-full object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
-            {handbook.handbuchUrl && (
-              <section className="mb-10">
-                <h2 className="text-2xl font-semibold mb-4">Schriftliche Anleitung</h2>
-                <div className="flex items-center gap-4">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                  <Link href={handbook.handbuchUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                    Handbuch als PDF anzeigen <Download className="h-4 w-4" />
-                  </Link>
-                </div>
-              </section>
-            )}
+            {/* Accordion mit allen Informationen */}
+            <Accordion type="single" collapsible className="space-y-4">
+              
+              {/* Videos */}
+              {(handbook.videoUrls?.video1 || handbook.videoUrls?.video2 || handbook.videoUrls?.video3 || 
+                handbook.videoUrls?.video4 || handbook.videoUrls?.video5 || handbook.videoUrls?.video6) && (
+                <AccordionItem value="videos" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-5 w-5 text-blue-600" />
+                      <span className="font-semibold">Videos & Erklärungen</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="space-y-4">
+                      {handbook.videoId && (
+                        <div>
+                          <h4 className="font-medium mb-2">Hauptvideo</h4>
+                          <YouTubeVideo videoId={handbook.videoId} title={handbook.title} />
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {handbook.videoUrls?.video1 && (
+                          <LinkButton url={handbook.videoUrls.video1} title="Video 1" icon={Play} />
+                        )}
+                        {handbook.videoUrls?.video2 && (
+                          <LinkButton url={handbook.videoUrls.video2} title="Video 2" icon={Play} />
+                        )}
+                        {handbook.videoUrls?.video3 && (
+                          <LinkButton url={handbook.videoUrls.video3} title="Video 3" icon={Play} />
+                        )}
+                        {handbook.videoUrls?.video4 && (
+                          <LinkButton url={handbook.videoUrls.video4} title="Video 4" icon={Play} />
+                        )}
+                        {handbook.videoUrls?.video5 && (
+                          <LinkButton url={handbook.videoUrls.video5} title="Video 5 (Sonderausführung)" icon={Play} />
+                        )}
+                        {handbook.videoUrls?.video6 && (
+                          <LinkButton url={handbook.videoUrls.video6} title="Video 6" icon={Play} />
+                        )}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            {handbook.datenblattUrl && (
-              <section className="mb-10">
-                <h2 className="text-2xl font-semibold mb-4">Produktdatenblatt</h2>
-                <div className="flex items-center gap-4">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                  <Link href={handbook.datenblattUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                    Datenblatt als PDF anzeigen <Download className="h-4 w-4" />
-                  </Link>
-                </div>
-              </section>
-            )}
+              {/* Handbücher */}
+              {(handbook.handbuchUrls?.einbauanleitung1 || handbook.handbuchUrls?.einbauanleitung1Google || 
+                handbook.handbuchUrls?.einbauanleitung2 || handbook.handbuchUrls?.schriftlicheAnleitung || 
+                handbook.handbuchUrls?.schriftlicheAnleitungGoogle) && (
+                <AccordionItem value="handbooks" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-green-600" />
+                      <span className="font-semibold">Handbücher & Anleitungen</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {handbook.handbuchUrls?.einbauanleitung1 && (
+                        <DownloadButton url={handbook.handbuchUrls.einbauanleitung1} title="Einbauanleitung (1)" icon={Download} />
+                      )}
+                      {handbook.handbuchUrls?.einbauanleitung1Google && (
+                        <DownloadButton url={handbook.handbuchUrls.einbauanleitung1Google} title="Einbauanleitung (1) Google Drive" icon={Download} />
+                      )}
+                      {handbook.handbuchUrls?.einbauanleitung2 && (
+                        <DownloadButton url={handbook.handbuchUrls.einbauanleitung2} title="Einbauanleitung (2 - neue Serie)" icon={Download} />
+                      )}
+                      {handbook.handbuchUrls?.schriftlicheAnleitung && (
+                        <DownloadButton url={handbook.handbuchUrls.schriftlicheAnleitung} title="Schriftliche Anleitung Sonderausführung" icon={Download} />
+                      )}
+                      {handbook.handbuchUrls?.schriftlicheAnleitungGoogle && (
+                        <DownloadButton url={handbook.handbuchUrls.schriftlicheAnleitungGoogle} title="Schr. Anleit. Connect (Google Drive)" icon={Download} />
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            {handbook.wartungUrl && (
-              <section className="mb-10">
-                <h2 className="text-2xl font-semibold mb-4">Wartungsinformation</h2>
-                <div className="flex items-center gap-4">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                  <Link href={handbook.wartungUrl} target="_blank" className="text-blue-700 underline flex items-center gap-2">
-                    Wartungsinformation als PDF anzeigen <Download className="h-4 w-4" />
-                  </Link>
-                </div>
-              </section>
-            )}
+              {/* Datenblätter */}
+              {(handbook.datenblattUrls?.alt || handbook.datenblattUrls?.alteVersion || 
+                handbook.datenblattUrls?.neueVersion || handbook.datenblattUrls?.technische) && (
+                <AccordionItem value="datasheets" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <FileDown className="h-5 w-5 text-purple-600" />
+                      <span className="font-semibold">Datenblätter & Technische Informationen</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {handbook.datenblattUrls?.neueVersion && (
+                        <DownloadButton url={handbook.datenblattUrls.neueVersion} title="Produktdatenblatt (neue Version)" icon={Download} />
+                      )}
+                      {handbook.datenblattUrls?.alteVersion && (
+                        <DownloadButton url={handbook.datenblattUrls.alteVersion} title="Produktdatenblatt (alte Version)" icon={Download} />
+                      )}
+                      {handbook.datenblattUrls?.alt && (
+                        <DownloadButton url={handbook.datenblattUrls.alt} title="Produktdatenblatt (alt)" icon={Download} />
+                      )}
+                      {handbook.datenblattUrls?.technische && (
+                        <DownloadButton url={handbook.datenblattUrls.technische} title="Technische Datenblätter (Google Drive)" icon={Download} />
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Weitere Fragen?</h2>
-              <div className="bg-gray-100 rounded-lg p-6 flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1">
-                  <p className="mb-2 font-medium">Kontaktieren Sie uns gerne:</p>
-                  <p className="mb-1">
-                    <span className="font-semibold">E-Mail:</span> <a href="mailto:info@induwa.de" className="text-blue-700 underline">info@induwa.de</a>
-                  </p>
-                  <p>
-                    <span className="font-semibold">Telefon:</span> <a href="tel:+4925728070320" className="text-blue-700 underline">+49 2572 807 03 20</a>
-                  </p>
-                </div>
-              </div>
-            </section>
+              {/* Wartungsinformationen */}
+              {(handbook.wartungUrls?.plan || handbook.wartungUrls?.klein || 
+                handbook.wartungUrls?.gross || handbook.wartungUrls?.jaehrlich) && (
+                <AccordionItem value="maintenance" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-5 w-5 text-orange-600" />
+                      <span className="font-semibold">Wartungsinformationen</span>
+                      {handbook.wartungsinformationenFreischalten && (
+                        <Badge variant="secondary" className="ml-2">Freigeschaltet</Badge>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {handbook.wartungUrls?.plan && (
+                        <DownloadButton url={handbook.wartungUrls.plan} title="Wartungsplan" icon={Wrench} />
+                      )}
+                      {handbook.wartungUrls?.klein && (
+                        <DownloadButton url={handbook.wartungUrls.klein} title="Wartungstätigkeiten (kleine Wartung)" icon={Wrench} />
+                      )}
+                      {handbook.wartungUrls?.gross && (
+                        <DownloadButton url={handbook.wartungUrls.gross} title="Wartungstätigkeiten (große Wartung)" icon={Wrench} />
+                      )}
+                      {handbook.wartungUrls?.jaehrlich && (
+                        <DownloadButton url={handbook.wartungUrls.jaehrlich} title="Wartungstätigkeiten (jährlich)" icon={Wrench} />
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* EKF-Komponenten */}
+              {(handbook.ekfKomponenten?.kompressor || handbook.ekfKomponenten?.oxidator || 
+                handbook.ekfKomponenten?.dpr || handbook.ekfKomponenten?.rsl) && (
+                <AccordionItem value="ekf" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-red-600" />
+                      <span className="font-semibold">EKF-Komponenten</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {handbook.ekfKomponenten?.kompressor && (
+                        <LinkButton url={handbook.ekfKomponenten.kompressor} title="Kompressor EKF" icon={Settings} />
+                      )}
+                      {handbook.ekfKomponenten?.oxidator && (
+                        <LinkButton url={handbook.ekfKomponenten.oxidator} title="Oxidator EKF" icon={Settings} />
+                      )}
+                      {handbook.ekfKomponenten?.dpr && (
+                        <LinkButton url={handbook.ekfKomponenten.dpr} title="DPR-EKF" icon={Settings} />
+                      )}
+                      {handbook.ekfKomponenten?.rsl && (
+                        <LinkButton url={handbook.ekfKomponenten.rsl} title="RSL-EKF" icon={Settings} />
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* OKF-Komponenten */}
+              {(handbook.okfKomponenten?.niveausteuerung || handbook.okfKomponenten?.rueckspuelautomatik || 
+                handbook.okfKomponenten?.komplettsteuerung) && (
+                <AccordionItem value="okf" className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-indigo-600" />
+                      <span className="font-semibold">OKF-Komponenten</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="space-y-2">
+                      {handbook.okfKomponenten?.niveausteuerung && (
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <strong>Niveausteuerung OKF:</strong> {handbook.okfKomponenten.niveausteuerung}
+                        </div>
+                      )}
+                      {handbook.okfKomponenten?.rueckspuelautomatik && (
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <strong>Rücksülautomatik OKF:</strong> {handbook.okfKomponenten.rueckspuelautomatik}
+                        </div>
+                      )}
+                      {handbook.okfKomponenten?.komplettsteuerung && (
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <strong>Komplettsteuerung OKF:</strong> {handbook.okfKomponenten.komplettsteuerung}
+                        </div>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Metadaten */}
+              <AccordionItem value="metadata" className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-gray-600" />
+                    <span className="font-semibold">Metadaten & Informationen</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {handbook.collectionId && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Collection ID:</strong> {handbook.collectionId}
+                      </div>
+                    )}
+                    {handbook.localeId && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Locale ID:</strong> {handbook.localeId}
+                      </div>
+                    )}
+                    {handbook.itemId && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Item ID:</strong> {handbook.itemId}
+                      </div>
+                    )}
+                    {handbook.createdOn && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Erstellt am:</strong> {handbook.createdOn}
+                      </div>
+                    )}
+                    {handbook.updatedOn && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Aktualisiert am:</strong> {handbook.updatedOn}
+                      </div>
+                    )}
+                    {handbook.publishedOn && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <strong>Veröffentlicht am:</strong> {handbook.publishedOn}
+                      </div>
+                    )}
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <strong>Status:</strong> 
+                      {handbook.archived && <Badge variant="destructive" className="ml-2">Archiviert</Badge>}
+                      {handbook.draft && <Badge variant="secondary" className="ml-2">Entwurf</Badge>}
+                      {!handbook.archived && !handbook.draft && <Badge variant="default" className="ml-2">Aktiv</Badge>}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Zurück Button */}
+            <div className="mt-12 text-center">
+              <Link href="/produkthandbuecher">
+                <Button variant="outline">
+                  ← Zurück zur Übersicht
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </SidebarInset>
@@ -265,4 +540,4 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
   )
 }
 
-// generateMetadata entfernt - nicht kompatibel mit "use client" 
+// generateMetadata entfernt - nicht kompatibel mit "use client"
