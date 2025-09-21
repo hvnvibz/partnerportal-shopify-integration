@@ -157,7 +157,7 @@ export default function ProdukthandbuecherUebersicht() {
                   <Link key={handbook.slug} href={`/produkthandbuecher/${handbook.slug}`}>
                     <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden flex flex-col">
                       {handbook.titelbild && (
-                        <div className="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <div className="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center my-4 shadow-sm">
                           <img 
                             src={handbook.titelbild} 
                             alt={handbook.title}
