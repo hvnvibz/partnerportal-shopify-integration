@@ -265,11 +265,4 @@ export default function ProdukthandbuchDetail({ params }: { params: { slug: stri
   )
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  // Optional: Hole Handbuchdaten für besseren Title
-  return {
-    title: `Handbuch: ${slug} – Partnerportal INDUWA`,
-    description: `Handbuch für ${slug} zum Download und Nachlesen im Partnerportal INDUWA.`,
-  };
-} 
+// generateMetadata entfernt - nicht kompatibel mit "use client" 
