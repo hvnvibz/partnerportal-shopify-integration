@@ -100,6 +100,9 @@ export function Cart() {
   const clearCart = () => {
     setCartItems([])
     localStorage.setItem("cart", JSON.stringify([]))
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT))
   }
 
   // Process checkout
@@ -154,11 +157,21 @@ export function Cart() {
         if (process.env.NODE_ENV === "development") {
           console.log("Leite weiter zur Checkout-URL:", data.url);
         }
-        // Redirect zur Shopify Checkout-Seite
-        window.location.href = data.url;
         
-        // Optional: Warenkorb leeren nach erfolgreicher Checkout-Weiterleitung
-        // clearCart()
+        // Zeige Bestätigungsnachricht vor der Weiterleitung
+        toast({
+          title: "Checkout gestartet",
+          description: "Sie werden zur Kasse weitergeleitet. Ihr Warenkorb wird geleert.",
+          duration: 3000,
+        });
+        
+        // Warenkorb leeren nach erfolgreicher Checkout-Weiterleitung
+        clearCart();
+        
+        // Kurze Verzögerung für bessere UX, dann Weiterleitung
+        setTimeout(() => {
+          window.location.href = data.url;
+        }, 1000);
       } else {
         throw new Error("Keine Checkout-URL erhalten");
       }
@@ -175,6 +188,13 @@ export function Cart() {
       setIsCheckingOut(false);
     }
   };
+
+  // Schließe das Sheet automatisch nach erfolgreichem Checkout
+  useEffect(() => {
+    if (cartItems.length === 0 && isOpen) {
+      setIsOpen(false);
+    }
+  }, [cartItems.length, isOpen]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -287,7 +307,7 @@ export function Cart() {
                   {isCheckingOut ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Bitte warten...
+                      Weiterleitung...
                     </>
                   ) : (
                     "Zur Kasse"
