@@ -98,9 +98,7 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
               </div>
               <div className="mt-auto pt-2">
                 {hidePrices ? (
-                  <div className="text-sm text-gray-500 italic">
-                    Preis auf Anfrage
-                  </div>
+                  <div className="h-6"></div>
                 ) : (
                   <>
                     {product.compareAtPrice && product.compareAtPrice.amount ? (

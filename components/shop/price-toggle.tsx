@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Eye, EyeOff } from "lucide-react"
 
 export function PriceToggle() {
@@ -28,29 +28,29 @@ export function PriceToggle() {
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <Switch
-        id="price-toggle"
-        checked={hidePrices}
-        onCheckedChange={handleToggle}
-        className="data-[state=checked]:bg-[#8abfdf]"
-      />
-      <Label 
-        htmlFor="price-toggle" 
-        className="text-sm font-medium cursor-pointer flex items-center gap-1"
-      >
-        {hidePrices ? (
-          <>
-            <EyeOff className="h-4 w-4" />
-            Preise ausblenden
-          </>
-        ) : (
-          <>
-            <Eye className="h-4 w-4" />
-            Preise anzeigen
-          </>
-        )}
-      </Label>
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center space-x-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center">
+              {hidePrices ? (
+                <EyeOff className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-500" />
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{hidePrices ? "Preise anzeigen" : "Preise ausblenden"}</p>
+          </TooltipContent>
+        </Tooltip>
+        <Switch
+          id="price-toggle"
+          checked={hidePrices}
+          onCheckedChange={handleToggle}
+          className="data-[state=checked]:bg-[#8abfdf] scale-75"
+        />
+      </div>
+    </TooltipProvider>
   )
 }
