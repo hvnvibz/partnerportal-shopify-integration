@@ -14,6 +14,7 @@ import { ShopFilters } from "@/components/shop/shop-filters"
 import { getProducts, getCollections, getFallbackProducts, getProductTypes } from "@/lib/shopify-storefront"
 import { ShopContent } from "@/components/shop/shop-content"
 import { Cart } from "@/components/shop/cart"
+import { PriceToggle } from "@/components/shop/price-toggle"
 import { Loader2 } from "lucide-react"
 
 // Disable caching for this page to ensure fresh data on each visit
@@ -143,7 +144,10 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <Cart />
+          <div className="flex items-center gap-4">
+            <PriceToggle />
+            <Cart />
+          </div>
         </header>
         <div className="p-4 md:p-6 space-y-6">
           <div className="flex flex-col lg:flex-row gap-6">

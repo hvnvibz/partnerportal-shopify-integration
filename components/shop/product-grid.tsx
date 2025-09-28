@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -17,6 +20,29 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
+  const [hidePrices, setHidePrices] = useState(false)
+
+  // Lade den gespeicherten Zustand beim Mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("hidePrices")
+    if (savedState !== null) {
+      setHidePrices(JSON.parse(savedState))
+    }
+  }, [])
+
+  // Höre auf Preis-Sichtbarkeits-Änderungen
+  useEffect(() => {
+    const handlePriceVisibilityChange = (event: CustomEvent) => {
+      setHidePrices(event.detail.hidePrices)
+    }
+
+    window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    
+    return () => {
+      window.removeEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    }
+  }, [])
+
   // Custom Breakpoints: xl = 1350px, 2xl = 1920px (siehe tailwind.config.js)
   const gridClass =
     "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
@@ -71,15 +97,23 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
                 )}
               </div>
               <div className="mt-auto pt-2">
-                {product.compareAtPrice && product.compareAtPrice.amount ? (
-                  <div className="flex gap-2 items-center">
-                    <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
-                    <span className="text-gray-500 line-through text-xs">
-                      {formatPrice(product.compareAtPrice.amount ?? "0")}
-                    </span>
+                {hidePrices ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Preis auf Anfrage
                   </div>
                 ) : (
-                  <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                  <>
+                    {product.compareAtPrice && product.compareAtPrice.amount ? (
+                      <div className="flex gap-2 items-center">
+                        <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                        <span className="text-gray-500 line-through text-xs">
+                          {formatPrice(product.compareAtPrice.amount ?? "0")}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                    )}
+                  </>
                 )}
               </div>
             </div>

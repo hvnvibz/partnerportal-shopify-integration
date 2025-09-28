@@ -13,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Cart } from "@/components/shop/cart"
+import { PriceToggle } from "@/components/shop/price-toggle"
 import type { Product } from "@/types"
 
 export default async function ProductPage({ params }: { params: { handle: string } }) {
@@ -214,7 +215,10 @@ export default async function ProductPage({ params }: { params: { handle: string
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <Cart />
+            <div className="flex items-center gap-4">
+              <PriceToggle />
+              <Cart />
+            </div>
           </header>
           <div className="p-4">
             <div className="text-center py-12">
@@ -249,7 +253,10 @@ export default async function ProductPage({ params }: { params: { handle: string
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <Cart />
+          <div className="flex items-center gap-4">
+            <PriceToggle />
+            <Cart />
+          </div>
         </header>
         <div className="p-4">
           <Suspense fallback={<div>Loading product...</div>}>

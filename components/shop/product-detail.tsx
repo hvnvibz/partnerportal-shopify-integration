@@ -40,7 +40,29 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
   const [selectedImageIdx, setSelectedImageIdx] = useState(0)
   const [imageRatios, setImageRatios] = useState<number[]>([])
   const [maxRatio, setMaxRatio] = useState<number>(1)
+  const [hidePrices, setHidePrices] = useState(false)
   const { toast } = useToast()
+
+  // Lade den gespeicherten Zustand beim Mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("hidePrices")
+    if (savedState !== null) {
+      setHidePrices(JSON.parse(savedState))
+    }
+  }, [])
+
+  // Höre auf Preis-Sichtbarkeits-Änderungen
+  useEffect(() => {
+    const handlePriceVisibilityChange = (event: CustomEvent) => {
+      setHidePrices(event.detail.hidePrices)
+    }
+
+    window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    
+    return () => {
+      window.removeEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    }
+  }, [])
 
   // Get the variants from the product
   const variants = product.variants.edges.map(edge => edge.node)
@@ -316,14 +338,20 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{formatPrice(variantPrice)}</span>
-            {comparePrice && (
-              <span className="text-lg text-muted-foreground line-through">{formatPrice(comparePrice)}</span>
-            )}
-            {onSale && (
-              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
-                {discountPercentage}% Wiederverkaufsrabatt ({formatPrice(discountAmount)})
-              </span>
+            {hidePrices ? (
+              <span className="text-2xl font-bold text-gray-500 italic">Preis auf Anfrage</span>
+            ) : (
+              <>
+                <span className="text-2xl font-bold">{formatPrice(variantPrice)}</span>
+                {comparePrice && (
+                  <span className="text-lg text-muted-foreground line-through">{formatPrice(comparePrice)}</span>
+                )}
+                {onSale && (
+                  <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                    {discountPercentage}% Wiederverkaufsrabatt ({formatPrice(discountAmount)})
+                  </span>
+                )}
+              </>
             )}
           </div>
 
@@ -411,10 +439,17 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
               className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white"
               size="lg"
               onClick={addToCart}
-              disabled={isAddingToCart || !selectedVariant?.availableForSale}
+              disabled={isAddingToCart || !selectedVariant?.availableForSale || hidePrices}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
-              {isAddingToCart ? "Wird hinzugefügt..." : selectedVariant?.availableForSale ? "Zum Warenkorb" : "Nicht verfügbar"}
+              {hidePrices 
+                ? "Preis auf Anfrage" 
+                : isAddingToCart 
+                  ? "Wird hinzugefügt..." 
+                  : selectedVariant?.availableForSale 
+                    ? "Zum Warenkorb" 
+                    : "Nicht verfügbar"
+              }
             </Button>
           </div>
         </div>
