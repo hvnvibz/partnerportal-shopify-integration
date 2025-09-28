@@ -184,10 +184,15 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
         }
       } else {
         // Add new item to cart
+        // Nur Variantentitel hinzufügen, wenn er nicht "Default Title" ist
+        const variantTitle = selectedVariant?.title && selectedVariant.title !== "Default Title" 
+          ? ` - ${selectedVariant.title}` 
+          : "";
+        
         cartItems.push({
           id: product.id,
           variantId: selectedVariantId,
-          title: `${product.title} - ${selectedVariant?.title || ""}`,
+          title: `${product.title}${variantTitle}`,
           price: variantPrice,
           quantity: quantity,
           image: product.featuredImage?.url,
