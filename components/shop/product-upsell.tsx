@@ -1,6 +1,6 @@
 import type { Product } from "@/types"
 import { ProductUpsellAddButton } from "@/components/shop/product-upsell-item"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface ProductUpsellProps {
   upsell1aProducts: Product[]
@@ -10,6 +10,24 @@ interface ProductUpsellProps {
 }
 
 export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, singleUpsellProduct, mainProductId }: ProductUpsellProps) {
+  const [hidePrices, setHidePrices] = useState(false)
+  // Lade den gespeicherten Zustand beim Mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("hidePrices")
+    if (savedState !== null) {
+      setHidePrices(JSON.parse(savedState))
+    }
+  }, [])
+  // Höre auf Preis-Sichtbarkeits-Änderungen
+  useEffect(() => {
+    const handlePriceVisibilityChange = (event: CustomEvent) => {
+      setHidePrices(event.detail.hidePrices)
+    }
+    window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    return () => {
+      window.removeEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
+    }
+  }, [])
   // State für Radiobutton-Auswahl und "im Warenkorb"-Status für 1a
   const [selectedProductId1a, setSelectedProductId1a] = useState(upsell1aProducts.length > 0 ? upsell1aProducts[0].id : "")
   const [addedProductId1a, setAddedProductId1a] = useState<string | null>(null)
@@ -40,9 +58,11 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
               >
                 <span className="font-medium text-[0.85rem] break-words max-w-xs">{product.title}</span>
                 <div className="flex flex-row items-center justify-between w-full mt-4 gap-2" style={{ minHeight: 44 }}>
-                  <span className="font-bold text-[0.8rem] leading-none">
-                    {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                  </span>
+                  {!hidePrices && (
+                    <span className="font-bold text-[0.8rem] leading-none">
+                      {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    </span>
+                  )}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId1a && (
                       <ProductUpsellAddButton product={product} onAdd={() => setAddedProductId1a(product.id)} buttonTextClassName="text-[0.8em]" />
@@ -76,9 +96,11 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
               >
                 <span className="font-medium text-[0.85rem] break-words max-w-xs">{product.title}</span>
                 <div className="flex flex-row items-center justify-between w-full mt-4 gap-2" style={{ minHeight: 44 }}>
-                  <span className="font-bold text-[0.8rem] leading-none">
-                    {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                  </span>
+                  {!hidePrices && (
+                    <span className="font-bold text-[0.8rem] leading-none">
+                      {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    </span>
+                  )}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId2a && (
                       <ProductUpsellAddButton product={product} onAdd={() => setAddedProductId2a(product.id)} buttonTextClassName="text-[0.8em]" />
@@ -102,9 +124,11 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
           >
             <div className="flex-1 font-medium text-[0.85rem] break-words max-w-xs">{singleUpsellProduct.title}</div>
             <div className="flex flex-row items-center gap-4 min-h-[40px] mr-4">
-              <span className="font-bold text-[0.8rem] leading-none">
-                {Number(singleUpsellProduct.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-              </span>
+              {!hidePrices && (
+                <span className="font-bold text-[0.8rem] leading-none">
+                  {Number(singleUpsellProduct.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                </span>
+              )}
               <ProductUpsellAddButton product={singleUpsellProduct} buttonTextClassName="text-[0.8em]" />
             </div>
           </div>

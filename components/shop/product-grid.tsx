@@ -63,7 +63,7 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
           >
             {/* Wrapper für Sale-Tag mit fixer Mindesthöhe */}
             <div className="min-h-[2.2rem] flex items-start bg-transparent">
-              {product.compareAtPrice && product.compareAtPrice.amount ? (
+              {!hidePrices && product.compareAtPrice && product.compareAtPrice.amount ? (
                 <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
                   {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
                 </div>

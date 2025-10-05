@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Plus, Check, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,18 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>(products.map(p => p.id));
   const [adding, setAdding] = useState(false);
   const [quantities, setQuantities] = useState<{ [id: string]: number }>(() => Object.fromEntries(products.map(p => [p.id, 1])));
+  const [hidePrices, setHidePrices] = useState(false);
+
+  // Preis-Sichtbarkeit laden und auf Änderungen reagieren
+  useEffect(() => {
+    const savedState = localStorage.getItem("hidePrices");
+    if (savedState !== null) setHidePrices(JSON.parse(savedState));
+  }, []);
+  useEffect(() => {
+    const handle = (event: CustomEvent) => setHidePrices(event.detail.hidePrices);
+    window.addEventListener("price-visibility-changed", handle as EventListener);
+    return () => window.removeEventListener("price-visibility-changed", handle as EventListener);
+  }, []);
   
   const toggleProduct = (id: string) => {
     setSelectedIds(ids => ids.includes(id) ? ids.filter(pid => pid !== id) : [...ids, id]);
@@ -73,7 +85,9 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
               )}
             </div>
             <div className="text-xs font-medium text-center mb-1 line-clamp-2 min-h-[2.5em]">{product.title}</div>
-            <div className="w-full text-center font-bold text-sm mb-2">{Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</div>
+            {!hidePrices && (
+              <div className="w-full text-center font-bold text-sm mb-2">{Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</div>
+            )}
             {/* Mengen-Auswahl am unteren Rand */}
             <div className="absolute left-0 right-0 bottom-6 flex items-center justify-center gap-2">
               <button
@@ -103,10 +117,14 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
           </div>
         ))}
         <div className="flex flex-col justify-center items-start ml-8 min-w-[180px]">
-          <div className="text-gray-700 text-sm mb-2">Gesamtpreis:</div>
-          <div className="text-xl font-bold mb-4">
-            {totalPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-          </div>
+          {!hidePrices && (
+            <>
+              <div className="text-gray-700 text-sm mb-2">Gesamtpreis:</div>
+              <div className="text-xl font-bold mb-4">
+                {totalPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+              </div>
+            </>
+          )}
           <Button
             className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded transition"
             onClick={addAllToCart}
