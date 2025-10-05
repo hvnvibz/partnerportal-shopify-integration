@@ -201,7 +201,7 @@ export function ProductUpsellItem({ product, hidePrice, hideImage, hideTitle }: 
   )
 }
 
-export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName }: { product: Product, onAdd?: (product: Product) => void, buttonTextClassName?: string }) {
+export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName, disabled }: { product: Product, onAdd?: (product: Product) => void, buttonTextClassName?: string, disabled?: boolean }) {
   const [isSelected, setIsSelected] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
@@ -211,6 +211,7 @@ export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName }: 
 
   // Function to add item to cart
   const addToCart = async () => {
+    if (disabled) return;
     try {
       setIsAddingToCart(true)
       const storedCart = localStorage.getItem("cart")
@@ -309,7 +310,7 @@ export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName }: 
           : "border-[#8abfdf] text-[#8abfdf] hover:bg-[#8abfdf]/10 focus:ring-[#8abfdf] focus:border-[#8abfdf]"
       }
       onClick={addToCart}
-      disabled={isAddingToCart}
+      disabled={isAddingToCart || !!disabled}
     >
       {isSelected ? (
         <span className={`flex flex-row items-center gap-1 ${buttonTextClassName || ''}`}>

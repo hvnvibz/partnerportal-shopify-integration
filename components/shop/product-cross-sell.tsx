@@ -41,6 +41,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
 
   // Fügt alle ausgewählten Produkte nacheinander in den Warenkorb
   const addAllToCart = async () => {
+    if (hidePrices) return; // block when prices are hidden
     setAdding(true);
     let addedCount = 0;
     for (const product of selectedProducts) {
@@ -128,7 +129,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
           <Button
             className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded transition"
             onClick={addAllToCart}
-            disabled={selectedIds.length === 0 || adding}
+            disabled={selectedIds.length === 0 || adding || hidePrices}
           >
             Alle {selectedIds.length} in den Warenkorb
           </Button>

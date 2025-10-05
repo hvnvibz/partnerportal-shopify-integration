@@ -65,7 +65,7 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
                   )}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId1a && (
-                      <ProductUpsellAddButton product={product} onAdd={() => setAddedProductId1a(product.id)} buttonTextClassName="text-[0.8em]" />
+                      <ProductUpsellAddButton disabled={hidePrices} product={product} onAdd={() => setAddedProductId1a(product.id)} buttonTextClassName="text-[0.8em]" />
                     )}
                     {addedProductId1a === product.id && (
                       <span className="text-green-600 text-xs font-semibold ml-2">Im Warenkorb</span>
@@ -103,7 +103,7 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
                   )}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId2a && (
-                      <ProductUpsellAddButton product={product} onAdd={() => setAddedProductId2a(product.id)} buttonTextClassName="text-[0.8em]" />
+                      <ProductUpsellAddButton disabled={hidePrices} product={product} onAdd={() => setAddedProductId2a(product.id)} buttonTextClassName="text-[0.8em]" />
                     )}
                     {addedProductId2a === product.id && (
                       <span className="text-green-600 text-xs font-semibold ml-2">Im Warenkorb</span>
@@ -129,7 +129,7 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
                   {Number(singleUpsellProduct.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
               )}
-              <ProductUpsellAddButton product={singleUpsellProduct} buttonTextClassName="text-[0.8em]" />
+              <ProductUpsellAddButton disabled={hidePrices} product={singleUpsellProduct} buttonTextClassName="text-[0.8em]" />
             </div>
           </div>
         </div>
