@@ -29,10 +29,12 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
   }, []);
   
   const toggleProduct = (id: string) => {
+    if (hidePrices) return;
     setSelectedIds(ids => ids.includes(id) ? ids.filter(pid => pid !== id) : [...ids, id]);
   };
 
   const setQuantity = (id: string, qty: number) => {
+    if (hidePrices) return;
     setQuantities(q => ({ ...q, [id]: Math.max(1, qty) }));
   };
 
@@ -77,6 +79,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
               onChange={() => toggleProduct(product.id)}
               className="absolute top-2 right-2 z-10 w-5 h-5 accent-yellow-500"
               aria-label="Produkt auswählen"
+              disabled={hidePrices}
             />
             <div className="w-20 h-20 mb-8 relative">
               {product.featuredImage ? (
@@ -95,7 +98,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
                 type="button"
                 className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
                 onClick={() => setQuantity(product.id, (quantities[product.id] || 1) - 1)}
-                disabled={quantities[product.id] <= 1}
+                disabled={quantities[product.id] <= 1 || hidePrices}
                 aria-label="Menge verringern"
               >
                 <Minus className="w-4 h-4" />
@@ -106,6 +109,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
                 className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
                 onClick={() => setQuantity(product.id, (quantities[product.id] || 1) + 1)}
                 aria-label="Menge erhöhen"
+                disabled={hidePrices}
               >
                 <Plus className="w-4 h-4" />
               </button>
