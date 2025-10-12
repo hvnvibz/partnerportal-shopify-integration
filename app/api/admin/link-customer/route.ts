@@ -5,11 +5,19 @@ import { getShopifyCustomer } from "@/lib/shopify-admin";
 // Admin client mit Service Role Key
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'temp-key'
 );
 
 export async function POST(req: Request) {
   try {
+    // Prüfe Service Role Key
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY === 'temp-key') {
+      return NextResponse.json(
+        { error: "Service Role Key nicht konfiguriert. Bitte SUPABASE_SERVICE_ROLE_KEY in Vercel setzen." },
+        { status: 500 }
+      );
+    }
+
     const { shopifyCustomerId, email } = await req.json();
 
     if (!shopifyCustomerId || !email) {
