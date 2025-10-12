@@ -12,7 +12,16 @@ export default function RegistrationPage() {
     customerNumber: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '',
+    address: {
+      address1: '',
+      address2: '',
+      city: '',
+      province: '',
+      country: 'Deutschland',
+      zip: ''
+    }
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,10 +31,22 @@ export default function RegistrationPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name.startsWith('address.')) {
+      const addressField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [addressField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -80,52 +101,25 @@ export default function RegistrationPage() {
     setLoading(true);
 
     try {
-      // Registriere den Benutzer bei Supabase
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            company: formData.company,
-            customer_number: formData.customerNumber,
-          }
-        }
-        // options: { captchaToken }
+      // Registriere den Benutzer über die neue API-Route
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
-      if (authError) {
-        // Übersetze Supabase-Fehlermeldungen ins Deutsche
-        let germanError = authError.message;
-        
-        switch (authError.message) {
-          case 'User already registered':
-            germanError = 'Diese E-Mail-Adresse ist bereits registriert.';
-            break;
-          case 'Password should be at least 6 characters':
-            germanError = 'Das Passwort muss mindestens 6 Zeichen lang sein.';
-            break;
-          case 'Invalid email':
-            germanError = 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
-            break;
-          case 'Signup is disabled':
-            germanError = 'Die Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator.';
-            break;
-          case 'Email rate limit exceeded':
-            germanError = 'Zu viele E-Mail-Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
-            break;
-          default:
-            germanError = `Registrierungsfehler: ${authError.message}`;
-        }
-        
-        setError(germanError);
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Registrierung fehlgeschlagen');
         // setCaptchaToken(null);
         // captchaRef.current?.resetCaptcha();
       } else {
         // Registrierung erfolgreich
         setError(null);
-        alert('Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail-Adresse und bestätigen Sie Ihr Konto.');
+        alert(result.message || 'Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail-Adresse und bestätigen Sie Ihr Konto.');
         router.push('/anmelden');
       }
     } catch (err) {
@@ -205,6 +199,88 @@ export default function RegistrationPage() {
               onChange={handleInputChange}
               required
             />
+
+            <label className="block mb-1 text-base font-semibold text-gray-800">Telefonnummer (optional)</label>
+            <input
+              type="tel"
+              name="phone"
+              className="w-full p-3 mb-4 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+              placeholder="+49 123 456789"
+              value={formData.phone}
+              onChange={handleInputChange}
+            />
+
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Adresse (optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Straße *</label>
+                  <input
+                    type="text"
+                    name="address.address1"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="Musterstraße 123"
+                    value={formData.address.address1}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Adresszusatz</label>
+                  <input
+                    type="text"
+                    name="address.address2"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="Etage 2"
+                    value={formData.address.address2}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">PLZ *</label>
+                  <input
+                    type="text"
+                    name="address.zip"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="12345"
+                    value={formData.address.zip}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Stadt *</label>
+                  <input
+                    type="text"
+                    name="address.city"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="Musterstadt"
+                    value={formData.address.city}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Bundesland</label>
+                  <input
+                    type="text"
+                    name="address.province"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="Bayern"
+                    value={formData.address.province}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Land *</label>
+                  <input
+                    type="text"
+                    name="address.country"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-sm"
+                    placeholder="Deutschland"
+                    value={formData.address.country}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>

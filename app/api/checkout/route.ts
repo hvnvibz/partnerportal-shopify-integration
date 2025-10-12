@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 import { createCart } from "@/lib/shopify-cart"
+import { supabase } from "@/lib/supabaseClient"
+import { generateDirectCheckoutUrl } from "@/lib/shopify-customer-account"
 
 export async function POST(req: Request) {
   try {
-    const { items, discounts, note } = await req.json()
+    const { items, discounts, note, authToken } = await req.json()
 
     if (process.env.NODE_ENV === "development") {
       console.log("Checkout API: Empfangene Warenkorbdaten:", JSON.stringify(items, null, 2));
@@ -60,11 +62,51 @@ export async function POST(req: Request) {
       console.log("Checkout erfolgreich, URL:", cart.checkoutUrl);
     }
 
+    // Check if user is authenticated and pre-fill customer data
+    let checkoutUrl = cart.checkoutUrl;
+    let customerPrefilledUrl = null;
+
+    if (authToken) {
+      try {
+        // Verify Supabase JWT token
+        const { data: { user }, error: authError } = await supabase.auth.getUser(authToken);
+        
+        if (!authError && user) {
+          // Get user profile with customer data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('phone, address')
+            .eq('id', user.id)
+            .single();
+
+          // Create customer data for pre-fill
+          const customerData = {
+            email: user.email!,
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            phone: profile?.phone,
+            addresses: profile?.address ? [profile.address] : undefined,
+          };
+
+          // Generate checkout URL with customer data pre-fill
+          customerPrefilledUrl = generateDirectCheckoutUrl(customerData);
+          
+          if (process.env.NODE_ENV === "development") {
+            console.log("Customer pre-filled URL generiert:", customerPrefilledUrl);
+          }
+        }
+      } catch (customerError) {
+        console.error("Customer pre-fill Fehler:", customerError);
+        // Fallback to regular checkout URL
+      }
+    }
+
     // Sende die Checkout-URL und Cart-ID für die Client-seitige Weiterleitung
     return NextResponse.json({
       success: true,
-      url: cart.checkoutUrl,
+      url: customerPrefilledUrl || checkoutUrl,
       cartId: cart.id,
+      customerPrefilled: !!customerPrefilledUrl,
     })
   } catch (error: any) {
     if (process.env.NODE_ENV === "development") {
