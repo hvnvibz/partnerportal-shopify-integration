@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@supabase/supabase-js";
 import { getShopifyCustomer } from "@/lib/shopify-admin";
+
+// Admin client mit Service Role Key
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     // Prüfe, ob bereits ein Supabase-Benutzer mit dieser E-Mail existiert
-    const { data: existingUser, error: userError } = await supabase.auth.admin.getUserByEmail(email);
+    const { data: existingUser, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
     
     if (userError && userError.message !== 'User not found') {
       console.error('Error checking existing user:', userError);
@@ -26,7 +32,7 @@ export async function POST(req: Request) {
 
     if (existingUser?.user) {
       // Bestehender Benutzer gefunden - verknüpfe mit Shopify-Kunde
-      const { error: profileError } = await supabase
+      const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .update({
           shopify_customer_id: shopifyCustomerId,
@@ -78,7 +84,7 @@ export async function POST(req: Request) {
     }
 
     // Erstelle Supabase-Benutzer
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: shopifyCustomer.email,
       password: generateRandomPassword(), // Temporäres Passwort
       email_confirm: true, // E-Mail sofort bestätigen
@@ -99,7 +105,7 @@ export async function POST(req: Request) {
     }
 
     // Aktualisiere Profil mit Shopify-Daten
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         shopify_customer_id: shopifyCustomer.id,
@@ -129,7 +135,7 @@ export async function POST(req: Request) {
 
     // Sende E-Mail mit Login-Daten
     try {
-      await supabase.auth.admin.generateLink({
+      await supabaseAdmin.auth.admin.generateLink({
         type: 'recovery',
         email: shopifyCustomer.email,
       });
