@@ -36,12 +36,12 @@ export async function POST(req: Request) {
     // Prüfe, ob bereits ein Supabase-Benutzer mit dieser E-Mail existiert
     let existingUser;
     try {
-      // Verwende die korrekte Admin API-Syntax
-      const { data, error: userError } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1,
-        filter: `email.eq.${email}`
-      });
+      // Verwende direkte Datenbankabfrage über auth.users
+      const { data: authUsers, error: userError } = await supabaseAdmin
+        .from('auth.users')
+        .select('id, email, created_at')
+        .eq('email', email)
+        .limit(1);
       
       if (userError) {
         console.error('Error checking existing user:', userError);
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         );
       }
       
-      existingUser = data?.users?.[0] ? { user: data.users[0] } : null;
+      existingUser = authUsers?.[0] ? { user: authUsers[0] } : null;
     } catch (supabaseError: any) {
       console.error('Supabase connection error:', supabaseError);
       return NextResponse.json(
@@ -122,73 +122,46 @@ export async function POST(req: Request) {
       );
     }
 
-    // Erstelle Supabase-Benutzer
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: shopifyCustomer.email,
-      password: generateRandomPassword(), // Temporäres Passwort
-      email_confirm: true, // E-Mail sofort bestätigen
-      user_metadata: {
-        first_name: shopifyCustomer.first_name,
-        last_name: shopifyCustomer.last_name,
-        company: extractCompanyFromNote(shopifyCustomer.note),
-        customer_number: extractCustomerNumberFromNote(shopifyCustomer.note),
-      }
+    // Erstelle Supabase-Benutzer über SQL-Funktion
+    const { data: authData, error: authError } = await supabaseAdmin.rpc('create_user_with_profile', {
+      user_email: shopifyCustomer.email,
+      user_password: generateRandomPassword(),
+      first_name: shopifyCustomer.first_name,
+      last_name: shopifyCustomer.last_name,
+      company: extractCompanyFromNote(shopifyCustomer.note),
+      customer_number: extractCustomerNumberFromNote(shopifyCustomer.note),
+      shopify_customer_id: shopifyCustomer.id,
+      phone: shopifyCustomer.phone,
+      address: shopifyCustomer.default_address ? {
+        company: shopifyCustomer.default_address.company,
+        address1: shopifyCustomer.default_address.address1,
+        address2: shopifyCustomer.default_address.address2,
+        city: shopifyCustomer.default_address.city,
+        province: shopifyCustomer.default_address.province,
+        country: shopifyCustomer.default_address.country,
+        zip: shopifyCustomer.default_address.zip,
+        phone: shopifyCustomer.default_address.phone,
+      } : null,
+      shopify_verified: shopifyCustomer.verified_email,
+      shopify_accepts_marketing: shopifyCustomer.accepts_marketing,
+      shopify_tags: shopifyCustomer.tags,
+      shopify_note: shopifyCustomer.note,
     });
 
     if (authError) {
       console.error('Error creating user:', authError);
       return NextResponse.json(
-        { error: "Fehler beim Erstellen des Benutzers" },
+        { error: `Fehler beim Erstellen des Benutzers: ${authError.message}` },
         { status: 500 }
       );
-    }
-
-    // Aktualisiere Profil mit Shopify-Daten
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        shopify_customer_id: shopifyCustomer.id,
-        phone: shopifyCustomer.phone,
-        address: shopifyCustomer.default_address ? {
-          company: shopifyCustomer.default_address.company,
-          address1: shopifyCustomer.default_address.address1,
-          address2: shopifyCustomer.default_address.address2,
-          city: shopifyCustomer.default_address.city,
-          province: shopifyCustomer.default_address.province,
-          country: shopifyCustomer.default_address.country,
-          zip: shopifyCustomer.default_address.zip,
-          phone: shopifyCustomer.default_address.phone,
-        } : null,
-        shopify_verified: shopifyCustomer.verified_email,
-        shopify_accepts_marketing: shopifyCustomer.accepts_marketing,
-        shopify_tags: shopifyCustomer.tags,
-        shopify_note: shopifyCustomer.note,
-      })
-      .eq('id', authData.user.id);
-
-    if (profileError) {
-      console.error('Error updating profile:', profileError);
-      // Benutzer wurde erstellt, aber Profil-Update fehlgeschlagen
-      // Das ist nicht kritisch, kann später manuell korrigiert werden
-    }
-
-    // Sende E-Mail mit Login-Daten
-    try {
-      await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
-        email: shopifyCustomer.email,
-      });
-    } catch (emailError) {
-      console.error('Error sending recovery email:', emailError);
-      // E-Mail-Versand ist nicht kritisch
     }
 
     return NextResponse.json({
       success: true,
       message: "Kunde erfolgreich verknüpft",
       user: {
-        id: authData.user.id,
-        email: authData.user.email,
+        id: authData.user_id,
+        email: shopifyCustomer.email,
         shopify_customer_id: shopifyCustomer.id,
       }
     });
