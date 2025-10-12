@@ -28,12 +28,23 @@ export async function POST(req: Request) {
     }
 
     // Prüfe, ob bereits ein Supabase-Benutzer mit dieser E-Mail existiert
-    const { data: existingUser, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
-    
-    if (userError && userError.message !== 'User not found') {
-      console.error('Error checking existing user:', userError);
+    let existingUser;
+    try {
+      const { data, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+      
+      if (userError && userError.message !== 'User not found') {
+        console.error('Error checking existing user:', userError);
+        return NextResponse.json(
+          { error: `Fehler beim Prüfen des bestehenden Benutzers: ${userError.message}` },
+          { status: 500 }
+        );
+      }
+      
+      existingUser = data;
+    } catch (supabaseError: any) {
+      console.error('Supabase connection error:', supabaseError);
       return NextResponse.json(
-        { error: "Fehler beim Prüfen des bestehenden Benutzers" },
+        { error: `Supabase-Verbindungsfehler: ${supabaseError.message}` },
         { status: 500 }
       );
     }
@@ -83,11 +94,20 @@ export async function POST(req: Request) {
     }
 
     // Hole Shopify-Kundendaten
-    const shopifyCustomer = await getShopifyCustomer(shopifyCustomerId);
-    if (!shopifyCustomer) {
+    let shopifyCustomer;
+    try {
+      shopifyCustomer = await getShopifyCustomer(shopifyCustomerId);
+      if (!shopifyCustomer) {
+        return NextResponse.json(
+          { error: "Shopify-Kunde nicht gefunden" },
+          { status: 404 }
+        );
+      }
+    } catch (shopifyError: any) {
+      console.error('Error fetching Shopify customer:', shopifyError);
       return NextResponse.json(
-        { error: "Shopify-Kunde nicht gefunden" },
-        { status: 404 }
+        { error: `Fehler beim Laden der Shopify-Kundendaten: ${shopifyError.message}` },
+        { status: 500 }
       );
     }
 
