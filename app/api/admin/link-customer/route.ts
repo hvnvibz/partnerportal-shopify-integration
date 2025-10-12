@@ -5,7 +5,13 @@ import { getShopifyCustomer } from "@/lib/shopify-admin";
 // Admin client mit Service Role Key
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'temp-key'
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'temp-key',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
 );
 
 export async function POST(req: Request) {
@@ -30,9 +36,14 @@ export async function POST(req: Request) {
     // Prüfe, ob bereits ein Supabase-Benutzer mit dieser E-Mail existiert
     let existingUser;
     try {
-      const { data, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+      // Verwende die korrekte Admin API-Syntax
+      const { data, error: userError } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+        filter: `email.eq.${email}`
+      });
       
-      if (userError && userError.message !== 'User not found') {
+      if (userError) {
         console.error('Error checking existing user:', userError);
         return NextResponse.json(
           { error: `Fehler beim Prüfen des bestehenden Benutzers: ${userError.message}` },
@@ -40,7 +51,7 @@ export async function POST(req: Request) {
         );
       }
       
-      existingUser = data;
+      existingUser = data?.users?.[0] ? { user: data.users[0] } : null;
     } catch (supabaseError: any) {
       console.error('Supabase connection error:', supabaseError);
       return NextResponse.json(
