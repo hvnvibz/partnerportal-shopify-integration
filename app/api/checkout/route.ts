@@ -40,15 +40,15 @@ export async function POST(req: Request) {
       };
     });
 
+    // Notiz auf 26 Zeichen begrenzen
+    const safeNote = typeof note === "string" ? note.slice(0, 26) : "";
+
     // Erstelle Cart mit der Shopify Storefront API
     console.log("[CheckoutAPI] Erzeuge Cart mit", {
       linesCount: lines.length,
       hasDiscounts: Array.isArray(discounts) && discounts.length > 0,
       noteLength: safeNote.length,
     })
-
-    // Notiz auf 26 Zeichen begrenzen
-    const safeNote = typeof note === "string" ? note.slice(0, 26) : "";
 
     let cart
     try {
