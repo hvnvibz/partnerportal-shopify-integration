@@ -50,11 +50,21 @@ export async function POST(req: Request) {
     // Notiz auf 26 Zeichen begrenzen
     const safeNote = typeof note === "string" ? note.slice(0, 26) : "";
 
-    const cart = await createCart({
-      lines,
-      discountCodes: discounts,
-      note: safeNote,
-    })
+    let cart
+    try {
+      cart = await createCart({
+        lines,
+        discountCodes: discounts,
+        note: safeNote,
+      })
+    } catch (e: any) {
+      console.error("[CheckoutAPI] createCart failed:", e)
+      return NextResponse.json({
+        success: false,
+        step: "createCart",
+        error: e?.message || String(e),
+      }, { status: 500 })
+    }
 
     // Debug: Cart-Details
     console.log("[CheckoutAPI] Cart erstellt:", { id: cart.id, checkoutUrl: cart.checkoutUrl })
@@ -67,9 +77,9 @@ export async function POST(req: Request) {
       customerPrefilled: false,
     })
   } catch (error: any) {
-    console.error("[CheckoutAPI] Fehler beim Erstellen des Carts:", error)
+    console.error("[CheckoutAPI] Uncaught error:", error)
     return NextResponse.json(
-      { error: typeof error?.message === 'string' ? error.message : String(error) },
+      { step: "uncaught", error: typeof error?.message === 'string' ? error.message : String(error), stack: error?.stack },
       { status: 500 }
     )
   }
