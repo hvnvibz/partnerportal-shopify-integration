@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { createShopifyCustomer, customerExists } from "@/lib/shopify-admin";
-import { createCustomerAccount } from "@/lib/shopify-customer-account";
 
 export async function POST(req: Request) {
   try {

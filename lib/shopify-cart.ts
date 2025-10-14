@@ -81,10 +81,8 @@ export async function createCart(input: CartCreateInput) {
       }),
     })
 
-    // Logge die vollständige Antwort für Debugging-Zwecke
-    if (process.env.NODE_ENV === "development") {
-      console.log("Shopify API Antwort Status:", response.status);
-    }
+    // Logge Response-Metadaten
+    console.log("[ShopifyCart] Response Status:", response.status)
     
     if (!response.ok) {
       // Versuche, die Fehlerinformationen zu extrahieren
@@ -94,42 +92,33 @@ export async function createCart(input: CartCreateInput) {
       } catch (e) {
         errorText = "Fehlertext konnte nicht gelesen werden";
       }
-      if (process.env.NODE_ENV === "development") {
-        console.error("Shopify API Fehler:", errorText);
-      }
+      console.error("[ShopifyCart] HTTP Fehler:", errorText)
       throw new Error(`HTTP error! status: ${response.status}. Details: ${errorText}`)
     }
 
     const responseData = await response.json()
-    if (process.env.NODE_ENV === "development") {
-      console.log("Shopify API Antwort:", JSON.stringify(responseData, null, 2));
-    }
+    console.log("[ShopifyCart] GraphQL Antwort erhalten")
     
     const { data, errors } = responseData
 
     if (errors) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Shopify GraphQL errors:", errors)
-      }
+      console.error("[ShopifyCart] GraphQL errors:", errors)
       throw new Error(`Shopify cart creation failed: ${errors[0].message}`)
     }
 
     if (data?.cartCreate?.userErrors?.length > 0) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Cart user errors:", data.cartCreate.userErrors)
-      }
+      console.error("[ShopifyCart] Cart user errors:", data.cartCreate.userErrors)
       throw new Error(`Cart creation failed: ${data.cartCreate.userErrors[0].message}`)
     }
 
     if (!data?.cartCreate?.cart?.checkoutUrl) {
+      console.error("[ShopifyCart] Missing checkoutUrl in response:", data)
       throw new Error("No checkout URL received from Shopify")
     }
 
     return data.cartCreate.cart
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("Error creating cart:", error)
-    }
+    console.error("[ShopifyCart] Error creating cart:", error)
     throw error
   }
 } 

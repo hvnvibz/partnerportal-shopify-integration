@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
 import { createCart } from "@/lib/shopify-cart"
-import { supabase } from "@/lib/supabaseClient"
-import { generateDirectCheckoutUrl } from "@/lib/shopify-customer-account"
+// Removed auth-based checkout URL personalization to restore default Shopify checkout handoff
 
 export async function POST(req: Request) {
   try {
-    const { items, discounts, note, authToken } = await req.json()
+    const { items, discounts, note } = await req.json()
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("Checkout API: Empfangene Warenkorbdaten:", JSON.stringify(items, null, 2));
-    }
+    // Debug: Eingehende Checkout-Daten
+    console.log("[CheckoutAPI] Eingehende Items:", Array.isArray(items) ? items.length : 0)
+    if (discounts && discounts.length) console.log("[CheckoutAPI] Discounts:", discounts)
+    if (note) console.log("[CheckoutAPI] Note:", note)
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -41,13 +41,11 @@ export async function POST(req: Request) {
     });
 
     // Erstelle Cart mit der Shopify Storefront API
-    if (process.env.NODE_ENV === "development") {
-      console.log("Sende an Shopify: ", JSON.stringify({
-        lines,
-        discountCodes: discounts,
-        note: note,
-      }, null, 2));
-    }
+    console.log("[CheckoutAPI] Erzeuge Cart mit", {
+      linesCount: lines.length,
+      hasDiscounts: Array.isArray(discounts) && discounts.length > 0,
+      noteLength: safeNote.length,
+    })
 
     // Notiz auf 26 Zeichen begrenzen
     const safeNote = typeof note === "string" ? note.slice(0, 26) : "";
@@ -58,60 +56,18 @@ export async function POST(req: Request) {
       note: safeNote,
     })
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("Checkout erfolgreich, URL:", cart.checkoutUrl);
-    }
+    // Debug: Cart-Details
+    console.log("[CheckoutAPI] Cart erstellt:", { id: cart.id, checkoutUrl: cart.checkoutUrl })
 
-    // Check if user is authenticated and pre-fill customer data
-    let checkoutUrl = cart.checkoutUrl;
-    let customerPrefilledUrl = null;
-
-    if (authToken) {
-      try {
-        // Verify Supabase JWT token
-        const { data: { user }, error: authError } = await supabase.auth.getUser(authToken);
-        
-        if (!authError && user) {
-          // Get user profile with customer data
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('phone, address')
-            .eq('id', user.id)
-            .single();
-
-          // Create customer data for pre-fill
-          const customerData = {
-            email: user.email!,
-            first_name: user.user_metadata?.first_name || '',
-            last_name: user.user_metadata?.last_name || '',
-            phone: profile?.phone,
-            addresses: profile?.address ? [profile.address] : undefined,
-          };
-
-          // Generate checkout URL with customer data pre-fill
-          customerPrefilledUrl = generateDirectCheckoutUrl(customerData);
-          
-          if (process.env.NODE_ENV === "development") {
-            console.log("Customer pre-filled URL generiert:", customerPrefilledUrl);
-          }
-        }
-      } catch (customerError) {
-        console.error("Customer pre-fill Fehler:", customerError);
-        // Fallback to regular checkout URL
-      }
-    }
-
-    // Sende die Checkout-URL und Cart-ID für die Client-seitige Weiterleitung
+    // Antwort für Client
     return NextResponse.json({
       success: true,
-      url: customerPrefilledUrl || checkoutUrl,
+      url: cart.checkoutUrl,
       cartId: cart.id,
-      customerPrefilled: !!customerPrefilledUrl,
+      customerPrefilled: false,
     })
   } catch (error: any) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("Fehler beim Erstellen des Carts:", error)
-    }
+    console.error("[CheckoutAPI] Fehler beim Erstellen des Carts:", error)
     return NextResponse.json(
       { error: error.message || "Fehler beim Erstellen des Carts" },
       { status: 500 }

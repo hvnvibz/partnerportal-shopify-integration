@@ -16,7 +16,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { useUser } from "@/lib/useUser"
-import { supabase } from "@/lib/supabaseClient"
 
 // Define cart item type
 export interface CartItem {
@@ -119,13 +118,6 @@ export function Cart() {
         console.log("Starte Checkout mit Artikeln:", cartItems);
       }
       
-      // Get auth token if user is logged in
-      let authToken = null;
-      if (user) {
-        const { data: { session } } = await supabase.auth.getSession();
-        authToken = session?.access_token;
-      }
-      
       // Sende den Warenkorb an die API-Route
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -138,8 +130,6 @@ export function Cart() {
           // discounts: ["RABATTCODE"],
           // Notizfeld übergeben
           note: cartNote,
-          // Auth token für Multipass
-          authToken: authToken,
         }),
       })
 
@@ -171,9 +161,7 @@ export function Cart() {
         }
         
         // Zeige Bestätigungsnachricht vor der Weiterleitung
-        const toastMessage = data.customerPrefilled 
-          ? "Sie werden zur Kasse weitergeleitet. Ihre Kundendaten werden vorausgefüllt."
-          : "Sie werden zur Kasse weitergeleitet. Ihr Warenkorb wird geleert.";
+        const toastMessage = "Sie werden zur Kasse weitergeleitet. Ihr Warenkorb wird geleert.";
           
         toast({
           title: "Checkout gestartet",
