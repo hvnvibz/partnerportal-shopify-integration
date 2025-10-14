@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("[CheckoutAPI] Fehler beim Erstellen des Carts:", error)
     return NextResponse.json(
-      { error: error.message || "Fehler beim Erstellen des Carts" },
+      { error: typeof error?.message === 'string' ? error.message : String(error) },
       { status: 500 }
     )
   }

@@ -61,6 +61,15 @@ export async function createCart(input: CartCreateInput) {
   `
 
   try {
+    // Basic runtime config validation to surface misconfiguration in logs
+    if (!SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
+      console.error("[ShopifyCart] Missing SHOPIFY_STOREFRONT_ACCESS_TOKEN env var")
+    }
+    if (!SHOPIFY_STOREFRONT_API_ENDPOINT) {
+      console.error("[ShopifyCart] Missing SHOPIFY_STOREFRONT_API_ENDPOINT env var")
+    }
+    console.log("[ShopifyCart] Using endpoint:", SHOPIFY_STOREFRONT_API_ENDPOINT.replace(/(https:\/\/)([^/]+)(.*)/, "$1$2$3"))
+
     // Verwende den konfigurierten API-Endpunkt
     const response = await fetch(SHOPIFY_STOREFRONT_API_ENDPOINT, {
       method: "POST",
