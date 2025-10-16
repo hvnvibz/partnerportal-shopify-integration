@@ -23,15 +23,13 @@ export default function AgentTestPage() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gray-100 flex">
-        <AppSidebar />
-        <SidebarInset>
-          <Script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" async />
-          <div className="flex items-center justify-center p-6">
-            <ChatKit control={control} className="h-[780px] w-[720px]" />
-          </div>
-        </SidebarInset>
-      </div>
+      <AppSidebar />
+      <SidebarInset>
+        <Script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" async />
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <ChatKit control={control} className="h-[780px] w-[720px]" />
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }
