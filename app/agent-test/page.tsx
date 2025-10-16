@@ -23,7 +23,7 @@ export default function AgentTestPage() {
     <>
       <Script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" async />
       <div className="flex items-center justify-center p-6">
-        <ChatKit control={control} className="h-[600px] w-[360px]" />
+        <ChatKit control={control} className="h-[780px] w-[720px]" />
       </div>
     </>
   )
