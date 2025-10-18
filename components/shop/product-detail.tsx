@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown } from "lucide-react"
+import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown, ZoomIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductGrid } from "@/components/shop/product-grid"
 import ProductUpsell from "@/components/shop/product-upsell"
@@ -20,6 +20,7 @@ import { type CartItem, CART_UPDATED_EVENT } from "@/components/shop/cart"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import ProductCrossSell from "@/components/shop/product-cross-sell"
 import RelatedProducts from "@/components/shop/related-products"
+import { ImageZoomModal } from "@/components/shop/image-zoom-modal"
 
 interface ProductDetailProps {
   product: Product
@@ -41,6 +42,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
   const [imageRatios, setImageRatios] = useState<number[]>([])
   const [maxRatio, setMaxRatio] = useState<number>(1)
   const [hidePrices, setHidePrices] = useState(false)
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false)
   const { toast } = useToast()
 
   // Lade den gespeicherten Zustand beim Mount
@@ -115,6 +117,19 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
     setSelectedVariantId(value)
     // Reset gallery selection when variant changes
     setSelectedImageIdx(0)
+  }
+
+  // Handle zoom modal
+  const openZoomModal = () => {
+    setIsZoomModalOpen(true)
+  }
+
+  const closeZoomModal = () => {
+    setIsZoomModalOpen(false)
+  }
+
+  const handleZoomImageChange = (index: number) => {
+    setSelectedImageIdx(index)
   }
 
   // Upsell-Module anzeigen, wenn mindestens eines befüllt ist
@@ -273,12 +288,22 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
           {product.images && product.images.length > 0 ? (
             <div className="flex flex-col items-center" style={{ minWidth: 320, maxWidth: 400, margin: '0 auto' }}>
               <div
-                className="relative flex items-center justify-center"
+                className="relative flex items-center justify-center cursor-pointer group"
                 style={{
                   width: 320,
                   height: 320,
                   margin: '0 auto',
                 }}
+                onClick={openZoomModal}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    openZoomModal()
+                  }
+                }}
+                aria-label="Bild vergrößern"
               >
                 <Image
                   src={mainImage}
@@ -289,7 +314,26 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                   sizes="320px"
                   priority
                 />
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
+                  <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </div>
               </div>
+              
+              {/* Zoom Button */}
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openZoomModal}
+                  className="flex items-center gap-2 bg-white hover:bg-gray-50"
+                  aria-label="Bild vergrößern"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                  Bild vergrößern
+                </Button>
+              </div>
+              
               <div className="flex gap-2 justify-center mt-6 w-full" style={{ minHeight: 67, alignItems: 'flex-end' }}>
                 {product.images.map((img, idx) => (
                   <button
@@ -312,7 +356,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
               </div>
             </div>
           ) : product.featuredImage ? (
-            <div className="relative" style={{ width: "100%", minHeight: 400, minWidth: 400, maxWidth: 480, margin: "0 auto", height: 480 }}>
+            <div className="relative cursor-pointer group" style={{ width: "100%", minHeight: 400, minWidth: 400, maxWidth: 480, margin: "0 auto", height: 480 }}>
               <Image
                 src={product.featuredImage.url || "/placeholder.svg"}
                 alt={product.featuredImage.altText || product.title}
@@ -320,7 +364,12 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                 style={{ objectFit: "contain" }}
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
+                onClick={openZoomModal}
               />
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
+                <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              </div>
             </div>
           ) : (
             <div className="aspect-square bg-muted flex items-center justify-center" style={{ minHeight: 400, minWidth: 400 }}>No image available</div>
@@ -464,6 +513,16 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
 
       {/* Related Products Section - immer anzeigen */}
       <RelatedProducts products={relatedProducts} columns={4} />
+      
+      {/* Image Zoom Modal */}
+      <ImageZoomModal
+        isOpen={isZoomModalOpen}
+        onClose={closeZoomModal}
+        images={product.images || []}
+        currentImageIndex={selectedImageIdx}
+        onImageChange={handleZoomImageChange}
+        productTitle={product.title}
+      />
     </div>
   )
 }
