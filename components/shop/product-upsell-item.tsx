@@ -328,7 +328,7 @@ export function ProductUpsellAddButton({ product, onAdd, buttonTextClassName, di
 }
 
 // Hilfsfunktion für Add-to-Cart mit Menge
-export async function addProductToCart(product: Product, quantity: number = 1, toast?: ReturnType<typeof useToast>["toast"]) {
+export async function addProductToCart(product: Product, quantity: number = 1, toast?: ReturnType<typeof useToast>["toast"], variantId?: string) {
   // Preisermittlung ohne INDUWA Connect-Sonderfall
   const minPrice = Number.parseFloat(product.priceRange.minVariantPrice.amount)
   // Get current cart from localStorage
@@ -341,26 +341,38 @@ export async function addProductToCart(product: Product, quantity: number = 1, t
       cartItems = []
     }
   }
-  let firstVariant: {
+  
+  // Variante bestimmen: entweder übergebene variantId oder erste verfügbare Variante
+  let selectedVariant: {
     id: string;
     title: string;
     sku?: string;
     availableForSale: boolean;
     price: { amount: string; currencyCode: string };
     compareAtPrice: { amount: string; currencyCode: string } | null;
-  } | undefined = product.variants.edges[0]?.node;
-  if (!firstVariant?.id) {
+  } | undefined;
+  
+  if (variantId) {
+    // Spezifische Variante verwenden
+    selectedVariant = product.variants.edges.find(edge => edge.node.id === variantId)?.node;
+  } else {
+    // Fallback: erste verfügbare Variante
+    selectedVariant = product.variants.edges.find(edge => edge.node.availableForSale)?.node;
+  }
+  
+  if (!selectedVariant?.id) {
+    // Versuche, die Variant-ID per API zu holen (z.B. bei Upsell-Produkt mit nur Produkt-ID)
     let variantIdFromApi: string | undefined = undefined;
     try {
       let handle = product.handle;
       if (handle) {
         const apiProduct = await getProductByHandle(handle);
         const variantNode = apiProduct?.variants?.edges[0]?.node;
-        firstVariant = variantNode && variantNode.id ? variantNode : undefined;
-        variantIdFromApi = firstVariant?.id;
+        selectedVariant = variantNode && variantNode.id ? variantNode : undefined;
+        variantIdFromApi = selectedVariant?.id;
       }
     } catch (err) {}
-    if (!variantIdFromApi || !firstVariant) {
+    if (!variantIdFromApi || !selectedVariant) {
       toast?.({
         title: "Fehler",
         description: "Dieses Produkt kann nicht in den Warenkorb gelegt werden (keine Variante gefunden).",
@@ -369,7 +381,8 @@ export async function addProductToCart(product: Product, quantity: number = 1, t
       return false;
     }
   }
-  if (!firstVariant || !firstVariant.id) {
+  
+  if (!selectedVariant || !selectedVariant.id) {
     toast?.({
       title: "Fehler",
       description: "Dieses Produkt kann nicht in den Warenkorb gelegt werden (keine Variante gefunden).",
@@ -377,20 +390,24 @@ export async function addProductToCart(product: Product, quantity: number = 1, t
     });
     return false;
   }
+  
+  // Preis der ausgewählten Variante verwenden
+  const variantPrice = Number.parseFloat(selectedVariant.price.amount);
+  
   const existingItemIndex = cartItems.findIndex(
-    (item) => item.variantId === firstVariant.id
+    (item) => item.variantId === selectedVariant.id
   )
   if (existingItemIndex >= 0) {
     cartItems[existingItemIndex].quantity += quantity
   } else {
     cartItems.push({
       id: product.id,
-      variantId: firstVariant.id,
+      variantId: selectedVariant.id,
       title: product.title,
-      price: minPrice,
+      price: variantPrice,
       quantity,
       image: product.featuredImage?.url,
-      sku: firstVariant.sku || product.sku || undefined,
+      sku: selectedVariant.sku || product.sku || undefined,
     })
   }
   localStorage.setItem("cart", JSON.stringify(cartItems))
