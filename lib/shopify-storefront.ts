@@ -202,10 +202,12 @@ export async function getProducts({
                       }
                     }
                     metafields(identifiers: [
-                      { namespace: "custom", key: "hide_from_listing" }
+                      { namespace: "custom", key: "hide_product_grid" }
                     ]) {
+                      namespace
                       key
                       value
+                      type
                     }
                   }
                 }
@@ -253,7 +255,7 @@ export async function getProducts({
           price: node.priceRange.minVariantPrice,
           compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
           sku: node.variants.edges[0]?.node.sku || "",
-          hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
+          hide_from_listing: metafields['hide_product_grid'] === "true" || metafields['hide_product_grid'] === true,
           cursor
         };
       });
@@ -335,10 +337,12 @@ export async function getProducts({
                     }
                   }
                   metafields(identifiers: [
-                    { namespace: "custom", key: "hide_from_listing" }
+                    { namespace: "custom", key: "hide_product_grid" }
                   ]) {
+                    namespace
                     key
                     value
+                    type
                   }
                 }
               }
@@ -364,8 +368,8 @@ export async function getProducts({
           Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
         // Metafelder extrahieren (nulls filtern!)
         const metafields = Array.isArray(node.metafields)
-          ? node.metafields.filter(Boolean).reduce((acc: any, node: any) => {
-              if (node && node.key) acc[node.key] = node.value;
+          ? node.metafields.reduce((acc: any, mf: any) => {
+              if (mf && mf.key) acc[mf.key] = mf.value;
               return acc;
             }, {})
           : {};
@@ -381,7 +385,7 @@ export async function getProducts({
           price: node.priceRange.minVariantPrice,
           compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
           sku: node.variants.edges[0]?.node.sku || "",
-          hide_from_listing: metafields['hide_from_listing'] === "true" || metafields['hide_from_listing'] === true,
+          hide_from_listing: metafields['hide_product_grid'] === "true" || metafields['hide_product_grid'] === true,
           cursor
         };
       });
@@ -470,7 +474,7 @@ export async function getProductByHandle(handle: string): Promise<ShopifyProduct
               { namespace: "custom", key: "cross_selling_1" },
               { namespace: "custom", key: "cross_selling_2" },
               { namespace: "custom", key: "cross_selling_3" },
-              { namespace: "custom", key: "hide_from_listing" }
+              { namespace: "custom", key: "hide_product_grid" }
             ]) {
               key
               value
@@ -605,7 +609,7 @@ export async function getProductById(id: string): Promise<ShopifyProduct | null>
               { namespace: "custom", key: "cross_selling_1" },
               { namespace: "custom", key: "cross_selling_2" },
               { namespace: "custom", key: "cross_selling_3" },
-              { namespace: "custom", key: "hide_from_listing" }
+              { namespace: "custom", key: "hide_product_grid" }
             ]) {
               key
               value

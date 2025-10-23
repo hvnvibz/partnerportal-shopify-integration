@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
     filterQuery += `(title:*${query}* OR tag:*${query}*) `
   }
 
+  // Hide products marked with hide_product_grid metafield
+  filterQuery += `NOT metafields.custom.hide_product_grid:true `
+
   try {
     // Fetch products with filters
     const productsData = await getProducts({

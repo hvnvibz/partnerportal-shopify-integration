@@ -81,6 +81,9 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
     filterQuery += `(title:*${query}* OR tag:*${query}* OR variants.sku:${query}) `
   }
 
+  // Hide products marked with hide_product_grid metafield
+  filterQuery += `NOT metafields.custom.hide_product_grid:true `
+
   console.log("Final Filter Query:", filterQuery.trim());
   console.log("Collection Handle:", collectionHandle);
 
