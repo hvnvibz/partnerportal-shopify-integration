@@ -10,18 +10,27 @@ interface ProductUpsellProps {
 }
 
 export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, singleUpsellProduct, mainProductId }: ProductUpsellProps) {
-  const [hidePrices, setHidePrices] = useState(false)
+  const [mode, setMode] = useState<"all" | "list" | "hidden">("all")
   // Lade den gespeicherten Zustand beim Mount
   useEffect(() => {
-    const savedState = localStorage.getItem("hidePrices")
-    if (savedState !== null) {
-      setHidePrices(JSON.parse(savedState))
+    const savedMode = localStorage.getItem("priceVisibility") as "all" | "list" | "hidden" | null
+    if (savedMode === "all" || savedMode === "list" || savedMode === "hidden") {
+      setMode(savedMode)
+    } else {
+      const legacy = localStorage.getItem("hidePrices")
+      if (legacy !== null) {
+        setMode(JSON.parse(legacy) ? "hidden" : "all")
+      }
     }
   }, [])
   // Höre auf Preis-Sichtbarkeits-Änderungen
   useEffect(() => {
     const handlePriceVisibilityChange = (event: CustomEvent) => {
-      setHidePrices(event.detail.hidePrices)
+      if (event.detail && (event.detail.mode === "all" || event.detail.mode === "list" || event.detail.mode === "hidden")) {
+        setMode(event.detail.mode)
+      } else if (typeof event.detail?.hidePrices === 'boolean') {
+        setMode(event.detail.hidePrices ? "hidden" : "all")
+      }
     }
     window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
     return () => {
@@ -42,8 +51,8 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
       {/* Card-Variante für 1a-Produkte */}
       {upsell1aProducts.length > 0 && (
         <fieldset
-          className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-0 rounded ${addedProductId1a ? 'opacity-50 pointer-events-none' : ''} ${hidePrices ? 'opacity-60 pointer-events-none' : ''}`}
-          disabled={!!addedProductId1a || hidePrices}
+          className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-0 rounded ${addedProductId1a ? 'opacity-50 pointer-events-none' : ''} ${mode !== 'all' ? 'opacity-60 pointer-events-none' : ''}`}
+          disabled={!!addedProductId1a || mode !== 'all'}
           style={{ paddingLeft: 0, paddingRight: 0 }}
         >
           <legend className="mb-4 font-semibold text-sm text-gray-700 pl-4">Wähle eine Option</legend>
@@ -53,19 +62,25 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
               <div
                 key={product.id}
                 className={`flex flex-col items-start border rounded p-4 gap-2 cursor-pointer bg-white transition-colors duration-150 ${isActive ? 'border-[#60a5fa] ring-2 ring-[#60a5fa] text-black' : 'border-gray-300 text-gray-400'}`}
-                onClick={() => !addedProductId1a && !hidePrices && setSelectedProductId1a(product.id)}
+                onClick={() => !addedProductId1a && mode === 'all' && setSelectedProductId1a(product.id)}
                 style={{ minHeight: '100px', marginLeft: idx === 0 ? '0.25rem' : 0 }}
               >
                 <span className="font-medium text-[0.85rem] break-words max-w-xs">{product.title}</span>
                 <div className="flex flex-row items-center justify-between w-full mt-4 gap-2" style={{ minHeight: 44 }}>
-                  {!hidePrices && (
+                  {mode === 'all' ? (
                     <span className="font-bold text-[0.8rem] leading-none">
                       {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </span>
-                  )}
+                  ) : mode === 'list' ? (
+                    singleUpsellProduct?.compareAtPriceRange || product.compareAtPriceRange ? (
+                      <span className="font-bold text-[0.8rem] leading-none">
+                        {Number((product.compareAtPriceRange?.minVariantPrice?.amount || singleUpsellProduct?.compareAtPriceRange?.minVariantPrice?.amount) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </span>
+                    ) : null
+                  ) : null}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId1a && (
-                      <ProductUpsellAddButton disabled={hidePrices} product={product} onAdd={() => setAddedProductId1a(product.id)} buttonTextClassName="text-[0.8em]" />
+                      <ProductUpsellAddButton disabled={mode !== 'all'} product={product} onAdd={() => setAddedProductId1a(product.id)} buttonTextClassName="text-[0.8em]" />
                     )}
                     {addedProductId1a === product.id && (
                       <span className="text-green-600 text-xs font-semibold ml-2">Im Warenkorb</span>
@@ -80,8 +95,8 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
       {/* Card-Variante für 2a-Produkte */}
       {upsell2aProducts.length > 0 && (
         <fieldset
-          className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-0 rounded ${addedProductId2a ? 'opacity-50 pointer-events-none' : ''} ${hidePrices ? 'opacity-60 pointer-events-none' : ''}`}
-          disabled={!!addedProductId2a || hidePrices}
+          className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 p-0 rounded ${addedProductId2a ? 'opacity-50 pointer-events-none' : ''} ${mode !== 'all' ? 'opacity-60 pointer-events-none' : ''}`}
+          disabled={!!addedProductId2a || mode !== 'all'}
           style={{ paddingLeft: 0, paddingRight: 0 }}
         >
           <legend className="mb-4 font-semibold text-sm text-gray-700 pl-4">Wähle eine Option</legend>
@@ -91,19 +106,25 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
               <div
                 key={product.id}
                 className={`flex flex-col items-start border rounded p-4 gap-2 cursor-pointer bg-white transition-colors duration-150 ${isActive ? 'border-[#60a5fa] ring-2 ring-[#60a5fa] text-black' : 'border-gray-300 text-gray-400'}`}
-                onClick={() => !addedProductId2a && !hidePrices && setSelectedProductId2a(product.id)}
+                onClick={() => !addedProductId2a && mode === 'all' && setSelectedProductId2a(product.id)}
                 style={{ minHeight: '100px', marginLeft: idx === 0 ? '0.25rem' : 0 }}
               >
                 <span className="font-medium text-[0.85rem] break-words max-w-xs">{product.title}</span>
                 <div className="flex flex-row items-center justify-between w-full mt-4 gap-2" style={{ minHeight: 44 }}>
-                  {!hidePrices && (
+                  {mode === 'all' ? (
                     <span className="font-bold text-[0.8rem] leading-none">
                       {Number(product.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </span>
-                  )}
+                  ) : mode === 'list' ? (
+                    product.compareAtPriceRange ? (
+                      <span className="font-bold text-[0.8rem] leading-none">
+                        {Number(product.compareAtPriceRange.minVariantPrice.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </span>
+                    ) : null
+                  ) : null}
                   <div style={{ minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
                     {isActive && !addedProductId2a && (
-                      <ProductUpsellAddButton disabled={hidePrices} product={product} onAdd={() => setAddedProductId2a(product.id)} buttonTextClassName="text-[0.8em]" />
+                      <ProductUpsellAddButton disabled={mode !== 'all'} product={product} onAdd={() => setAddedProductId2a(product.id)} buttonTextClassName="text-[0.8em]" />
                     )}
                     {addedProductId2a === product.id && (
                       <span className="text-green-600 text-xs font-semibold ml-2">Im Warenkorb</span>
@@ -124,12 +145,18 @@ export default function ProductUpsell({ upsell1aProducts, upsell2aProducts, sing
           >
             <div className="flex-1 font-medium text-[0.85rem] break-words max-w-xs">{singleUpsellProduct.title}</div>
             <div className="flex flex-row items-center gap-4 min-h-[40px] mr-4">
-              {!hidePrices && (
+              {mode === 'all' ? (
                 <span className="font-bold text-[0.8rem] leading-none">
                   {Number(singleUpsellProduct.priceRange?.minVariantPrice?.amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
-              )}
-              <ProductUpsellAddButton disabled={hidePrices} product={singleUpsellProduct} buttonTextClassName="text-[0.8em]" />
+              ) : mode === 'list' ? (
+                singleUpsellProduct.compareAtPriceRange ? (
+                  <span className="font-bold text-[0.8rem] leading-none">
+                    {Number(singleUpsellProduct.compareAtPriceRange.minVariantPrice.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  </span>
+                ) : null
+              ) : null}
+              <ProductUpsellAddButton disabled={mode !== 'all'} product={singleUpsellProduct} buttonTextClassName="text-[0.8em]" />
             </div>
           </div>
         </div>

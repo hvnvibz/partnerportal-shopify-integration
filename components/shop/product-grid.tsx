@@ -20,20 +20,30 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
-  const [hidePrices, setHidePrices] = useState(false)
+  const [mode, setMode] = useState<"all" | "list" | "hidden">("all")
 
   // Lade den gespeicherten Zustand beim Mount
   useEffect(() => {
-    const savedState = localStorage.getItem("hidePrices")
-    if (savedState !== null) {
-      setHidePrices(JSON.parse(savedState))
+    // Prefer new tri-state key; fall back to legacy boolean
+    const savedMode = localStorage.getItem("priceVisibility") as "all" | "list" | "hidden" | null
+    if (savedMode === "all" || savedMode === "list" || savedMode === "hidden") {
+      setMode(savedMode)
+    } else {
+      const legacy = localStorage.getItem("hidePrices")
+      if (legacy !== null) {
+        setMode(JSON.parse(legacy) ? "hidden" : "all")
+      }
     }
   }, [])
 
   // Höre auf Preis-Sichtbarkeits-Änderungen
   useEffect(() => {
     const handlePriceVisibilityChange = (event: CustomEvent) => {
-      setHidePrices(event.detail.hidePrices)
+      if (event.detail && (event.detail.mode === "all" || event.detail.mode === "list" || event.detail.mode === "hidden")) {
+        setMode(event.detail.mode)
+      } else if (typeof event.detail?.hidePrices === 'boolean') {
+        setMode(event.detail.hidePrices ? "hidden" : "all")
+      }
     }
 
     window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
@@ -63,7 +73,7 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
           >
             {/* Wrapper für Sale-Tag mit fixer Mindesthöhe */}
             <div className="min-h-[2.2rem] flex items-start bg-transparent">
-              {!hidePrices && product.compareAtPrice && product.compareAtPrice.amount ? (
+              {mode === 'all' && product.compareAtPrice && product.compareAtPrice.amount ? (
                 <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
                   {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
                 </div>
@@ -97,19 +107,27 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
                 )}
               </div>
               <div className="mt-auto pt-2">
-                {hidePrices ? (
+                {mode === 'hidden' ? (
                   <div className="h-6"></div>
                 ) : (
                   <>
-                    {product.compareAtPrice && product.compareAtPrice.amount ? (
-                      <div className="flex gap-2 items-center">
-                        <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
-                        <span className="text-gray-500 line-through text-xs">
-                          {formatPrice(product.compareAtPrice.amount ?? "0")}
-                        </span>
-                      </div>
+                    {mode === 'list' ? (
+                      product.compareAtPrice && product.compareAtPrice.amount ? (
+                        <span className="font-semibold">{formatPrice(product.compareAtPrice.amount ?? "0")}</span>
+                      ) : (
+                        <div className="h-6"></div>
+                      )
                     ) : (
-                      <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                      product.compareAtPrice && product.compareAtPrice.amount ? (
+                        <div className="flex gap-2 items-center">
+                          <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                          <span className="text-gray-500 line-through text-xs">
+                            {formatPrice(product.compareAtPrice.amount ?? "0")}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                      )
                     )}
                   </>
                 )}

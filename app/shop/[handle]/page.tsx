@@ -13,7 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Cart } from "@/components/shop/cart"
-import { PriceToggle } from "@/components/shop/price-toggle"
+import { PriceVisibilityDropdown } from "@/components/shop/price-visibility-dropdown"
 import type { Product } from "@/types"
 
 export default async function ProductPage({ params }: { params: { handle: string } }) {
@@ -216,7 +216,7 @@ export default async function ProductPage({ params }: { params: { handle: string
               </BreadcrumbList>
             </Breadcrumb>
             <div className="flex items-center gap-4">
-              <PriceToggle />
+              <PriceVisibilityDropdown />
               <Cart />
             </div>
           </header>
@@ -254,7 +254,7 @@ export default async function ProductPage({ params }: { params: { handle: string
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex items-center gap-4">
-            <PriceToggle />
+            <PriceVisibilityDropdown />
             <Cart />
           </div>
         </header>

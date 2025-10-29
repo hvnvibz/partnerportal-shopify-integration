@@ -16,7 +16,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>(products.map(p => p.id));
   const [adding, setAdding] = useState(false);
   const [quantities, setQuantities] = useState<{ [id: string]: number }>(() => Object.fromEntries(products.map(p => [p.id, 1])));
-  const [hidePrices, setHidePrices] = useState(false);
+  const [mode, setMode] = useState<"all" | "list" | "hidden">("all");
   
   // State für ausgewählte Varianten
   const [selectedVariants, setSelectedVariants] = useState<{ [productId: string]: string }>(() => {
@@ -33,22 +33,32 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
 
   // Preis-Sichtbarkeit laden und auf Änderungen reagieren
   useEffect(() => {
-    const savedState = localStorage.getItem("hidePrices");
-    if (savedState !== null) setHidePrices(JSON.parse(savedState));
+    const savedMode = localStorage.getItem("priceVisibility") as "all" | "list" | "hidden" | null;
+    if (savedMode === "all" || savedMode === "list" || savedMode === "hidden") setMode(savedMode);
+    else {
+      const legacy = localStorage.getItem("hidePrices");
+      if (legacy !== null) setMode(JSON.parse(legacy) ? "hidden" : "all");
+    }
   }, []);
   useEffect(() => {
-    const handle = (event: CustomEvent) => setHidePrices(event.detail.hidePrices);
+    const handle = (event: CustomEvent) => {
+      if (event.detail && (event.detail.mode === "all" || event.detail.mode === "list" || event.detail.mode === "hidden")) {
+        setMode(event.detail.mode);
+      } else if (typeof event.detail?.hidePrices === 'boolean') {
+        setMode(event.detail.hidePrices ? "hidden" : "all");
+      }
+    };
     window.addEventListener("price-visibility-changed", handle as EventListener);
     return () => window.removeEventListener("price-visibility-changed", handle as EventListener);
   }, []);
   
   const toggleProduct = (id: string) => {
-    if (hidePrices) return;
+    if (mode !== 'all') return;
     setSelectedIds(ids => ids.includes(id) ? ids.filter(pid => pid !== id) : [...ids, id]);
   };
 
   const setQuantity = (id: string, qty: number) => {
-    if (hidePrices) return;
+    if (mode !== 'all') return;
     setQuantities(q => ({ ...q, [id]: Math.max(1, qty) }));
   };
 
@@ -68,7 +78,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
 
   // Fügt alle ausgewählten Produkte nacheinander in den Warenkorb
   const addAllToCart = async () => {
-    if (hidePrices) return; // block when prices are hidden
+    if (mode !== 'all') return; // block when not all prices
     setAdding(true);
     let addedCount = 0;
     for (const product of selectedProducts) {
@@ -105,7 +115,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
               onChange={() => toggleProduct(product.id)}
               className="absolute bottom-2 right-2 z-10 w-6 h-6 accent-yellow-500"
               aria-label="Produkt auswählen"
-              disabled={hidePrices}
+              disabled={mode !== 'all'}
             />
             <div className="text-xs font-medium text-center mb-2 line-clamp-2 min-h-[2.5em]">{product.title}</div>
             
@@ -117,16 +127,36 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
               )}
             </div>
             
-            {!hidePrices && (
-              <div className="w-full text-center font-bold text-sm mb-2">
+            {mode === 'all' ? (
+              <div className="w-full text-center mb-2">
                 {(() => {
                   const selectedVariantId = selectedVariants[product.id];
-                  const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId);
-                  const price = selectedVariant ? Number.parseFloat(selectedVariant.node.price.amount) : Number.parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
-                  return price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+                  const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId)?.node;
+                  const price = selectedVariant ? Number.parseFloat(selectedVariant.price.amount) : Number.parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+                  const compare = selectedVariant?.compareAtPrice ? Number.parseFloat(selectedVariant.compareAtPrice.amount) : undefined;
+                  const priceStr = price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+                  const compareStr = compare !== undefined ? compare.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €" : undefined;
+                  return compare && compare > price ? (
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <span className="text-gray-500 line-through text-xs">{compareStr}</span>
+                      <span className="font-bold text-sm">{priceStr}</span>
+                    </div>
+                  ) : (
+                    <span className="font-bold text-sm">{priceStr}</span>
+                  );
                 })()}
               </div>
-            )}
+            ) : mode === 'list' ? (
+              <div className="w-full text-center font-bold text-sm mb-2">
+                {(() => {
+                  // show compare-at if available for selected variant, else nothing
+                  const selectedVariantId = selectedVariants[product.id];
+                  const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId);
+                  const compareAt = selectedVariant?.node.compareAtPrice ? Number.parseFloat(selectedVariant.node.compareAtPrice.amount) : (product.compareAtPriceRange ? Number.parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : NaN);
+                  return isNaN(compareAt) ? "" : (compareAt.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €");
+                })()}
+              </div>
+            ) : null}
             
             {/* Variant-Dropdown für Produkte mit mehreren Varianten */}
             {product.variants.edges.length > 1 && (
@@ -134,7 +164,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
                 <Select
                   value={selectedVariants[product.id] || ""}
                   onValueChange={(variantId) => handleVariantChange(product.id, variantId)}
-                  disabled={hidePrices}
+                  disabled={mode !== 'all'}
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Variante wählen" />
@@ -157,7 +187,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
                 type="button"
                 className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
                 onClick={() => setQuantity(product.id, (quantities[product.id] || 1) - 1)}
-                disabled={quantities[product.id] <= 1 || hidePrices}
+                disabled={quantities[product.id] <= 1 || mode !== 'all'}
                 aria-label="Menge verringern"
               >
                 <Minus className="w-4 h-4" />
@@ -168,7 +198,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
                 className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
                 onClick={() => setQuantity(product.id, (quantities[product.id] || 1) + 1)}
                 aria-label="Menge erhöhen"
-                disabled={hidePrices}
+                disabled={mode !== 'all'}
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -181,7 +211,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
           </div>
         ))}
         <div className="flex flex-col justify-center items-start ml-8 min-w-[180px]">
-          {!hidePrices && (
+          {mode === 'all' && (
             <>
               <div className="text-gray-700 text-sm mb-2">Gesamtpreis:</div>
               <div className="text-xl font-bold mb-4">
@@ -192,7 +222,7 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
           <Button
             className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded transition"
             onClick={addAllToCart}
-            disabled={selectedIds.length === 0 || adding || hidePrices}
+            disabled={selectedIds.length === 0 || adding || mode !== 'all'}
           >
             Alle {selectedIds.length} in den Warenkorb
           </Button>

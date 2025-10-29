@@ -14,7 +14,7 @@ import { ShopFilters } from "@/components/shop/shop-filters"
 import { getProducts, getCollections, getFallbackProducts, getProductTypes } from "@/lib/shopify-storefront"
 import { ShopContent } from "@/components/shop/shop-content"
 import { Cart } from "@/components/shop/cart"
-import { PriceToggle } from "@/components/shop/price-toggle"
+import { PriceVisibilityDropdown } from "@/components/shop/price-visibility-dropdown"
 import { Loader2 } from "lucide-react"
 
 // Disable caching for this page to ensure fresh data on each visit
@@ -148,7 +148,7 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
             </BreadcrumbList>
           </Breadcrumb>
           <div className="flex items-center gap-4">
-            <PriceToggle />
+            <PriceVisibilityDropdown />
             <Cart />
           </div>
         </header>

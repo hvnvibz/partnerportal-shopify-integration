@@ -41,22 +41,31 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
   const [selectedImageIdx, setSelectedImageIdx] = useState(0)
   const [imageRatios, setImageRatios] = useState<number[]>([])
   const [maxRatio, setMaxRatio] = useState<number>(1)
-  const [hidePrices, setHidePrices] = useState(false)
+  const [mode, setMode] = useState<"all" | "list" | "hidden">("all")
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false)
   const { toast } = useToast()
 
   // Lade den gespeicherten Zustand beim Mount
   useEffect(() => {
-    const savedState = localStorage.getItem("hidePrices")
-    if (savedState !== null) {
-      setHidePrices(JSON.parse(savedState))
+    const savedMode = localStorage.getItem("priceVisibility") as "all" | "list" | "hidden" | null
+    if (savedMode === "all" || savedMode === "list" || savedMode === "hidden") {
+      setMode(savedMode)
+    } else {
+      const legacy = localStorage.getItem("hidePrices")
+      if (legacy !== null) {
+        setMode(JSON.parse(legacy) ? "hidden" : "all")
+      }
     }
   }, [])
 
   // Höre auf Preis-Sichtbarkeits-Änderungen
   useEffect(() => {
     const handlePriceVisibilityChange = (event: CustomEvent) => {
-      setHidePrices(event.detail.hidePrices)
+      if (event.detail && (event.detail.mode === "all" || event.detail.mode === "list" || event.detail.mode === "hidden")) {
+        setMode(event.detail.mode)
+      } else if (typeof event.detail?.hidePrices === 'boolean') {
+        setMode(event.detail.hidePrices ? "hidden" : "all")
+      }
     }
 
     window.addEventListener("price-visibility-changed", handlePriceVisibilityChange as EventListener)
@@ -83,6 +92,9 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
       (product.compareAtPriceRange ? Number.parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : null))
 
   const onSale = comparePrice && comparePrice > variantPrice
+  const isHidden = mode === 'hidden'
+  const isListOnly = mode === 'list'
+
 
   // Calculate discount percentage and absolute amount
   let discountPercentage = 0
@@ -387,8 +399,14 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
           </div>
 
           <div className="flex items-baseline gap-2">
-            {hidePrices ? (
+            {isHidden ? (
               <span className="text-2xl font-bold text-gray-500 italic">Preis auf Anfrage</span>
+            ) : isListOnly ? (
+              comparePrice ? (
+                <span className="text-2xl font-bold">{formatPrice(comparePrice)}</span>
+              ) : (
+                <span className="text-2xl font-bold text-gray-500 italic">Listenpreis nicht verfügbar</span>
+              )
             ) : (
               <>
                 <span className="text-2xl font-bold">{formatPrice(variantPrice)}</span>
@@ -468,7 +486,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                 size="icon"
                 className="h-10 w-10 rounded-none"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || isHidden || isListOnly}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -478,7 +496,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                 size="icon"
                 className="h-10 w-10 rounded-none"
                 onClick={() => setQuantity(quantity + 1)}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || isHidden || isListOnly}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -488,11 +506,11 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
               className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white"
               size="lg"
               onClick={addToCart}
-              disabled={isAddingToCart || !selectedVariant?.availableForSale || hidePrices}
+              disabled={isAddingToCart || !selectedVariant?.availableForSale || isHidden || isListOnly}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
-              {hidePrices 
-                ? "Preis auf Anfrage" 
+              {isHidden || isListOnly
+                ? (isListOnly ? "Nur Listenpreise aktiv" : "Preis auf Anfrage") 
                 : isAddingToCart 
                   ? "Wird hinzugefügt..." 
                   : selectedVariant?.availableForSale 
