@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
-// import HCaptcha from "@hcaptcha/react-hcaptcha";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function RegistrationPage() {
   const [formData, setFormData] = useState({
@@ -93,10 +93,10 @@ export default function RegistrationPage() {
       return;
     }
 
-    // if (!captchaToken) {
-    //   setError('Bitte bestätigen Sie das Captcha.');
-    //   return;
-    // }
+    if (!captchaToken) {
+      setError('Bitte bestätigen Sie das Captcha.');
+      return;
+    }
 
     setLoading(true);
 
@@ -107,15 +107,18 @@ export default function RegistrationPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          captchaToken
+        }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
         setError(result.error || 'Registrierung fehlgeschlagen');
-        // setCaptchaToken(null);
-        // captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
+        captchaRef.current?.resetCaptcha();
       } else {
         // Registrierung erfolgreich
         setError(null);
@@ -310,14 +313,12 @@ export default function RegistrationPage() {
             </div>
 
             <div className="mb-5 flex justify-center">
-              {/*
               <HCaptcha
-                sitekey="a9283372-582e-4ee0-b196-b36448a2cbc6"
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
                 onVerify={setCaptchaToken}
                 ref={captchaRef}
                 theme="light"
               />
-              */}
             </div>
 
             {error && <div className="mb-4 text-red-600 text-sm text-center">{error}</div>}

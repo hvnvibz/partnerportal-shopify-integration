@@ -12,7 +12,8 @@ export async function POST(req: Request) {
       email, 
       password,
       phone,
-      address 
+      address,
+      captchaToken
     } = await req.json();
 
     // Validate required fields
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       email,
       password,
       options: {
+        captchaToken,
         data: {
           first_name: firstName,
           last_name: lastName,

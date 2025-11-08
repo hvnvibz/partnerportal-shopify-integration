@@ -1,32 +1,46 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setMessage(null);
+    
+    if (!captchaToken) {
+      setError('Bitte bestätigen Sie das Captcha.');
+      return;
+    }
+    
+    setLoading(true);
     
     try {
       console.log('Sende Reset-E-Mail an:', email);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/reset-password/update` : undefined,
+        captchaToken,
       });
       
       if (error) {
         console.error('Reset-Password-Fehler:', error);
         setError(`Fehler beim Senden der E-Mail: ${error.message}`);
+        setCaptchaToken(null);
+        captchaRef.current?.resetCaptcha();
       } else {
         console.log('Reset-E-Mail erfolgreich gesendet');
         setMessage('Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet, falls die Adresse existiert.');
+        setCaptchaToken(null);
+        captchaRef.current?.resetCaptcha();
       }
     } catch (err) {
       console.error('Unerwarteter Fehler:', err);
@@ -56,6 +70,14 @@ export default function ResetPasswordPage() {
               onChange={e => setEmail(e.target.value)}
               required
             />
+            <div className="mb-5 flex justify-center">
+              <HCaptcha
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+                onVerify={setCaptchaToken}
+                ref={captchaRef}
+                theme="light"
+              />
+            </div>
             {error && <div className="mb-4 text-red-600 text-sm text-center">{error}</div>}
             {message && <div className="mb-4 text-green-700 text-sm text-center">{message}</div>}
             <button
