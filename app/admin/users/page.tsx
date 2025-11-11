@@ -428,7 +428,7 @@ export default function AdminUsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>E-Mail</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Displayname</TableHead>
                 <TableHead>Kundennummer</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Status</TableHead>
