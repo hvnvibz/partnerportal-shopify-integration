@@ -52,12 +52,32 @@ export default function SignInPage() {
         setCaptchaToken(null);
         captchaRef.current?.resetCaptcha();
       } else {
-        // Login successful - force session refresh and redirect
+        // Login successful - set session client-side and redirect
         setError(null);
         
-        // Force a full page reload to ensure session cookies are loaded
-        // This ensures the client-side Supabase client picks up the session
-        window.location.href = '/';
+        // If session data is returned, set it client-side
+        if (result.session) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+          });
+          
+          if (sessionError) {
+            console.error('Error setting session:', sessionError);
+            // Fallback: try full page reload
+            window.location.href = '/';
+            return;
+          }
+          
+          console.log('Session set successfully, redirecting...');
+          // Wait a moment for session to be established
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 100);
+        } else {
+          // Fallback: full page reload
+          window.location.href = '/';
+        }
       }
     } catch (err) {
       setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');

@@ -148,13 +148,21 @@ export async function POST(req: Request) {
       }
     }
 
-    // Return success response
+    // Return success response with session data
+    // The client will set the session using the tokens
     return NextResponse.json({
       success: true,
       user: {
         id: authData.user.id,
         email: authData.user.email,
-      }
+      },
+      session: authData.session ? {
+        access_token: authData.session.access_token,
+        refresh_token: authData.session.refresh_token,
+        expires_at: authData.session.expires_at,
+        expires_in: authData.session.expires_in,
+        token_type: authData.session.token_type,
+      } : null
     });
 
   } catch (error: any) {
