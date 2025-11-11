@@ -79,6 +79,7 @@ export async function POST(req: Request) {
     }
 
     // Check user status - only active users can login
+    // Use raw SQL query to ensure we get the correct status
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('status, role')
@@ -87,13 +88,26 @@ export async function POST(req: Request) {
 
     if (profileError) {
       console.error('Profile fetch error:', profileError);
+      console.error('User ID:', authData.user.id);
+      console.error('Email:', authData.user.email);
+      
+      // Try alternative query to debug
+      const { data: altData, error: altError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+      
+      console.error('Alternative query result:', { altData, altError });
+      
       return NextResponse.json(
-        { error: "Fehler beim Laden des Benutzerprofils" },
+        { error: `Fehler beim Laden des Benutzerprofils: ${profileError.message}` },
         { status: 500 }
       );
     }
 
     if (!profileData) {
+      console.error('Profile not found for user:', authData.user.id);
       return NextResponse.json(
         { error: "Benutzerprofil nicht gefunden" },
         { status: 404 }
@@ -108,8 +122,11 @@ export async function POST(req: Request) {
       userId: authData.user.id,
       email: authData.user.email,
       status: profileData.status,
+      statusType: typeof profileData.status,
+      statusLength: profileData.status?.length,
       normalizedStatus: userStatus,
-      role: profileData.role
+      role: profileData.role,
+      rawProfileData: JSON.stringify(profileData)
     });
 
     // Check if user is active (handle NULL, empty string, or case variations)
@@ -120,8 +137,12 @@ export async function POST(req: Request) {
           { status: 403 }
         );
       } else {
+        // Return detailed error with status information
+        const statusInfo = profileData.status 
+          ? `Status: "${profileData.status}" (Typ: ${typeof profileData.status}, Länge: ${profileData.status.length})`
+          : 'Status: nicht gesetzt (NULL)';
         return NextResponse.json(
-          { error: `Ihr Konto wurde noch nicht freigeschaltet. Status: ${profileData.status || 'nicht gesetzt'}` },
+          { error: `Ihr Konto wurde noch nicht freigeschaltet. ${statusInfo}` },
           { status: 403 }
         );
       }
