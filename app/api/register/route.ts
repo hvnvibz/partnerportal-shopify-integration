@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createShopifyCustomer, customerExists } from "@/lib/shopify-admin";
 
 export async function POST(req: Request) {
@@ -91,8 +92,8 @@ export async function POST(req: Request) {
 
       shopifyCustomerId = shopifyCustomer.id;
       
-      // Update Supabase profile with Shopify customer ID
-      const { error: profileError } = await supabase
+      // Update Supabase profile with Shopify customer ID (use service role to bypass RLS)
+      const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .update({
           shopify_customer_id: shopifyCustomerId,
