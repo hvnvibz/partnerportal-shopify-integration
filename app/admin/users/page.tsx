@@ -3,6 +3,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Table,
   TableBody,
@@ -218,11 +229,29 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Benutzerverwaltung</h1>
-        <p className="text-gray-600">Verwalten Sie Benutzerrollen und -status</p>
-      </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb className="flex-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Start</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Benutzerverwaltung</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Benutzerverwaltung</h1>
+            <p className="text-gray-600">Verwalten Sie Benutzerrollen und -status</p>
+          </div>
 
       {/* Filters */}
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -336,10 +365,12 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="mt-4 text-sm text-gray-500">
-        Gesamt: {filteredUsers.length} Benutzer
-      </div>
-    </div>
+          <div className="mt-4 text-sm text-gray-500">
+            Gesamt: {filteredUsers.length} Benutzer
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
