@@ -33,7 +33,9 @@ export function useUser() {
       
       setProfile(profileData ?? null);
       setRole(profileData?.role ?? null);
-      setStatus(profileData?.status ?? null);
+      // Normalize status to lowercase and trim (consistent with login route)
+      const normalizedStatus = profileData?.status?.toLowerCase()?.trim() || null;
+      setStatus(normalizedStatus);
       
       // Debug logging
       console.log('Profile loaded in refreshUser:', {
@@ -42,6 +44,7 @@ export function useUser() {
         hasStatus: !!profileData?.status,
         role: profileData?.role,
         status: profileData?.status,
+        normalizedStatus: normalizedStatus,
         fullProfile: profileData
       });
     } else {
@@ -73,7 +76,9 @@ export function useUser() {
             }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
-            setStatus(data?.status ?? null);
+            // Normalize status to lowercase and trim (consistent with login route)
+            const normalizedStatus = data?.status?.toLowerCase()?.trim() || null;
+            setStatus(normalizedStatus);
             
             // Debug logging
             console.log('Profile loaded (auth state change):', {
@@ -82,6 +87,7 @@ export function useUser() {
               hasStatus: !!data?.status,
               role: data?.role,
               status: data?.status,
+              normalizedStatus: normalizedStatus,
               fullProfile: data
             });
           });
@@ -114,7 +120,9 @@ export function useUser() {
             }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
-            setStatus(data?.status ?? null);
+            // Normalize status to lowercase and trim (consistent with login route)
+            const normalizedStatus = data?.status?.toLowerCase()?.trim() || null;
+            setStatus(normalizedStatus);
             
             // Debug logging
             console.log('Profile loaded (initial check):', {
@@ -123,6 +131,7 @@ export function useUser() {
               hasStatus: !!data?.status,
               role: data?.role,
               status: data?.status,
+              normalizedStatus: normalizedStatus,
               fullProfile: data
             });
           });
