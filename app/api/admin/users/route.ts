@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     const userIds = authUsers.users.map(u => u.id);
     const { data: profilesData, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, display_name, role, status')
+      .select('id, display_name, role, status, customer_number')
       .in('id', userIds);
 
     if (profilesError) {
@@ -70,6 +70,7 @@ export async function GET(req: Request) {
         id: authUser.id,
         email: authUser.email || '',
         display_name: profile?.display_name || '',
+        customer_number: profile?.customer_number || '',
         role: profile?.role || 'partner',
         status: profile?.status || 'pending',
         created_at: authUser.created_at,

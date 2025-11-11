@@ -38,6 +38,7 @@ interface User {
   id: string;
   email: string;
   display_name: string;
+  customer_number: string;
   role: string;
   status: string;
   created_at: string;
@@ -52,6 +53,8 @@ export default function AdminUsersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState<string>("");
+  const [editingCustomerNumber, setEditingCustomerNumber] = useState<string | null>(null);
+  const [editingCustomerNumberValue, setEditingCustomerNumberValue] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -167,7 +170,12 @@ export default function AdminUsersPage() {
       // Update local state with response data
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === userId ? { ...u, status: result.user.status, display_name: result.user.display_name } : u
+          u.id === userId ? { 
+            ...u, 
+            status: result.user.status, 
+            display_name: result.user.display_name,
+            customer_number: result.user.customer_number || u.customer_number
+          } : u
         )
       );
     } catch (err: any) {
@@ -231,6 +239,61 @@ export default function AdminUsersPage() {
   const cancelEditingName = () => {
     setEditingName(null);
     setEditingNameValue("");
+  };
+
+  const updateUserCustomerNumber = async (userId: string, newCustomerNumber: string) => {
+    try {
+      setUpdating(userId);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Nicht autorisiert");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ customer_number: newCustomerNumber }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Fehler beim Aktualisieren der Kundennummer");
+        return;
+      }
+
+      const result = await response.json();
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === userId ? { ...u, customer_number: result.user.customer_number } : u
+        )
+      );
+      
+      // Exit edit mode
+      setEditingCustomerNumber(null);
+      setEditingCustomerNumberValue("");
+    } catch (err: any) {
+      console.error('Error updating customer number:', err);
+      setError("Fehler beim Aktualisieren der Kundennummer");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const startEditingCustomerNumber = (userId: string, currentNumber: string) => {
+    setEditingCustomerNumber(userId);
+    setEditingCustomerNumberValue(currentNumber || "");
+  };
+
+  const cancelEditingCustomerNumber = () => {
+    setEditingCustomerNumber(null);
+    setEditingCustomerNumberValue("");
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -366,6 +429,7 @@ export default function AdminUsersPage() {
               <TableRow>
                 <TableHead>E-Mail</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Kundennummer</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Registriert</TableHead>
@@ -375,7 +439,7 @@ export default function AdminUsersPage() {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     Keine Benutzer gefunden
                   </TableCell>
                 </TableRow>
@@ -430,6 +494,59 @@ export default function AdminUsersPage() {
                             disabled={updating === user.id}
                             className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Display-Name bearbeiten"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingCustomerNumber === user.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editingCustomerNumberValue}
+                            onChange={(e) => setEditingCustomerNumberValue(e.target.value)}
+                            className="w-[150px]"
+                            maxLength={50}
+                            disabled={updating === user.id}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                updateUserCustomerNumber(user.id, editingCustomerNumberValue);
+                              } else if (e.key === 'Escape') {
+                                cancelEditingCustomerNumber();
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => updateUserCustomerNumber(user.id, editingCustomerNumberValue)}
+                            disabled={updating === user.id}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelEditingCustomerNumber}
+                            disabled={updating === user.id}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{user.customer_number || '-'}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => startEditingCustomerNumber(user.id, user.customer_number || '')}
+                            disabled={updating === user.id}
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Kundennummer bearbeiten"
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>

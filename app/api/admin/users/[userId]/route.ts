@@ -8,12 +8,12 @@ export async function PATCH(
 ) {
   try {
     const { userId } = params;
-    const { status, display_name } = await req.json();
+    const { status, display_name, customer_number } = await req.json();
 
     // Validate that at least one field is provided
-    if (status === undefined && display_name === undefined) {
+    if (status === undefined && display_name === undefined && customer_number === undefined) {
       return NextResponse.json(
-        { error: "Mindestens ein Feld (status oder display_name) muss angegeben werden" },
+        { error: "Mindestens ein Feld (status, display_name oder customer_number) muss angegeben werden" },
         { status: 400 }
       );
     }
@@ -32,6 +32,17 @@ export async function PATCH(
       if (trimmedName && trimmedName.length > 100) {
         return NextResponse.json(
           { error: "Display-Name darf maximal 100 Zeichen lang sein" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate customer_number if provided (max length, trim)
+    if (customer_number !== undefined) {
+      const trimmedNumber = customer_number?.trim();
+      if (trimmedNumber && trimmedNumber.length > 50) {
+        return NextResponse.json(
+          { error: "Kundennummer darf maximal 50 Zeichen lang sein" },
           { status: 400 }
         );
       }
@@ -71,12 +82,15 @@ export async function PATCH(
     }
 
     // Build update object with only provided fields
-    const updateData: { status?: string; display_name?: string | null } = {};
+    const updateData: { status?: string; display_name?: string | null; customer_number?: string | null } = {};
     if (status !== undefined) {
       updateData.status = status;
     }
     if (display_name !== undefined) {
       updateData.display_name = display_name?.trim() || null;
+    }
+    if (customer_number !== undefined) {
+      updateData.customer_number = customer_number?.trim() || null;
     }
 
     // Update user profile
@@ -108,6 +122,7 @@ export async function PATCH(
         id: updatedUser.id,
         status: updatedUser.status,
         display_name: updatedUser.display_name,
+        customer_number: updatedUser.customer_number,
       },
     });
 
