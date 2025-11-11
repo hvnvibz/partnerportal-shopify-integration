@@ -17,8 +17,24 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   const isPublic = PUBLIC_PATHS.some(path => pathname === path || pathname === path + "/");
 
+  // Debug logging
+  useEffect(() => {
+    console.log('ProtectedRoute state:', {
+      pathname,
+      isPublic,
+      loading,
+      hasUser: !!user,
+      userEmail: user?.email,
+      status,
+      statusType: typeof status,
+      statusLength: status?.length,
+      willBlock: !loading && user && status !== null && status !== undefined && status !== 'active' && !isPublic
+    });
+  }, [user, status, loading, pathname, isPublic]);
+
   useEffect(() => {
     if (!loading && !user && !isPublic) {
+      console.log('ProtectedRoute: Redirecting to login - no user');
       router.replace("/anmelden");
       return;
     }
@@ -28,7 +44,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     // If status is null/undefined, allow access (for existing users or if RLS blocks the query)
     // This is a safety measure: if we can't read the status, we assume the user is active
     if (!loading && user && status !== null && status !== undefined && status !== 'active' && !isPublic) {
-      console.log('Blocking access - user status:', status);
+      console.log('ProtectedRoute: Blocking access - user status:', status, 'type:', typeof status);
       router.replace("/anmelden?error=not-activated");
     }
   }, [user, status, loading, router, pathname, isPublic]);
@@ -40,8 +56,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   // Block access if user is not active (only if status is explicitly set)
   // If status is null/undefined, allow access (for existing users or if RLS blocks the query)
   if (user && status !== null && status !== undefined && status !== 'active' && !isPublic) {
-    console.log('Blocking render - user status:', status);
+    console.log('ProtectedRoute: Blocking render - user status:', status, 'type:', typeof status);
     return <div className="flex justify-center items-center min-h-screen">Lade...</div>;
+  }
+  
+  // Debug: Log successful access
+  if (user && !loading && isPublic === false) {
+    console.log('ProtectedRoute: Allowing access - user:', user.email, 'status:', status);
   }
 
   return <>{children}</>;
