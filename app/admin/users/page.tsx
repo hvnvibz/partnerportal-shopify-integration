@@ -45,8 +45,14 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if not admin
+  // Wichtig: Warte bis role geladen ist (nicht null) bevor wir weiterleiten
   useEffect(() => {
-    if (!userLoading && (!user || role !== 'admin')) {
+    // Nur weiterleiten wenn:
+    // 1. User-Daten geladen sind (userLoading = false)
+    // 2. Rolle geladen ist (role !== null)
+    // 3. Entweder kein User ODER Rolle ist nicht 'admin'
+    if (!userLoading && role !== null && (!user || role !== 'admin')) {
+      console.log('Redirecting non-admin user:', { user: user?.email, role });
       router.push('/');
     }
   }, [user, role, userLoading, router]);
@@ -195,7 +201,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (userLoading || !user || role !== 'admin') {
+  // Warte bis User-Daten und Rolle geladen sind
+  // Zeige Loading nur wenn:
+  // - User-Daten noch geladen werden ODER
+  // - Rolle noch nicht geladen ist (null) ODER
+  // - Kein User vorhanden ODER
+  // - Rolle ist nicht 'admin' (aber nur wenn sie bereits geladen wurde, nicht null)
+  if (userLoading || role === null || !user || (role !== null && role !== 'admin')) {
+    // Wenn Rolle geladen ist und nicht 'admin', wird der useEffect weiterleiten
+    // Hier zeigen wir nur Loading während des Ladens
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
