@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createShopifyCustomer, customerExists } from "@/lib/shopify-admin";
+import { verifyHCaptcha } from "@/lib/hcaptcha";
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate hCAPTCHA token
+    if (!captchaToken) {
+      return NextResponse.json(
+        { error: "Bitte bestätigen Sie das Captcha." },
+        { status: 400 }
+      );
+    }
+
+    const isValidCaptcha = await verifyHCaptcha(captchaToken);
+    if (!isValidCaptcha) {
+      return NextResponse.json(
+        { error: "Captcha-Validierung fehlgeschlagen. Bitte versuchen Sie es erneut." },
+        { status: 400 }
+      );
+    }
+
     // Check if customer already exists in Shopify
     const existingShopifyCustomer = await customerExists(email);
     if (existingShopifyCustomer) {
@@ -34,12 +51,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Register user in Supabase
+    // Register user in Supabase (hCAPTCHA already validated server-side)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        captchaToken,
         data: {
           first_name: firstName,
           last_name: lastName,
@@ -92,7 +108,7 @@ export async function POST(req: Request) {
 
       shopifyCustomerId = shopifyCustomer.id;
       
-      // Update Supabase profile with Shopify customer ID (use service role to bypass RLS)
+      // Update Supabase profile with Shopify customer ID, role and status (use service role to bypass RLS)
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .update({
@@ -112,6 +128,8 @@ export async function POST(req: Request) {
           shopify_accepts_marketing: false,
           shopify_tags: `partnerportal,${company.replace(/\s+/g, '-').toLowerCase()}`,
           shopify_note: `Partnerportal-Kunde. Kundennummer: ${customerNumber}, Unternehmen: ${company}`,
+          role: 'partner',
+          status: 'pending',
         })
         .eq('id', authData.user.id);
 

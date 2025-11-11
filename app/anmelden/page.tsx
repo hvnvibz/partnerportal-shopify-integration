@@ -1,7 +1,6 @@
 "use client";
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabaseClient';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignInPage() {
@@ -11,7 +10,16 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const captchaRef = useRef<any>(null);
+
+  // Check for error in URL params
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'not-activated') {
+      setError('Ihr Konto wurde noch nicht freigeschaltet.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,42 +29,38 @@ export default function SignInPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: { captchaToken }
-    });
-    setLoading(false);
-    if (error) {
-      // Übersetze Supabase-Fehlermeldungen ins Deutsche
-      let germanError = error.message;
-      
-      switch (error.message) {
-        case 'Invalid login credentials':
-          germanError = 'Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.';
-          break;
-        case 'Email not confirmed':
-          germanError = 'E-Mail-Adresse nicht bestätigt. Bitte bestätigen Sie Ihre E-Mail-Adresse.';
-          break;
-        case 'Too many requests':
-          germanError = 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
-          break;
-        case 'User not found':
-          germanError = 'Benutzer nicht gefunden. Bitte überprüfen Sie Ihre E-Mail-Adresse.';
-          break;
-        case 'Invalid email or password':
-          germanError = 'Ungültige E-Mail oder Passwort. Bitte überprüfen Sie Ihre Eingaben.';
-          break;
-        default:
-          // Für unbekannte Fehler die ursprüngliche Meldung verwenden
-          germanError = `Anmeldefehler: ${error.message}`;
+
+    try {
+      // Sign in user via API route (hCAPTCHA validated server-side)
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          captchaToken
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Anmeldung fehlgeschlagen');
+        setCaptchaToken(null);
+        captchaRef.current?.resetCaptcha();
+      } else {
+        // Login successful
+        setError(null);
+        router.push('/');
       }
-      
-      setError(germanError);
+    } catch (err) {
+      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
       setCaptchaToken(null);
       captchaRef.current?.resetCaptcha();
-    } else {
-      router.push('/');
+    } finally {
+      setLoading(false);
     }
   };
 

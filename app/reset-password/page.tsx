@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function ResetPasswordPage() {
@@ -24,27 +23,34 @@ export default function ResetPasswordPage() {
     setLoading(true);
     
     try {
-      console.log('Sende Reset-E-Mail an:', email);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/reset-password/update` : undefined,
-        captchaToken,
+      // Send password reset email via API route (hCAPTCHA validated server-side)
+      const response = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          captchaToken
+        }),
       });
-      
-      if (error) {
-        console.error('Reset-Password-Fehler:', error);
-        setError(`Fehler beim Senden der E-Mail: ${error.message}`);
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Fehler beim Senden der E-Mail');
         setCaptchaToken(null);
         captchaRef.current?.resetCaptcha();
       } else {
-        console.log('Reset-E-Mail erfolgreich gesendet');
-        setMessage('Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet, falls die Adresse existiert.');
+        setMessage(result.message || 'Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet, falls die Adresse existiert.');
         setCaptchaToken(null);
         captchaRef.current?.resetCaptcha();
       }
     } catch (err) {
       console.error('Unerwarteter Fehler:', err);
       setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } finally {
       setLoading(false);
     }

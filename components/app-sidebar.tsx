@@ -24,7 +24,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [search, setSearch] = useState("")
-  const { user } = useUser();
+  const { user, profile, role } = useUser();
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -129,21 +129,35 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <div className="mt-auto pb-4 border-t border-gray-200">
-        <div className="flex flex-row gap-2 px-6 pt-4 justify-end">
-          <div className="flex flex-col flex-1 items-start">
+        <div className="flex flex-col gap-2 px-6 pt-4">
+          {role === 'admin' && (
             <Link
-              href="/einstellungen"
-              className={`flex items-center gap-0 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
-              style={{ justifyContent: 'flex-start' }}
+              href="/admin/users"
+              className={`flex items-center gap-2 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/admin/users" ? "bg-gray-200 text-gray-800" : ""}`}
             >
-              {/* Icon entfernt */}
-              <span className="ml-0">Einstellungen</span>
+              <UserCog className="h-4 w-4" />
+              <span>Admin</span>
             </Link>
-            {user?.email && (
-              <div className="ml-3 text-xs text-gray-500 truncate pt-1 text-left w-full">{user.email}</div>
-            )}
+          )}
+          <div className="flex flex-row gap-2 justify-end">
+            <div className="flex flex-col flex-1 items-start">
+              <Link
+                href="/einstellungen"
+                className={`flex items-center gap-0 text-base px-3 py-2 rounded text-gray-700 hover:bg-gray-100 font-semibold ${pathname === "/einstellungen" ? "bg-gray-200 text-gray-800" : ""}`}
+                style={{ justifyContent: 'flex-start' }}
+              >
+                {/* Icon entfernt */}
+                <span className="ml-0">Einstellungen</span>
+              </Link>
+              {profile?.display_name && (
+                <div className="ml-3 text-xs text-gray-700 truncate pt-1 text-left w-full font-medium">{profile.display_name}</div>
+              )}
+              {user?.email && (
+                <div className="ml-3 text-xs text-gray-500 truncate pt-1 text-left w-full">{user.email}</div>
+              )}
+            </div>
+            <AppSidebarLogout />
           </div>
-          <AppSidebarLogout />
         </div>
       </div>
     </Sidebar>

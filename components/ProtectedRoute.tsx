@@ -6,7 +6,7 @@ import { useEffect } from "react";
 const PUBLIC_PATHS = ["/anmelden", "/registrierung", "/reset-password", "/reset-password/update"];
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useUser();
+  const { user, status, loading } = useUser();
   const router = useRouter();
   const pathname = usePathname() || "";
 
@@ -21,9 +21,18 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     if (!loading && !user && !isPublic) {
       router.replace("/anmelden");
     }
-  }, [user, loading, router, pathname, isPublic]);
+    // Check if user is logged in but not active
+    if (!loading && user && status !== 'active' && !isPublic) {
+      router.replace("/anmelden?error=not-activated");
+    }
+  }, [user, status, loading, router, pathname, isPublic]);
 
   if (loading || (!user && !isPublic)) {
+    return <div className="flex justify-center items-center min-h-screen">Lade...</div>;
+  }
+
+  // Block access if user is not active
+  if (user && status !== 'active' && !isPublic) {
     return <div className="flex justify-center items-center min-h-screen">Lade...</div>;
   }
 

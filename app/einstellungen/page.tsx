@@ -176,7 +176,7 @@ export default function EinstellungenPage() {
                   Profil
                 </CardTitle>
                 <CardDescription>
-                  Ihre persönlichen Daten und Shopify-Kundeninformationen.
+                  Ihre persönlichen Informationen
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

@@ -6,6 +6,8 @@ import type { User } from "@supabase/supabase-js";
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ display_name?: string; avatar_url?: string } | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function refreshUser() {
@@ -15,12 +17,16 @@ export function useUser() {
     if (data.session?.user) {
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar_url, role, status')
         .eq('id', data.session.user.id)
         .single();
       setProfile(profileData ?? null);
+      setRole(profileData?.role ?? null);
+      setStatus(profileData?.status ?? null);
     } else {
       setProfile(null);
+      setRole(null);
+      setStatus(null);
     }
     setLoading(false);
   }
@@ -31,12 +37,18 @@ export function useUser() {
       if (session?.user) {
         supabase
           .from('profiles')
-          .select('display_name, avatar_url')
+          .select('display_name, avatar_url, role, status')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => setProfile(data ?? null));
+          .then(({ data }) => {
+            setProfile(data ?? null);
+            setRole(data?.role ?? null);
+            setStatus(data?.status ?? null);
+          });
       } else {
         setProfile(null);
+        setRole(null);
+        setStatus(null);
       }
       setLoading(false);
     });
@@ -47,12 +59,18 @@ export function useUser() {
       if (data.session?.user) {
         supabase
           .from('profiles')
-          .select('display_name, avatar_url')
+          .select('display_name, avatar_url, role, status')
           .eq('id', data.session.user.id)
           .single()
-          .then(({ data }) => setProfile(data ?? null));
+          .then(({ data }) => {
+            setProfile(data ?? null);
+            setRole(data?.role ?? null);
+            setStatus(data?.status ?? null);
+          });
       } else {
         setProfile(null);
+        setRole(null);
+        setStatus(null);
       }
       setLoading(false);
     });
@@ -62,5 +80,5 @@ export function useUser() {
     };
   }, []);
 
-  return { user, profile, loading, refreshUser };
+  return { user, profile, role, status, loading, refreshUser };
 } 
