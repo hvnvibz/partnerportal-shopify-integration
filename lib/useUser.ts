@@ -23,6 +23,12 @@ export function useUser() {
       
       if (profileError) {
         console.error('Error loading profile in useUser:', profileError);
+        console.error('Error details:', {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        });
       }
       
       setProfile(profileData ?? null);
@@ -30,14 +36,14 @@ export function useUser() {
       setStatus(profileData?.status ?? null);
       
       // Debug logging
-      if (profileData) {
-        console.log('Profile loaded:', {
-          hasRole: !!profileData.role,
-          hasStatus: !!profileData.status,
-          role: profileData.role,
-          status: profileData.status
-        });
-      }
+      console.log('Profile loaded in refreshUser:', {
+        hasData: !!profileData,
+        hasRole: !!profileData?.role,
+        hasStatus: !!profileData?.status,
+        role: profileData?.role,
+        status: profileData?.status,
+        fullProfile: profileData
+      });
     } else {
       setProfile(null);
       setRole(null);
@@ -58,20 +64,26 @@ export function useUser() {
           .then(({ data, error }) => {
             if (error) {
               console.error('Error loading profile in auth state change:', error);
+              console.error('Error details:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+              });
             }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
             setStatus(data?.status ?? null);
             
             // Debug logging
-            if (data) {
-              console.log('Profile loaded (auth state change):', {
-                hasRole: !!data.role,
-                hasStatus: !!data.status,
-                role: data.role,
-                status: data.status
-              });
-            }
+            console.log('Profile loaded (auth state change):', {
+              hasData: !!data,
+              hasRole: !!data?.role,
+              hasStatus: !!data?.status,
+              role: data?.role,
+              status: data?.status,
+              fullProfile: data
+            });
           });
       } else {
         setProfile(null);
@@ -93,20 +105,26 @@ export function useUser() {
           .then(({ data, error }) => {
             if (error) {
               console.error('Error loading profile in initial check:', error);
+              console.error('Error details:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+              });
             }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
             setStatus(data?.status ?? null);
             
             // Debug logging
-            if (data) {
-              console.log('Profile loaded (initial check):', {
-                hasRole: !!data.role,
-                hasStatus: !!data.status,
-                role: data.role,
-                status: data.status
-              });
-            }
+            console.log('Profile loaded (initial check):', {
+              hasData: !!data,
+              hasRole: !!data?.role,
+              hasStatus: !!data?.status,
+              role: data?.role,
+              status: data?.status,
+              fullProfile: data
+            });
           });
       } else {
         setProfile(null);

@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AppSidebarLogout from "@/components/AppSidebarLogout"
 import { useUser } from "@/lib/useUser";
 
@@ -24,7 +24,19 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [search, setSearch] = useState("")
-  const { user, profile, role } = useUser();
+  const { user, profile, role, loading } = useUser();
+
+  // Debug logging for role
+  useEffect(() => {
+    if (!loading) {
+      console.log('Sidebar - Role check:', {
+        role,
+        roleType: typeof role,
+        isAdmin: role === 'admin',
+        user: user?.email
+      });
+    }
+  }, [role, loading, user]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
