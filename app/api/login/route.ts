@@ -31,10 +31,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Sign in user (hCAPTCHA already validated server-side)
+    // Sign in user (hCAPTCHA already validated server-side, but pass token to Supabase as well)
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        captchaToken, // Pass token to Supabase even though we validated it server-side
+      },
     });
 
     if (authError) {
@@ -97,16 +100,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user is active
-    if (profileData.status !== 'active') {
-      if (profileData.status === 'blocked') {
+    // Normalize status to lowercase for comparison (handle case sensitivity)
+    const userStatus = profileData.status?.toLowerCase()?.trim();
+    
+    // Log for debugging
+    console.log('User login attempt:', {
+      userId: authData.user.id,
+      email: authData.user.email,
+      status: profileData.status,
+      normalizedStatus: userStatus,
+      role: profileData.role
+    });
+
+    // Check if user is active (handle NULL, empty string, or case variations)
+    if (!userStatus || userStatus !== 'active') {
+      if (userStatus === 'blocked') {
         return NextResponse.json(
           { error: "Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support." },
           { status: 403 }
         );
       } else {
         return NextResponse.json(
-          { error: "Ihr Konto wurde noch nicht freigeschaltet." },
+          { error: `Ihr Konto wurde noch nicht freigeschaltet. Status: ${profileData.status || 'nicht gesetzt'}` },
           { status: 403 }
         );
       }

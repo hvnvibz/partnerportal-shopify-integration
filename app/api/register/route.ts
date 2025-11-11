@@ -51,11 +51,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Register user in Supabase (hCAPTCHA already validated server-side)
+    // Register user in Supabase (hCAPTCHA already validated server-side, but pass token to Supabase as well)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        captchaToken, // Pass token to Supabase even though we validated it server-side
         data: {
           first_name: firstName,
           last_name: lastName,
