@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignInPage() {
@@ -51,9 +52,15 @@ export default function SignInPage() {
         setCaptchaToken(null);
         captchaRef.current?.resetCaptcha();
       } else {
-        // Login successful
+        // Login successful - refresh session and then redirect
         setError(null);
-        router.push('/');
+        // Wait a moment for session to be established, then refresh and redirect
+        await supabase.auth.getSession();
+        // Small delay to ensure session is fully loaded
+        setTimeout(() => {
+          router.push('/');
+          router.refresh(); // Force refresh to reload user data
+        }, 100);
       }
     } catch (err) {
       setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
