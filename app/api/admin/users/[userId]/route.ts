@@ -8,14 +8,33 @@ export async function PATCH(
 ) {
   try {
     const { userId } = params;
-    const { status } = await req.json();
+    const { status, display_name } = await req.json();
 
-    // Validate status
-    if (!status || !['pending', 'active', 'blocked'].includes(status)) {
+    // Validate that at least one field is provided
+    if (status === undefined && display_name === undefined) {
+      return NextResponse.json(
+        { error: "Mindestens ein Feld (status oder display_name) muss angegeben werden" },
+        { status: 400 }
+      );
+    }
+
+    // Validate status if provided
+    if (status !== undefined && !['pending', 'active', 'blocked'].includes(status)) {
       return NextResponse.json(
         { error: "Ungültiger Status. Erlaubte Werte: pending, active, blocked" },
         { status: 400 }
       );
+    }
+
+    // Validate display_name if provided (max length, trim)
+    if (display_name !== undefined) {
+      const trimmedName = display_name?.trim();
+      if (trimmedName && trimmedName.length > 100) {
+        return NextResponse.json(
+          { error: "Display-Name darf maximal 100 Zeichen lang sein" },
+          { status: 400 }
+        );
+      }
     }
 
     // Get the current user from authorization header
@@ -51,10 +70,19 @@ export async function PATCH(
       );
     }
 
-    // Update user status
+    // Build update object with only provided fields
+    const updateData: { status?: string; display_name?: string | null } = {};
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+    if (display_name !== undefined) {
+      updateData.display_name = display_name?.trim() || null;
+    }
+
+    // Update user profile
     const { data: updatedUser, error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ status })
+      .update(updateData)
       .eq('id', userId)
       .select()
       .single();
@@ -79,6 +107,7 @@ export async function PATCH(
       user: {
         id: updatedUser.id,
         status: updatedUser.status,
+        display_name: updatedUser.display_name,
       },
     });
 

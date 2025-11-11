@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Edit2, Check, X } from "lucide-react";
 
 interface User {
   id: string;
@@ -50,6 +50,8 @@ export default function AdminUsersPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -161,10 +163,11 @@ export default function AdminUsersPage() {
         return;
       }
 
-      // Update local state
+      const result = await response.json();
+      // Update local state with response data
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === userId ? { ...u, status: newStatus } : u
+          u.id === userId ? { ...u, status: result.user.status, display_name: result.user.display_name } : u
         )
       );
     } catch (err: any) {
@@ -173,6 +176,61 @@ export default function AdminUsersPage() {
     } finally {
       setUpdating(null);
     }
+  };
+
+  const updateUserDisplayName = async (userId: string, newDisplayName: string) => {
+    try {
+      setUpdating(userId);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Nicht autorisiert");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ display_name: newDisplayName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Fehler beim Aktualisieren des Display-Namens");
+        return;
+      }
+
+      const result = await response.json();
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === userId ? { ...u, display_name: result.user.display_name } : u
+        )
+      );
+      
+      // Exit edit mode
+      setEditingName(null);
+      setEditingNameValue("");
+    } catch (err: any) {
+      console.error('Error updating display name:', err);
+      setError("Fehler beim Aktualisieren des Display-Namens");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const startEditingName = (userId: string, currentName: string) => {
+    setEditingName(userId);
+    setEditingNameValue(currentName || "");
+  };
+
+  const cancelEditingName = () => {
+    setEditingName(null);
+    setEditingNameValue("");
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -323,9 +381,61 @@ export default function AdminUsersPage() {
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.id} className="group">
                     <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>{user.display_name || '-'}</TableCell>
+                    <TableCell>
+                      {editingName === user.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editingNameValue}
+                            onChange={(e) => setEditingNameValue(e.target.value)}
+                            className="w-[200px]"
+                            maxLength={100}
+                            disabled={updating === user.id}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                updateUserDisplayName(user.id, editingNameValue);
+                              } else if (e.key === 'Escape') {
+                                cancelEditingName();
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => updateUserDisplayName(user.id, editingNameValue)}
+                            disabled={updating === user.id}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelEditingName}
+                            disabled={updating === user.id}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{user.display_name || '-'}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => startEditingName(user.id, user.display_name || '')}
+                            disabled={updating === user.id}
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Display-Name bearbeiten"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{getRoleLabel(user.role)}</Badge>
                     </TableCell>
