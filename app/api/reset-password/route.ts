@@ -34,9 +34,10 @@ export async function POST(req: Request) {
     const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const redirectTo = `${origin}/reset-password/update`;
 
-    // Send password reset email (hCAPTCHA already validated server-side)
+    // Send password reset email (hCAPTCHA already validated server-side, but pass token to Supabase as well)
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
+      captchaToken, // Pass token to Supabase even though we validated it server-side
     });
 
     if (resetError) {
