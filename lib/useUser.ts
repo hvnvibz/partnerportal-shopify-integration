@@ -15,14 +15,29 @@ export function useUser() {
     const { data } = await supabase.auth.getSession();
     setUser(data.session?.user ?? null);
     if (data.session?.user) {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('display_name, avatar_url, role, status')
         .eq('id', data.session.user.id)
         .single();
+      
+      if (profileError) {
+        console.error('Error loading profile in useUser:', profileError);
+      }
+      
       setProfile(profileData ?? null);
       setRole(profileData?.role ?? null);
       setStatus(profileData?.status ?? null);
+      
+      // Debug logging
+      if (profileData) {
+        console.log('Profile loaded:', {
+          hasRole: !!profileData.role,
+          hasStatus: !!profileData.status,
+          role: profileData.role,
+          status: profileData.status
+        });
+      }
     } else {
       setProfile(null);
       setRole(null);
@@ -40,10 +55,23 @@ export function useUser() {
           .select('display_name, avatar_url, role, status')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => {
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('Error loading profile in auth state change:', error);
+            }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
             setStatus(data?.status ?? null);
+            
+            // Debug logging
+            if (data) {
+              console.log('Profile loaded (auth state change):', {
+                hasRole: !!data.role,
+                hasStatus: !!data.status,
+                role: data.role,
+                status: data.status
+              });
+            }
           });
       } else {
         setProfile(null);
@@ -62,10 +90,23 @@ export function useUser() {
           .select('display_name, avatar_url, role, status')
           .eq('id', data.session.user.id)
           .single()
-          .then(({ data }) => {
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('Error loading profile in initial check:', error);
+            }
             setProfile(data ?? null);
             setRole(data?.role ?? null);
             setStatus(data?.status ?? null);
+            
+            // Debug logging
+            if (data) {
+              console.log('Profile loaded (initial check):', {
+                hasRole: !!data.role,
+                hasStatus: !!data.status,
+                role: data.role,
+                status: data.status
+              });
+            }
           });
       } else {
         setProfile(null);
