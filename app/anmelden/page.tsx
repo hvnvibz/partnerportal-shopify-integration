@@ -52,15 +52,12 @@ export default function SignInPage() {
         setCaptchaToken(null);
         captchaRef.current?.resetCaptcha();
       } else {
-        // Login successful - refresh session and then redirect
+        // Login successful - force session refresh and redirect
         setError(null);
-        // Wait a moment for session to be established, then refresh and redirect
-        await supabase.auth.getSession();
-        // Small delay to ensure session is fully loaded
-        setTimeout(() => {
-          router.push('/');
-          router.refresh(); // Force refresh to reload user data
-        }, 100);
+        
+        // Force a full page reload to ensure session cookies are loaded
+        // This ensures the client-side Supabase client picks up the session
+        window.location.href = '/';
       }
     } catch (err) {
       setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
