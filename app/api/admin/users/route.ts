@@ -74,6 +74,7 @@ export async function GET(req: Request) {
         role: profile?.role || 'partner',
         status: profile?.status || 'pending',
         created_at: authUser.created_at,
+        last_sign_in_at: authUser.last_sign_in_at,
       };
     });
 

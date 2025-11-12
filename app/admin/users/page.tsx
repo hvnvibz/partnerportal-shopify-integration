@@ -42,6 +42,7 @@ interface User {
   role: string;
   status: string;
   created_at: string;
+  last_sign_in_at: string | null;
 }
 
 export default function AdminUsersPage() {
@@ -433,13 +434,14 @@ export default function AdminUsersPage() {
                 <TableHead>Rolle</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Registriert</TableHead>
+                <TableHead>Letzter Login</TableHead>
                 <TableHead>Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     Keine Benutzer gefunden
                   </TableCell>
                 </TableRow>
@@ -564,6 +566,11 @@ export default function AdminUsersPage() {
                     <TableCell>
                       {user.created_at
                         ? new Date(user.created_at).toLocaleDateString('de-DE')
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {user.last_sign_in_at
+                        ? new Date(user.last_sign_in_at).toLocaleDateString('de-DE')
                         : '-'}
                     </TableCell>
                     <TableCell>
