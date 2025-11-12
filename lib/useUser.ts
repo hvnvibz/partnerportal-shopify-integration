@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import type { User } from "@supabase/supabase-js";
 
@@ -9,6 +9,35 @@ export function useUser() {
   const [role, setRole] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const activityIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityUpdateRef = useRef<number>(0);
+
+  // Function to update user activity
+  async function updateActivity() {
+    const now = Date.now();
+    // Only update if more than 1 minute has passed since last update
+    if (now - lastActivityUpdateRef.current < 60000) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) return;
+
+      const response = await fetch('/api/activity', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        lastActivityUpdateRef.current = now;
+      }
+    } catch (error) {
+      console.error('Error updating activity:', error);
+    }
+  }
 
   async function refreshUser() {
     setLoading(true);
@@ -145,8 +174,36 @@ export function useUser() {
 
     return () => {
       listener.subscription.unsubscribe();
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current);
+      }
     };
   }, []);
+
+  // Set up activity tracking when user is logged in
+  useEffect(() => {
+    // Clear existing interval
+    if (activityIntervalRef.current) {
+      clearInterval(activityIntervalRef.current);
+      activityIntervalRef.current = null;
+    }
+
+    if (user && !loading) {
+      // Update activity immediately when user is loaded
+      updateActivity();
+      
+      // Then update every 2 minutes
+      activityIntervalRef.current = setInterval(() => {
+        updateActivity();
+      }, 120000); // 2 minutes
+    }
+
+    return () => {
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current);
+      }
+    };
+  }, [user, loading]);
 
   return { user, profile, role, status, loading, refreshUser };
 } 

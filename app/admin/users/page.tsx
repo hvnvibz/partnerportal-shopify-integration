@@ -42,7 +42,7 @@ interface User {
   role: string;
   status: string;
   created_at: string;
-  last_sign_in_at: string | null;
+  last_activity_at: string | null;
 }
 
 export default function AdminUsersPage() {
@@ -569,8 +569,8 @@ export default function AdminUsersPage() {
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      {user.last_sign_in_at
-                        ? new Date(user.last_sign_in_at).toLocaleDateString('de-DE')
+                      {user.last_activity_at
+                        ? new Date(user.last_activity_at).toLocaleDateString('de-DE')
                         : '-'}
                     </TableCell>
                     <TableCell>
