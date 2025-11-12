@@ -137,12 +137,9 @@ export async function POST(req: Request) {
           { status: 403 }
         );
       } else {
-        // Return detailed error with status information
-        const statusInfo = profileData.status 
-          ? `Status: "${profileData.status}" (Typ: ${typeof profileData.status}, Länge: ${profileData.status.length})`
-          : 'Status: nicht gesetzt (NULL)';
+        // Return error message
         return NextResponse.json(
-          { error: `Ihr Konto wurde noch nicht freigeschaltet. ${statusInfo}` },
+          { error: "Ihr Konto wurde noch nicht freigeschaltet. Bitte wenden Sie sich an Ihren INDUWA Ansprechpartner." },
           { status: 403 }
         );
       }

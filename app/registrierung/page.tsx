@@ -133,10 +133,21 @@ export default function RegistrationPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left: Form */}
-      <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-gray-100">
-        <div className="w-full max-w-xl p-12 rounded-3xl shadow-2xl bg-white/80 backdrop-blur-md border border-gray-200"
+    <div className="relative min-h-screen">
+      {/* Background Image */}
+      <div className="fixed inset-0 z-0">
+        <img
+          src="/signin-bg.avif"
+          alt="INDUWA background"
+          className="object-cover w-full h-full"
+          style={{ objectPosition: 'center' }}
+          loading="eager"
+        />
+      </div>
+      
+      {/* Centered Form Container */}
+      <div className="relative z-10 flex flex-col justify-center items-center min-h-screen py-12 px-4">
+        <div className="w-full max-w-4xl p-12 rounded-3xl shadow-2xl bg-white/90 backdrop-blur-md border border-gray-200"
           style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}>
           <h1 className="text-4xl md:text-5xl font-extrabold text-center text-blue-900 mb-6 leading-tight">Registrierung für das<br />INDUWA Partnerportal</h1>
           <p className="text-center text-gray-700 mb-10 text-lg">
@@ -145,7 +156,7 @@ export default function RegistrationPage() {
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block mb-1 text-base font-semibold text-gray-800">Vorname *</label>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Vorname *</label>
                 <input
                   type="text"
                   name="firstName"
@@ -157,7 +168,7 @@ export default function RegistrationPage() {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-base font-semibold text-gray-800">Nachname *</label>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Nachname *</label>
                 <input
                   type="text"
                   name="lastName"
@@ -170,51 +181,62 @@ export default function RegistrationPage() {
               </div>
             </div>
 
-            <label className="block mb-1 text-base font-semibold text-gray-800">Unternehmen *</label>
-            <input
-              type="text"
-              name="company"
-              className="w-full p-3 mb-4 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              placeholder="Mustermann GmbH"
-              value={formData.company}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Unternehmen *</label>
+                <input
+                  type="text"
+                  name="company"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                  placeholder="Mustermann GmbH"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Kundennummer *</label>
+                <input
+                  type="text"
+                  name="customerNumber"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                  placeholder="12345"
+                  value={formData.customerNumber}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
 
-            <label className="block mb-1 text-base font-semibold text-gray-800">Kundennummer *</label>
-            <input
-              type="text"
-              name="customerNumber"
-              className="w-full p-3 mb-4 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              placeholder="12345"
-              value={formData.customerNumber}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">E-Mail Adresse *</label>
+                <input
+                  type="email"
+                  name="email"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                  placeholder="max.muster@unternehmen.de"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Telefonnummer</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                  placeholder="+49 123 456789"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
 
-            <label className="block mb-1 text-base font-semibold text-gray-800">E-Mail-Adresse *</label>
-            <input
-              type="email"
-              name="email"
-              className="w-full p-3 mb-4 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              placeholder="max.muster@unternehmen.de"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-
-            <label className="block mb-1 text-base font-semibold text-gray-800">Telefonnummer (optional)</label>
-            <input
-              type="tel"
-              name="phone"
-              className="w-full p-3 mb-4 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              placeholder="+49 123 456789"
-              value={formData.phone}
-              onChange={handleInputChange}
-            />
+            <hr className="my-6 border-gray-300" />
 
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Adresse (optional)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Straße *</label>
@@ -285,9 +307,11 @@ export default function RegistrationPage() {
               </div>
             </div>
 
+            <hr className="my-6 border-gray-300" />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block mb-1 text-base font-semibold text-gray-800">Passwort *</label>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Passwort *</label>
                 <input
                   type="password"
                   name="password"
@@ -299,7 +323,7 @@ export default function RegistrationPage() {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-base font-semibold text-gray-800">Passwort bestätigen *</label>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Passwort bestätigen *</label>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -337,17 +361,6 @@ export default function RegistrationPage() {
             <a href="/anmelden" className="text-blue-900 underline hover:text-blue-700">Hier anmelden</a>
           </div>
         </div>
-      </div>
-
-      {/* Right: Background Image */}
-      <div className="hidden md:block w-1/2 h-full relative">
-        <img
-          src="/signin-bg.avif"
-          alt="INDUWA background"
-          className="object-cover w-full h-full min-h-screen rounded-l-3xl"
-          style={{ objectPosition: 'center' }}
-          loading="eager"
-        />
       </div>
     </div>
   );
