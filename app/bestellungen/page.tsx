@@ -10,20 +10,66 @@ import { supabase } from "@/lib/supabaseClient";
 import { OrderHistory } from "@/components/orders/order-history";
 import type { ShopifyOrder } from "@/lib/shopify-admin";
 
+interface ExtendedProfile {
+  display_name?: string;
+  avatar_url?: string;
+  shopify_customer_id?: number;
+  phone?: string;
+  address?: {
+    company?: string;
+    address1?: string;
+    address2?: string;
+    city?: string;
+    province?: string;
+    country?: string;
+    zip?: string;
+    phone?: string;
+  };
+}
+
 export default function BestellungenPage() {
-  const { user, profile, loading: userLoading } = useUser();
+  const { user, profile: baseProfile, loading: userLoading } = useUser();
+  const [extendedProfile, setExtendedProfile] = useState<ExtendedProfile | null>(null);
   const [orders, setOrders] = useState<ShopifyOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Load extended profile with shopify_customer_id
   useEffect(() => {
-    if (user && profile?.shopify_customer_id && !userLoading) {
+    if (user?.id && !userLoading) {
+      const loadProfile = async () => {
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('shopify_customer_id, phone, address, display_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileData) {
+            setExtendedProfile({
+              display_name: profileData.display_name,
+              avatar_url: profileData.avatar_url,
+              shopify_customer_id: profileData.shopify_customer_id,
+              phone: profileData.phone,
+              address: profileData.address,
+            });
+          }
+        } catch (error) {
+          console.error('Error loading profile:', error);
+        }
+      };
+      loadProfile();
+    }
+  }, [user?.id, userLoading]);
+
+  useEffect(() => {
+    if (user && extendedProfile?.shopify_customer_id && !userLoading) {
       loadOrders();
     }
-  }, [user, profile, userLoading]);
+  }, [user, extendedProfile?.shopify_customer_id, userLoading]);
 
   const loadOrders = async () => {
-    if (!profile?.shopify_customer_id) return;
+    if (!extendedProfile?.shopify_customer_id) return;
 
     setIsLoadingOrders(true);
     setError(null);
@@ -35,7 +81,7 @@ export default function BestellungenPage() {
       }
 
       const response = await fetch(
-        `/api/shopify/customers/${profile.shopify_customer_id}/orders`,
+        `/api/shopify/customers/${extendedProfile.shopify_customer_id}/orders`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
@@ -75,7 +121,7 @@ export default function BestellungenPage() {
     );
   }
 
-  if (!profile?.shopify_customer_id) {
+  if (!extendedProfile?.shopify_customer_id) {
     return (
       <SidebarProvider>
         <AppSidebar />
