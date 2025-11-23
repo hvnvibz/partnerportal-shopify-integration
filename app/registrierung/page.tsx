@@ -151,7 +151,7 @@ export default function RegistrationPage() {
           style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}>
           <h1 className="text-4xl md:text-5xl font-extrabold text-center text-blue-900 mb-6 leading-tight">Registrierung für das<br />INDUWA Partnerportal</h1>
           <p className="text-center text-gray-700 mb-10 text-lg">
-            Erstellen Sie Ihr Konto und erhalten Sie Zugang zu unseren Wasseraufbereitungsanlagen, digitalen Produkthandbüchern und Supportvideos.
+            Erstellen Sie Ihr Konto und erhalten Sie Zugang zu unseren Wasseraufbereitungsanlagen, digitalen Produkthandbüchern, Supportvideos und vielen weiteren Services.
           </p>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

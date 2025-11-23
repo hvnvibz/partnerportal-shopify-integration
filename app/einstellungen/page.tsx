@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -10,25 +10,57 @@ import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 
+interface ExtendedProfile {
+  display_name?: string;
+  avatar_url?: string;
+  shopify_customer_id?: number;
+  phone?: string;
+  address?: {
+    company?: string;
+    address1?: string;
+    address2?: string;
+    city?: string;
+    province?: string;
+    country?: string;
+    zip?: string;
+    phone?: string;
+  };
+}
+
 export default function EinstellungenPage() {
-  const { user, profile, loading } = useUser();
+  const { user, profile: baseProfile, loading } = useUser();
   const { toast } = useToast();
   const [shopifyData, setShopifyData] = useState<any>(null);
   const [syncStatus, setSyncStatus] = useState<any>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [extendedProfile, setExtendedProfile] = useState<ExtendedProfile | null>(null);
 
-  // Load Shopify customer data
+  // Memoize profile to prevent unnecessary re-renders
+  const profile = useMemo(() => {
+    return extendedProfile || (baseProfile as ExtendedProfile | null);
+  }, [extendedProfile, baseProfile]);
+
+  // Update extended profile when base profile changes (only if different)
   useEffect(() => {
-    if (user && profile?.shopify_customer_id) {
-      loadShopifyData();
-      loadSyncStatus();
-      loadOrders();
+    if (baseProfile) {
+      setExtendedProfile((prev) => {
+        // Only update if baseProfile actually changed
+        if (prev?.display_name === baseProfile.display_name && 
+            prev?.avatar_url === baseProfile.avatar_url) {
+          return prev;
+        }
+        return baseProfile as ExtendedProfile;
+      });
     }
-  }, [user, profile]);
+  }, [baseProfile]);
 
-  const loadShopifyData = async () => {
+  // Memoize loadShopifyData to prevent recreation on every render
+  // Remove baseProfile dependency to prevent infinite loop
+  const loadShopifyData = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -36,8 +68,8 @@ export default function EinstellungenPage() {
       // Load basic Shopify customer data from profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('shopify_customer_id, phone, address, shopify_synced_at')
-        .eq('id', user?.id)
+        .select('shopify_customer_id, phone, address, shopify_synced_at, display_name, avatar_url')
+        .eq('id', user.id)
         .single();
 
       if (profileData) {
@@ -47,19 +79,51 @@ export default function EinstellungenPage() {
           address: profileData.address,
           synced_at: profileData.shopify_synced_at,
         });
+        
+        // Update extended profile with Shopify data only if values actually changed
+        // Use functional update to access current state and prevent infinite loop
+        setExtendedProfile((prev) => {
+          // Get current baseProfile values from prev or use profileData
+          const currentDisplayName = prev?.display_name || profileData.display_name;
+          const currentAvatarUrl = prev?.avatar_url || profileData.avatar_url;
+          
+          const newProfile = {
+            display_name: currentDisplayName,
+            avatar_url: currentAvatarUrl,
+            shopify_customer_id: profileData.shopify_customer_id,
+            phone: profileData.phone,
+            address: profileData.address,
+          } as ExtendedProfile;
+          
+          // Only update if values actually changed to prevent infinite loop
+          if (
+            prev?.shopify_customer_id === newProfile.shopify_customer_id &&
+            prev?.phone === newProfile.phone &&
+            JSON.stringify(prev?.address) === JSON.stringify(newProfile.address) &&
+            prev?.display_name === newProfile.display_name &&
+            prev?.avatar_url === newProfile.avatar_url
+          ) {
+            return prev;
+          }
+          
+          return newProfile;
+        });
       }
     } catch (error) {
       console.error('Error loading Shopify data:', error);
     }
-  };
+  }, [user?.id]);
 
-  const loadSyncStatus = async () => {
+  // Memoize loadSyncStatus
+  const loadSyncStatus = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
       const { data, error } = await supabase
-        .rpc('get_customer_sync_status', { p_user_id: user?.id });
+        .rpc('get_customer_sync_status', { p_user_id: user.id });
 
       if (!error && data) {
         setSyncStatus(data[0]);
@@ -67,14 +131,32 @@ export default function EinstellungenPage() {
     } catch (error) {
       console.error('Error loading sync status:', error);
     }
-  };
+  }, [user?.id]);
 
-  const loadOrders = async () => {
-    if (!profile?.shopify_customer_id) return;
+  // Load Shopify customer data when user changes
+  // Only depend on user.id to prevent infinite loop with baseProfile
+  useEffect(() => {
+    if (user?.id) {
+      loadShopifyData();
+      loadSyncStatus();
+    }
+  }, [user?.id, loadShopifyData, loadSyncStatus]);
+
+  // Memoize loadOrders
+  const loadOrders = useCallback(async () => {
+    const customerId = extendedProfile?.shopify_customer_id;
+    if (!customerId) return;
     
     setIsLoadingOrders(true);
     try {
-      const response = await fetch(`/api/shopify/customers/${profile.shopify_customer_id}/orders`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/shopify/customers/${customerId}/orders`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setOrders(data.orders || []);
@@ -84,7 +166,15 @@ export default function EinstellungenPage() {
     } finally {
       setIsLoadingOrders(false);
     }
-  };
+  }, [extendedProfile?.shopify_customer_id]);
+
+  // Load orders separately when shopify_customer_id is available
+  // Only depend on user.id to prevent unnecessary re-runs
+  useEffect(() => {
+    if (user?.id && extendedProfile?.shopify_customer_id) {
+      loadOrders();
+    }
+  }, [user?.id, extendedProfile?.shopify_customer_id, loadOrders]);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -286,34 +376,30 @@ export default function EinstellungenPage() {
 
                   {/* Bestellhistorie */}
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Letzte Bestellungen
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Bestellhistorie
+                      </h4>
+                    </div>
                     {isLoadingOrders ? (
                       <div className="text-center py-4">
                         <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
                         <p className="text-sm text-gray-500">Lade Bestellungen...</p>
                       </div>
                     ) : orders.length > 0 ? (
-                      <div className="space-y-2">
-                        {orders.slice(0, 5).map((order) => (
-                          <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div>
-                              <p className="font-medium text-gray-900">Bestellung #{order.order_number}</p>
-                              <p className="text-sm text-gray-600">{formatDate(order.created_at)}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900">{formatPrice(order.total_price)}</p>
-                              <p className="text-sm text-gray-600 capitalize">{order.financial_status}</p>
-                            </div>
-                          </div>
-                        ))}
-                        {orders.length > 5 && (
-                          <p className="text-sm text-gray-500 text-center">
-                            ... und {orders.length - 5} weitere Bestellungen
-                          </p>
-                        )}
+                      <div className="space-y-3">
+                        <div className="text-sm text-gray-600">
+                          Sie haben {orders.length} {orders.length === 1 ? 'Bestellung' : 'Bestellungen'}.
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100"
+                          onClick={() => window.location.href = '/bestellungen'}
+                        >
+                          <ShoppingBag className="h-4 w-4 mr-2" />
+                          Alle Bestellungen anzeigen
+                        </Button>
                       </div>
                     ) : (
                       <div className="text-center py-4 text-gray-500">

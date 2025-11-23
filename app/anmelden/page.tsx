@@ -16,7 +16,7 @@ export default function SignInPage() {
 
   // Check for error in URL params
   useEffect(() => {
-    const errorParam = searchParams.get('error');
+    const errorParam = searchParams?.get('error');
     if (errorParam === 'not-activated') {
       setError('Ihr Konto wurde noch nicht freigeschaltet. Bitte wenden Sie sich an Ihren INDUWA Ansprechpartner.');
     }

@@ -1,0 +1,145 @@
+"use client";
+import { useState, useEffect } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, ShoppingBag } from "lucide-react";
+import { useUser } from "@/lib/useUser";
+import { supabase } from "@/lib/supabaseClient";
+import { OrderHistory } from "@/components/orders/order-history";
+import type { ShopifyOrder } from "@/lib/shopify-admin";
+
+export default function BestellungenPage() {
+  const { user, profile, loading: userLoading } = useUser();
+  const [orders, setOrders] = useState<ShopifyOrder[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && profile?.shopify_customer_id && !userLoading) {
+      loadOrders();
+    }
+  }, [user, profile, userLoading]);
+
+  const loadOrders = async () => {
+    if (!profile?.shopify_customer_id) return;
+
+    setIsLoadingOrders(true);
+    setError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Nicht autorisiert");
+        return;
+      }
+
+      const response = await fetch(
+        `/api/shopify/customers/${profile.shopify_customer_id}/orders`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Fehler beim Laden der Bestellungen");
+        return;
+      }
+
+      const data = await response.json();
+      setOrders(data.orders || []);
+    } catch (err: any) {
+      console.error("Error loading orders:", err);
+      setError("Fehler beim Laden der Bestellungen");
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  if (userLoading) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-900" />
+              <p className="text-gray-600">Lade Bestellungen...</p>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
+  if (!profile?.shopify_customer_id) {
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <h1 className="text-2xl font-bold text-blue-900">Bestellhistorie</h1>
+          </header>
+          <div className="container mx-auto py-12 px-4 md:px-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-blue-900" />
+                  Kein Shopify-Konto verknüpft
+                </CardTitle>
+                <CardDescription>
+                  Um Ihre Bestellhistorie anzuzeigen, muss Ihr Konto mit Shopify verknüpft sein.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">
+                  Bitte kontaktieren Sie den Support, um Ihr Konto mit Shopify zu verknüpfen.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <h1 className="text-2xl font-bold text-blue-900">Bestellhistorie</h1>
+        </header>
+        <div className="container mx-auto py-12 px-4 md:px-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-blue-900" />
+                Meine Bestellungen
+              </CardTitle>
+              <CardDescription>
+                Übersicht über alle Ihre Bestellungen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
+                  {error}
+                </div>
+              )}
+              <OrderHistory orders={orders} loading={isLoadingOrders} />
+            </CardContent>
+          </Card>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
