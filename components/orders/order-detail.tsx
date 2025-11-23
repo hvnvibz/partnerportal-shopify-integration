@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,7 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import type { ShopifyOrder } from "@/lib/shopify-admin";
+import { type CartItem, CART_UPDATED_EVENT } from "@/components/shop/cart";
 
 interface OrderDetailProps {
   order: ShopifyOrder;
@@ -25,6 +29,9 @@ interface OrderDetailProps {
 }
 
 export function OrderDetail({ order, open, onOpenChange }: OrderDetailProps) {
+  const { toast } = useToast();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("de-DE", {
       year: "numeric",
@@ -42,48 +49,80 @@ export function OrderDetail({ order, open, onOpenChange }: OrderDetailProps) {
     })} €`;
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
-    let label = status;
-
-    if (statusLower.includes("paid") || statusLower.includes("bezahlt")) {
-      variant = "default";
-      label = "Bezahlt";
-    } else if (statusLower.includes("pending") || statusLower.includes("ausstehend")) {
-      variant = "secondary";
-      label = "Ausstehend";
-    } else if (statusLower.includes("refunded") || statusLower.includes("erstattet")) {
-      variant = "destructive";
-      label = "Erstattet";
-    } else {
-      label = status.charAt(0).toUpperCase() + status.slice(1);
-    }
-
-    return <Badge variant={variant}>{label}</Badge>;
-  };
-
-  const getFulfillmentBadge = (status?: string) => {
-    if (!status) return <Badge variant="outline">Nicht versandt</Badge>;
+  const addOrderItemsToCart = async () => {
+    setIsAddingToCart(true);
     
-    const statusLower = status.toLowerCase();
-    let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
-    let label = status;
+    try {
+      // Get current cart from localStorage
+      const storedCart = localStorage.getItem("cart");
+      let cartItems: CartItem[] = [];
 
-    if (statusLower.includes("fulfilled") || statusLower.includes("versandt")) {
-      variant = "default";
-      label = "Versandt";
-    } else if (statusLower.includes("partial") || statusLower.includes("teilweise")) {
-      variant = "secondary";
-      label = "Teilweise versandt";
-    } else if (statusLower.includes("unfulfilled") || statusLower.includes("nicht")) {
-      variant = "outline";
-      label = "Nicht versandt";
-    } else {
-      label = status.charAt(0).toUpperCase() + status.slice(1);
+      if (storedCart) {
+        try {
+          cartItems = JSON.parse(storedCart);
+        } catch (error) {
+          console.error("Error parsing cart data:", error);
+          cartItems = [];
+        }
+      }
+
+      let addedCount = 0;
+
+      // Add each line item to cart
+      for (const item of order.line_items) {
+        // Convert variant_id to GraphQL format
+        const variantId = `gid://shopify/ProductVariant/${item.variant_id}`;
+        const productId = `gid://shopify/Product/${item.product_id}`;
+        
+        // Check if item with same variant already exists in cart
+        const existingItemIndex = cartItems.findIndex(
+          (cartItem) => cartItem.variantId === variantId
+        );
+
+        if (existingItemIndex >= 0) {
+          // Update quantity if item already exists
+          cartItems[existingItemIndex].quantity += item.quantity;
+          addedCount++;
+        } else {
+          // Add new item to cart
+          cartItems.push({
+            id: productId,
+            variantId: variantId,
+            title: item.title,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: item.sku || undefined,
+          });
+          addedCount++;
+        }
+      }
+
+      // Save updated cart
+      localStorage.setItem("cart", JSON.stringify(cartItems));
+      
+      // Dispatch cart update event
+      window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+
+      // Show success message
+      toast({
+        title: "Artikel hinzugefügt",
+        description: `${addedCount} Artikel${addedCount > 1 ? "" : ""} wurde${addedCount > 1 ? "n" : ""} zum Warenkorb hinzugefügt.`,
+      });
+
+      // Close dialog after a short delay
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
+    } catch (error) {
+      console.error("Error adding items to cart:", error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Hinzufügen der Artikel zum Warenkorb.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
     }
-
-    return <Badge variant={variant}>{label}</Badge>;
   };
 
   return (
@@ -96,29 +135,32 @@ export function OrderDetail({ order, open, onOpenChange }: OrderDetailProps) {
           </DialogDescription>
         </DialogHeader>
 
+        {/* Button zum Warenkorb hinzufügen */}
+        <div className="flex justify-end mt-4">
+          <Button
+            onClick={addOrderItemsToCart}
+            disabled={isAddingToCart}
+            className="flex items-center gap-2"
+          >
+            {isAddingToCart ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Wird hinzugefügt...
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4" />
+                Alle Artikel erneut bestellen
+              </>
+            )}
+          </Button>
+        </div>
+
         <div className="space-y-6 mt-4">
           {/* Bestellinformationen */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Bestelldatum</p>
-              <p className="text-sm text-gray-900">{formatDate(order.created_at)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Bearbeitungsdatum</p>
-              <p className="text-sm text-gray-900">
-                {order.processed_at ? formatDate(order.processed_at) : "-"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Zahlungsstatus</p>
-              <div className="mt-1">{getStatusBadge(order.financial_status)}</div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Versandstatus</p>
-              <div className="mt-1">
-                {getFulfillmentBadge(order.fulfillment_status)}
-              </div>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Bestelldatum</p>
+            <p className="text-sm text-gray-900">{formatDate(order.created_at)}</p>
           </div>
 
           <Separator />

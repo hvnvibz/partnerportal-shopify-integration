@@ -327,6 +327,10 @@ export default function AdminUsersPage() {
       return;
     }
 
+    // Capture values at function start to prevent issues if dialog is closed during async operation
+    const userId = linkingUser.id;
+    const customerId = shopifyCustomerId.trim();
+
     setLinking(true);
     setError(null);
 
@@ -337,13 +341,13 @@ export default function AdminUsersPage() {
         return;
       }
 
-      const response = await fetch(`/api/admin/users/${linkingUser.id}/link-shopify`, {
+      const response = await fetch(`/api/admin/users/${userId}/link-shopify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ shopifyCustomerId: parseInt(shopifyCustomerId.trim()) }),
+        body: JSON.stringify({ shopifyCustomerId: parseInt(customerId) }),
       });
 
       if (!response.ok) {
@@ -354,10 +358,10 @@ export default function AdminUsersPage() {
 
       const result = await response.json();
       
-      // Update local state
+      // Update local state using captured userId
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === linkingUser.id 
+          u.id === userId 
             ? { ...u, shopify_customer_id: result.user.shopify_customer_id }
             : u
         )
