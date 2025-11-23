@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { ShoppingCart, Plus, Minus, Trash2, Loader2 } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Trash2, Loader2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -40,6 +40,7 @@ export function Cart() {
   const { toast } = useToast()
   const [cartNote, setCartNote] = useState("")
   const { user } = useUser()
+  const [hasBackup, setHasBackup] = useState(false)
 
   // Function to load cart from localStorage
   const loadCart = () => {
@@ -48,6 +49,10 @@ export function Cart() {
       if (storedCart) {
         setCartItems(JSON.parse(storedCart))
       }
+      
+      // Check if backup exists
+      const backup = localStorage.getItem("cart_backup")
+      setHasBackup(!!backup)
     } catch (error) {
       console.error("Error loading cart data:", error)
     }
@@ -102,9 +107,58 @@ export function Cart() {
   const clearCart = () => {
     setCartItems([])
     localStorage.setItem("cart", JSON.stringify([]))
+    // Backup NICHT löschen beim Leeren - bleibt für Wiederherstellung erhalten
+    // Backup wird nur gelöscht, wenn:
+    // 1. Der Nutzer manuell "Warenkorb leeren" klickt (dann auch Backup löschen)
+    // 2. Der Warenkorb erfolgreich wiederhergestellt wird
     
     // Dispatch event to notify other components
     window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT))
+  }
+
+  // Clear cart and backup (for manual clear button)
+  const clearCartAndBackup = () => {
+    setCartItems([])
+    localStorage.setItem("cart", JSON.stringify([]))
+    localStorage.removeItem("cart_backup")
+    setHasBackup(false)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT))
+    
+    toast({
+      title: "Warenkorb geleert",
+      description: "Ihr Warenkorb wurde geleert.",
+    })
+  }
+
+  // Restore cart from backup
+  const restoreCart = () => {
+    try {
+      const backup = localStorage.getItem("cart_backup")
+      if (backup) {
+        const backupItems = JSON.parse(backup)
+        setCartItems(backupItems)
+        localStorage.setItem("cart", backup)
+        localStorage.removeItem("cart_backup")
+        setHasBackup(false)
+        
+        // Dispatch event to notify other components
+        window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT))
+        
+        toast({
+          title: "Warenkorb wiederhergestellt",
+          description: "Ihr Warenkorb wurde erfolgreich wiederhergestellt.",
+        })
+      }
+    } catch (error) {
+      console.error("Error restoring cart from backup:", error)
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Wiederherstellen des Warenkorbs.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Process checkout
@@ -160,16 +214,20 @@ export function Cart() {
           console.log("Leite weiter zur Checkout-URL:", data.url);
         }
         
+        // Backup des aktuellen Warenkorbs erstellen, bevor zur Kasse weitergeleitet wird
+        // Dies ermöglicht die Wiederherstellung, falls der Nutzer zurückkommt
+        localStorage.setItem("cart_backup", JSON.stringify(cartItems));
+        setHasBackup(true);
+        
         // Zeige Bestätigungsnachricht vor der Weiterleitung
-        const toastMessage = "Sie werden zur Kasse weitergeleitet. Ihr Warenkorb wird geleert.";
-          
         toast({
           title: "Checkout gestartet",
-          description: toastMessage,
+          description: "Sie werden zur Kasse weitergeleitet.",
           duration: 3000,
         });
         
         // Warenkorb leeren nach erfolgreicher Checkout-Weiterleitung
+        // Der Backup bleibt erhalten für die Wiederherstellungsfunktion
         clearCart();
         
         // Kurze Verzögerung für bessere UX, dann Weiterleitung
@@ -221,8 +279,24 @@ export function Cart() {
           <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
             <ShoppingCart className="h-16 w-16 text-muted-foreground" />
             <p className="text-lg font-medium">Ihr Warenkorb ist leer</p>
+            {hasBackup && (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  Es gibt einen gespeicherten Warenkorb von Ihrem letzten Checkout-Versuch.
+                </p>
+                <Button
+                  onClick={restoreCart}
+                  className="bg-[#8abfdf] hover:bg-[#8abfdf]/90 flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Warenkorb wiederherstellen
+                </Button>
+              </div>
+            )}
             <SheetClose asChild>
-              <Button className="bg-[#8abfdf] hover:bg-[#8abfdf]/90">Weiter einkaufen</Button>
+              <Button variant="outline" className={hasBackup ? "" : "bg-[#8abfdf] hover:bg-[#8abfdf]/90"}>
+                Weiter einkaufen
+              </Button>
             </SheetClose>
           </div>
         ) : (
@@ -317,7 +391,7 @@ export function Cart() {
                     "Zur Kasse"
                   )}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={clearCart}>
+                <Button variant="outline" className="flex-1" onClick={clearCartAndBackup}>
                   Warenkorb leeren
                 </Button>
               </SheetFooter>
