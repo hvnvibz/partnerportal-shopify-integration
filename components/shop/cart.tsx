@@ -251,12 +251,9 @@ export function Cart() {
     }
   };
 
-  // Schließe das Sheet automatisch nach erfolgreichem Checkout
-  useEffect(() => {
-    if (cartItems.length === 0 && isOpen) {
-      setIsOpen(false);
-    }
-  }, [cartItems.length, isOpen]);
+  // Schließe das Sheet automatisch nur nach erfolgreichem Checkout
+  // Nicht schließen, wenn Warenkorb einfach leer ist - sonst kann man die Wiederherstellungsfunktion nicht nutzen
+  // Das Sheet wird automatisch geschlossen, wenn der Nutzer zur Shopify-Checkout-Seite weitergeleitet wird
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
