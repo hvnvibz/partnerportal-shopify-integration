@@ -32,7 +32,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Edit2, Check, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Search, Loader2, Edit2, Check, X, Link2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -43,6 +51,7 @@ interface User {
   status: string;
   created_at: string;
   last_activity_at: string | null;
+  shopify_customer_id: number | null;
 }
 
 export default function AdminUsersPage() {
@@ -60,6 +69,9 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
+  const [linkingUser, setLinkingUser] = useState<User | null>(null);
+  const [shopifyCustomerId, setShopifyCustomerId] = useState<string>("");
+  const [linking, setLinking] = useState(false);
 
   // Redirect if not admin
   // Wichtig: Warte bis role geladen ist (nicht null) bevor wir weiterleiten
@@ -297,6 +309,73 @@ export default function AdminUsersPage() {
     setEditingCustomerNumberValue("");
   };
 
+  const startLinkingShopify = (user: User) => {
+    setLinkingUser(user);
+    setShopifyCustomerId("");
+    setError(null);
+  };
+
+  const cancelLinkingShopify = () => {
+    setLinkingUser(null);
+    setShopifyCustomerId("");
+    setError(null);
+  };
+
+  const linkShopifyCustomer = async () => {
+    if (!linkingUser || !shopifyCustomerId.trim()) {
+      setError("Bitte geben Sie eine Shopify-Kunden-ID ein");
+      return;
+    }
+
+    setLinking(true);
+    setError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Nicht autorisiert");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/users/${linkingUser.id}/link-shopify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ shopifyCustomerId: parseInt(shopifyCustomerId.trim()) }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Fehler beim Verknüpfen mit Shopify-Kunde");
+        return;
+      }
+
+      const result = await response.json();
+      
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === linkingUser.id 
+            ? { ...u, shopify_customer_id: result.user.shopify_customer_id }
+            : u
+        )
+      );
+
+      // Close dialog
+      cancelLinkingShopify();
+      
+      // Refresh users list
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Error linking Shopify customer:', err);
+      setError("Fehler beim Verknüpfen mit Shopify-Kunde");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -433,6 +512,7 @@ export default function AdminUsersPage() {
                 <TableHead>Kundennummer</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Shopify Konto</TableHead>
                 <TableHead>Registriert</TableHead>
                 <TableHead>Letzter Login</TableHead>
                 <TableHead>Aktionen</TableHead>
@@ -441,7 +521,7 @@ export default function AdminUsersPage() {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     Keine Benutzer gefunden
                   </TableCell>
                 </TableRow>
@@ -564,6 +644,31 @@ export default function AdminUsersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        {user.shopify_customer_id ? (
+                          <Badge className="bg-green-100 text-green-800">
+                            Verknüpft
+                          </Badge>
+                        ) : (
+                          <>
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                              Keine Verbindung
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startLinkingShopify(user)}
+                              disabled={updating === user.id}
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Mit Shopify-Kunde verknüpfen"
+                            >
+                              <Link2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       {user.created_at
                         ? new Date(user.created_at).toLocaleDateString('de-DE')
                         : '-'}
@@ -604,6 +709,65 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </SidebarInset>
+
+      {/* Dialog für Shopify-Verknüpfung */}
+      <Dialog open={linkingUser !== null} onOpenChange={(open) => !open && cancelLinkingShopify()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Shopify-Kunde verknüpfen</DialogTitle>
+            <DialogDescription>
+              Verknüpfen Sie den Benutzer <strong>{linkingUser?.email}</strong> mit einem Shopify-Kunden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block mb-2 text-sm font-medium">
+                Shopify-Kunden-ID
+              </label>
+              <Input
+                type="number"
+                value={shopifyCustomerId}
+                onChange={(e) => setShopifyCustomerId(e.target.value)}
+                placeholder="z.B. 9398914875720"
+                disabled={linking}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Die Shopify-Kunden-ID finden Sie im Shopify Admin unter Kunden.
+              </p>
+            </div>
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={cancelLinkingShopify}
+              disabled={linking}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={linkShopifyCustomer}
+              disabled={linking || !shopifyCustomerId.trim()}
+            >
+              {linking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verknüpfe...
+                </>
+              ) : (
+                <>
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Verknüpfen
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }

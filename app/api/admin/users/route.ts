@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     const userIds = authUsers.users.map(u => u.id);
     const { data: profilesData, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, display_name, role, status, customer_number, last_activity_at')
+      .select('id, display_name, role, status, customer_number, last_activity_at, shopify_customer_id')
       .in('id', userIds);
 
     if (profilesError) {
@@ -75,6 +75,7 @@ export async function GET(req: Request) {
         status: profile?.status || 'pending',
         created_at: authUser.created_at,
         last_activity_at: profile?.last_activity_at || null,
+        shopify_customer_id: profile?.shopify_customer_id || null,
       };
     });
 

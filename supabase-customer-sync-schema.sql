@@ -188,6 +188,11 @@ GRANT EXECUTE ON FUNCTION get_customers_needing_sync TO authenticated;
 -- Create RLS policies for the new columns
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view own shopify data" ON profiles;
+DROP POLICY IF EXISTS "Users can update own shopify data" ON profiles;
+DROP POLICY IF EXISTS "Service role can manage shopify data" ON profiles;
+
 -- Policy to allow users to read their own Shopify data
 CREATE POLICY "Users can view own shopify data" ON profiles
   FOR SELECT USING (auth.uid() = id);

@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegistrationPage() {
   const [formData, setFormData] = useState({
@@ -26,6 +27,8 @@ export default function RegistrationPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const captchaRef = useRef<any>(null);
 
@@ -312,27 +315,55 @@ export default function RegistrationPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Passwort *</label>
-                <input
-                  type="password"
-                  name="password"
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-                  placeholder="Mindestens 6 Zeichen"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                    placeholder="Mindestens 6 Zeichen"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    aria-label={showPassword ? "Passwort ausblenden" : "Passwort anzeigen"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block mb-1 text-sm font-semibold text-gray-700">Passwort bestätigen *</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-                  placeholder="Passwort wiederholen"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                    placeholder="Passwort wiederholen"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    aria-label={showConfirmPassword ? "Passwort ausblenden" : "Passwort anzeigen"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 

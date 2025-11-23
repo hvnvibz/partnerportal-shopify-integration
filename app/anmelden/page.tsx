@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const captchaRef = useRef<any>(null);
@@ -109,13 +111,27 @@ export default function SignInPage() {
               required
             />
             <label className="block mb-1 text-base font-semibold text-gray-800">Ihr Passwort</label>
-            <input
-              type="password"
-              className="w-full p-3 mb-3 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative mb-3">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full p-3 pr-10 border border-gray-300 rounded-lg bg-gray-100 placeholder-gray-400 text-base"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showPassword ? "Passwort ausblenden" : "Passwort anzeigen"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             <div className="flex justify-end mb-5">
               <a href="/reset-password" className="text-sm text-blue-900 underline hover:text-blue-700">Passwort vergessen?</a>
             </div>

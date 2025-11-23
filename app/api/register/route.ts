@@ -140,10 +140,18 @@ export async function POST(req: Request) {
         // The user can still use the system and we can sync later
       }
 
-    } catch (shopifyError) {
+    } catch (shopifyError: any) {
       console.error('Shopify customer creation error:', shopifyError);
+      // Log error details for admin review
+      console.error('Shopify error details:', {
+        email,
+        userId: authData.user.id,
+        error: shopifyError.message || shopifyError,
+        timestamp: new Date().toISOString()
+      });
       // Don't fail the registration if Shopify creation fails
-      // The user can still use the system and we can create the customer later
+      // The user can still use the system and we can create the customer later via admin interface
+      // shopifyCustomerId remains null, which will be visible in admin panel
     }
 
     // Return success response

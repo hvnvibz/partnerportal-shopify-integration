@@ -1,11 +1,19 @@
 // Shopify Admin API Client
 // Handles customer management, order history, and data synchronization
 
-import { SHOPIFY_STORE_DOMAIN } from "./shopify-constants";
+// Helper function to get store domain (reads from env at runtime)
+function getShopifyStoreDomain(): string {
+  const domain = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN?.trim();
+  if (!domain) {
+    throw new Error('NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN is not set');
+  }
+  return domain;
+}
 
-// Environment variables
-const SHOPIFY_ADMIN_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN!;
-const SHOPIFY_STORE_URL = `https://${SHOPIFY_STORE_DOMAIN}`;
+// Helper function to get store URL (reads from env at runtime)
+function getShopifyStoreUrl(): string {
+  return `https://${getShopifyStoreDomain()}`;
+}
 
 // Types
 export interface ShopifyCustomer {
@@ -141,14 +149,23 @@ export interface UpdateCustomerData {
   tags?: string;
 }
 
+// Helper function to get access token (reads from env at runtime)
+function getShopifyAccessToken(): string {
+  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN?.trim();
+  if (!token) {
+    throw new Error('SHOPIFY_ADMIN_ACCESS_TOKEN is not set');
+  }
+  return token;
+}
+
 // Helper function to make Admin API requests
 async function shopifyAdminFetch(endpoint: string, options: RequestInit = {}) {
-  const url = `${SHOPIFY_STORE_URL}/admin/api/2024-01/${endpoint}`;
+  const url = `${getShopifyStoreUrl()}/admin/api/2024-01/${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
     headers: {
-      'X-Shopify-Access-Token': SHOPIFY_ADMIN_ACCESS_TOKEN,
+      'X-Shopify-Access-Token': getShopifyAccessToken(),
       'Content-Type': 'application/json',
       ...options.headers,
     },
@@ -378,6 +395,71 @@ export function getCustomerSummary(customer: ShopifyCustomer) {
 }
 
 /**
+ * Get all customers from Shopify (with pagination)
+ * Note: This function handles pagination automatically using Shopify's cursor-based pagination
+ */
+export async function getAllShopifyCustomers(): Promise<ShopifyCustomer[]> {
+  const allCustomers: ShopifyCustomer[] = [];
+  let pageInfo: string | null = null;
+  let hasNextPage = true;
+  let pageCount = 0;
+
+  try {
+    while (hasNextPage) {
+      pageCount++;
+      let endpoint = 'customers.json?limit=250';
+      if (pageInfo) {
+        endpoint += `&page_info=${encodeURIComponent(pageInfo)}`;
+      }
+
+      // We need to use fetch directly to access response headers
+      const url = `${getShopifyStoreUrl()}/admin/api/2024-01/${endpoint}`;
+      const token = getShopifyAccessToken();
+      
+      const response = await fetch(url, {
+        headers: {
+          'X-Shopify-Access-Token': token,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Shopify Admin API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.customers && data.customers.length > 0) {
+        allCustomers.push(...data.customers);
+        console.log(`   Seite ${pageCount}: ${data.customers.length} Kunden geladen (Gesamt: ${allCustomers.length})`);
+      }
+
+      // Check for pagination in Link header
+      const linkHeader = response.headers.get('link') || '';
+      const nextPageMatch = linkHeader.match(/<[^>]*page_info=([^&>]+)[^>]*>; rel="next"/);
+      
+      if (nextPageMatch && data.customers && data.customers.length === 250) {
+        pageInfo = decodeURIComponent(nextPageMatch[1]);
+        hasNextPage = true;
+      } else {
+        hasNextPage = false;
+      }
+
+      // Rate limiting: Wait 500ms between requests (Shopify allows 2 req/sec)
+      if (hasNextPage) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    return allCustomers;
+  } catch (error) {
+    console.error('Error fetching all Shopify customers:', error);
+    throw error;
+  }
+}
+
+/**
  * Format customer data for Supabase
  */
 export function formatCustomerForSupabase(customer: ShopifyCustomer) {
@@ -394,6 +476,10 @@ export function formatCustomerForSupabase(customer: ShopifyCustomer) {
       zip: customer.default_address.zip,
       phone: customer.default_address.phone,
     } : null,
+    shopify_verified: customer.verified_email,
+    shopify_accepts_marketing: customer.accepts_marketing,
+    shopify_tags: customer.tags,
+    shopify_note: customer.note,
     shopify_synced_at: new Date().toISOString(),
   };
 }
