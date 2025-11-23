@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +16,8 @@ import { Loader2, ShoppingBag } from "lucide-react";
 import { useUser } from "@/lib/useUser";
 import { supabase } from "@/lib/supabaseClient";
 import { OrderHistory } from "@/components/orders/order-history";
+import { Cart } from "@/components/shop/cart";
+import { PriceVisibilityDropdown } from "@/components/shop/price-visibility-dropdown";
 import type { ShopifyOrder } from "@/lib/shopify-admin";
 
 interface ExtendedProfile {
@@ -110,6 +120,25 @@ export default function BestellungenPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb className="flex-1">
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/">Start</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Bestellhistorie</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="flex items-center gap-4">
+              <PriceVisibilityDropdown />
+              <Cart />
+            </div>
+          </header>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-900" />
@@ -129,7 +158,21 @@ export default function BestellungenPage() {
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-2xl font-bold text-blue-900">Bestellhistorie</h1>
+            <Breadcrumb className="flex-1">
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/">Start</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Bestellhistorie</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="flex items-center gap-4">
+              <PriceVisibilityDropdown />
+              <Cart />
+            </div>
           </header>
           <div className="container mx-auto py-12 px-4 md:px-8">
             <Card>
@@ -155,14 +198,28 @@ export default function BestellungenPage() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-2xl font-bold text-blue-900">Bestellhistorie</h1>
-        </header>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb className="flex-1">
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/">Start</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Bestellhistorie</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="flex items-center gap-4">
+              <PriceVisibilityDropdown />
+              <Cart />
+            </div>
+          </header>
         <div className="container mx-auto py-12 px-4 md:px-8">
           <Card>
             <CardHeader>
