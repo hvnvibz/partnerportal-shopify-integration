@@ -228,7 +228,7 @@ export default function BestellungenPage() {
                 Meine Bestellungen
               </CardTitle>
               <CardDescription>
-                Übersicht über alle Ihre Bestellungen
+                Übersicht über bisherige Bestellungen
               </CardDescription>
             </CardHeader>
             <CardContent>

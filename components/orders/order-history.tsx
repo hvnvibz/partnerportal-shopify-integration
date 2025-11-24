@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowUpDown, Eye } from "lucide-react";
 import type { ShopifyOrder } from "@/lib/shopify-admin";
@@ -19,7 +18,7 @@ interface OrderHistoryProps {
   loading?: boolean;
 }
 
-type SortField = "order_number" | "created_at" | "total_price" | "financial_status";
+type SortField = "order_number" | "created_at" | "total_price";
 type SortDirection = "asc" | "desc";
 
 export function OrderHistory({ orders, loading }: OrderHistoryProps) {
@@ -40,27 +39,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })} €`;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
-    let label = status;
-
-    if (statusLower.includes("paid") || statusLower.includes("bezahlt")) {
-      variant = "default";
-      label = "Bezahlt";
-    } else if (statusLower.includes("pending") || statusLower.includes("ausstehend")) {
-      variant = "secondary";
-      label = "Ausstehend";
-    } else if (statusLower.includes("refunded") || statusLower.includes("erstattet")) {
-      variant = "destructive";
-      label = "Erstattet";
-    } else {
-      label = status.charAt(0).toUpperCase() + status.slice(1);
-    }
-
-    return <Badge variant={variant}>{label}</Badge>;
   };
 
   const handleSort = (field: SortField) => {
@@ -88,10 +66,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
       case "total_price":
         aValue = parseFloat(a.total_price);
         bValue = parseFloat(b.total_price);
-        break;
-      case "financial_status":
-        aValue = a.financial_status;
-        bValue = b.financial_status;
         break;
       default:
         return 0;
@@ -164,19 +138,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
                   )}
                 </Button>
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 -ml-3"
-                  onClick={() => handleSort("financial_status")}
-                >
-                  Status
-                  {sortField === "financial_status" && (
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  )}
-                </Button>
-              </TableHead>
               <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
@@ -188,7 +149,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
                 </TableCell>
                 <TableCell>{formatDate(order.created_at)}</TableCell>
                 <TableCell>{formatPrice(order.total_price, order.currency)}</TableCell>
-                <TableCell>{getStatusBadge(order.financial_status)}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
