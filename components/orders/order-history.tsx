@@ -18,7 +18,7 @@ interface OrderHistoryProps {
   loading?: boolean;
 }
 
-type SortField = "order_number" | "created_at" | "total_price";
+type SortField = "created_at" | "total_price";
 type SortDirection = "asc" | "desc";
 
 export function OrderHistory({ orders, loading }: OrderHistoryProps) {
@@ -55,10 +55,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
     let bValue: any;
 
     switch (sortField) {
-      case "order_number":
-        aValue = a.order_number;
-        bValue = b.order_number;
-        break;
       case "created_at":
         aValue = new Date(a.created_at).getTime();
         bValue = new Date(b.created_at).getTime();
@@ -75,6 +71,33 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
+
+  const renderLineItems = (lineItems: typeof orders[0]["line_items"]) => {
+    if (lineItems.length === 0) return <span className="text-gray-400">Keine Artikel</span>;
+    
+    const maxVisible = 2;
+    const visibleItems = lineItems.slice(0, maxVisible);
+    const remainingCount = lineItems.length - maxVisible;
+
+    return (
+      <div className="space-y-1.5">
+        {visibleItems.map((item, index) => (
+          <div key={item.id} className="flex items-start gap-2 text-sm">
+            <span className="text-gray-600 font-medium min-w-[2ch]">{item.quantity}x</span>
+            <span className="text-gray-900 flex-1">{item.title}</span>
+            {item.variant_title && (
+              <span className="text-gray-500 text-xs">({item.variant_title})</span>
+            )}
+          </div>
+        ))}
+        {remainingCount > 0 && (
+          <div className="text-xs text-gray-500 pt-1">
+            + {remainingCount} weitere Artikel
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -104,19 +127,6 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
                   variant="ghost"
                   size="sm"
                   className="h-8 -ml-3"
-                  onClick={() => handleSort("order_number")}
-                >
-                  Bestellnummer
-                  {sortField === "order_number" && (
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 -ml-3"
                   onClick={() => handleSort("created_at")}
                 >
                   Datum
@@ -125,6 +135,7 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
                   )}
                 </Button>
               </TableHead>
+              <TableHead className="min-w-[300px]">Artikel</TableHead>
               <TableHead>
                 <Button
                   variant="ghost"
@@ -144,12 +155,16 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
           <TableBody>
             {sortedOrders.map((order) => (
               <TableRow key={order.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">
-                  #{order.order_number}
+                <TableCell className="font-medium py-4">
+                  {formatDate(order.created_at)}
                 </TableCell>
-                <TableCell>{formatDate(order.created_at)}</TableCell>
-                <TableCell>{formatPrice(order.total_price, order.currency)}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="py-4">
+                  {renderLineItems(order.line_items)}
+                </TableCell>
+                <TableCell className="font-semibold py-4">
+                  {formatPrice(order.total_price, order.currency)}
+                </TableCell>
+                <TableCell className="text-right py-4">
                   <Button
                     variant="ghost"
                     size="sm"

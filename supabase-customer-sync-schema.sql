@@ -63,6 +63,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to get customer sync status
+-- SECURITY: Only allows users to check their own status or service role to check any
 CREATE OR REPLACE FUNCTION get_customer_sync_status(p_user_id UUID)
 RETURNS TABLE(
   is_synced BOOLEAN,
@@ -71,6 +72,11 @@ RETURNS TABLE(
   sync_age_hours NUMERIC
 ) AS $$
 BEGIN
+  -- Only allow users to check their own status or service role to check any
+  IF auth.uid() != p_user_id AND auth.role() != 'service_role' THEN
+    RAISE EXCEPTION 'Access denied: You can only check your own sync status';
+  END IF;
+
   RETURN QUERY
   SELECT 
     (p.shopify_customer_id IS NOT NULL) as is_synced,
@@ -152,34 +158,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create view for customer sync dashboard
-CREATE OR REPLACE VIEW customer_sync_dashboard AS
-SELECT 
-  p.id as user_id,
-  au.email,
-  p.display_name,
-  p.shopify_customer_id,
-  p.shopify_synced_at,
-  CASE 
-    WHEN p.shopify_customer_id IS NULL THEN 'Not Synced'
-    WHEN p.shopify_synced_at IS NULL THEN 'Never Synced'
-    WHEN EXTRACT(EPOCH FROM (NOW() - p.shopify_synced_at)) / 3600 < 1 THEN 'Recently Synced'
-    WHEN EXTRACT(EPOCH FROM (NOW() - p.shopify_synced_at)) / 3600 < 24 THEN 'Synced Today'
-    WHEN EXTRACT(EPOCH FROM (NOW() - p.shopify_synced_at)) / 3600 < 168 THEN 'Synced This Week'
-    ELSE 'Needs Sync'
-  END as sync_status,
-  EXTRACT(EPOCH FROM (NOW() - p.shopify_synced_at)) / 3600 as sync_age_hours,
-  p.phone,
-  p.shopify_verified,
-  p.shopify_accepts_marketing,
-  p.shopify_tags,
-  au.created_at as user_created_at
-FROM profiles p
-JOIN auth.users au ON p.id = au.id
-ORDER BY p.shopify_synced_at ASC NULLS FIRST;
+-- SECURITY WARNING: The customer_sync_dashboard view has been removed due to security issues.
+-- It exposed auth.users data to authenticated users and used SECURITY DEFINER.
+-- Use the secure functions instead:
+--   - get_admin_sync_dashboard() - for admin access (service role only)
+--   - get_my_sync_status() - for users to check their own status
+--   - get_customer_sync_status(p_user_id UUID) - for checking specific user status
+-- See fix-security-issues.sql for the secure implementation.
 
 -- Grant necessary permissions
-GRANT SELECT ON customer_sync_dashboard TO authenticated;
 GRANT EXECUTE ON FUNCTION sync_customer_from_shopify TO authenticated;
 GRANT EXECUTE ON FUNCTION get_customer_sync_status TO authenticated;
 GRANT EXECUTE ON FUNCTION find_user_by_shopify_id TO authenticated;
@@ -220,4 +207,3 @@ COMMENT ON FUNCTION get_customer_sync_status IS 'Returns sync status and age for
 COMMENT ON FUNCTION find_user_by_shopify_id IS 'Finds Supabase user by Shopify customer ID';
 COMMENT ON FUNCTION get_customers_needing_sync IS 'Returns customers that need synchronization';
 COMMENT ON FUNCTION cleanup_orphaned_shopify_refs IS 'Cleans up orphaned Shopify references';
-COMMENT ON VIEW customer_sync_dashboard IS 'Dashboard view for customer synchronization status';
