@@ -179,15 +179,15 @@ export default function BestellungenPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShoppingBag className="h-5 w-5 text-blue-900" />
-                  Kein Shopify-Konto verknüpft
+                  Bestellhistorie
                 </CardTitle>
                 <CardDescription>
-                  Um Ihre Bestellhistorie anzuzeigen, muss Ihr Konto mit Shopify verknüpft sein.
+                  Bislang ist noch keine Bestellung ausgeführt worden.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600">
-                  Bitte kontaktieren Sie den Support, um Ihr Konto mit Shopify zu verknüpfen.
+                  Sobald Sie eine Bestellung aufgeben, wird diese hier angezeigt.
                 </p>
               </CardContent>
             </Card>
