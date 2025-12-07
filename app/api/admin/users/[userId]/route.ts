@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { updateShopifyCustomer } from "@/lib/shopify-admin";
 
 export async function PATCH(
   req: Request,
@@ -81,8 +82,25 @@ export async function PATCH(
       );
     }
 
+    // Get current profile to check for status change
+    const { data: currentProfile, error: currentProfileError } = await supabaseAdmin
+      .from('profiles')
+      .select('status, shopify_customer_id')
+      .eq('id', userId)
+      .single();
+
+    if (currentProfileError || !currentProfile) {
+      return NextResponse.json(
+        { error: "Benutzer nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    // Check if status is changing from 'pending' to 'active'
+    const isActivatingUser = status === 'active' && currentProfile.status === 'pending';
+
     // Build update object with only provided fields
-    const updateData: { status?: string; display_name?: string | null; customer_number?: string | null } = {};
+    const updateData: { status?: string; display_name?: string | null; customer_number?: string | null; shopify_verified?: boolean } = {};
     if (status !== undefined) {
       updateData.status = status;
     }
@@ -91,6 +109,11 @@ export async function PATCH(
     }
     if (customer_number !== undefined) {
       updateData.customer_number = customer_number?.trim() || null;
+    }
+
+    // If activating user, also set shopify_verified to true
+    if (isActivatingUser) {
+      updateData.shopify_verified = true;
     }
 
     // Update user profile
@@ -116,6 +139,24 @@ export async function PATCH(
       );
     }
 
+    // If activating user and Shopify customer exists, update Shopify verified_email
+    if (isActivatingUser && currentProfile.shopify_customer_id) {
+      try {
+        await updateShopifyCustomer(currentProfile.shopify_customer_id, {
+          verified_email: true
+        });
+        console.log(`Shopify customer ${currentProfile.shopify_customer_id} verified_email set to true`);
+      } catch (shopifyError: any) {
+        // Log error but don't fail the request - Supabase was already updated
+        console.error('Error updating Shopify customer verified status:', shopifyError);
+        console.error('Shopify update failed for customer:', {
+          shopify_customer_id: currentProfile.shopify_customer_id,
+          userId: userId,
+          error: shopifyError.message
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -123,6 +164,7 @@ export async function PATCH(
         status: updatedUser.status,
         display_name: updatedUser.display_name,
         customer_number: updatedUser.customer_number,
+        shopify_verified: updatedUser.shopify_verified,
       },
     });
 
