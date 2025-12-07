@@ -4,6 +4,46 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createShopifyCustomer, customerExists } from "@/lib/shopify-admin";
 import { verifyHCaptcha } from "@/lib/hcaptcha";
 
+// Mapping für deutsche Ländernamen zu Shopify-kompatiblen englischen Namen
+const countryMapping: Record<string, string> = {
+  'deutschland': 'Germany',
+  'österreich': 'Austria',
+  'schweiz': 'Switzerland',
+  'germany': 'Germany',
+  'austria': 'Austria',
+  'switzerland': 'Switzerland',
+  'niederlande': 'Netherlands',
+  'belgien': 'Belgium',
+  'frankreich': 'France',
+  'italien': 'Italy',
+  'spanien': 'Spain',
+  'polen': 'Poland',
+  'tschechien': 'Czech Republic',
+  'dänemark': 'Denmark',
+  'luxemburg': 'Luxembourg',
+  // ISO codes
+  'de': 'Germany',
+  'at': 'Austria',
+  'ch': 'Switzerland',
+  'nl': 'Netherlands',
+  'be': 'Belgium',
+  'fr': 'France',
+  'it': 'Italy',
+  'es': 'Spain',
+  'pl': 'Poland',
+  'cz': 'Czech Republic',
+  'dk': 'Denmark',
+  'lu': 'Luxembourg',
+};
+
+function normalizeCountryForShopify(country?: string): string {
+  if (!country || country.trim() === '') {
+    return 'Germany'; // Standard: Deutschland
+  }
+  const normalized = country.toLowerCase().trim();
+  return countryMapping[normalized] || country; // Fallback: Original zurückgeben
+}
+
 export async function POST(req: Request) {
   try {
     const { 
@@ -81,6 +121,67 @@ export async function POST(req: Request) {
       );
     }
 
+    // Update profile immediately with customer_number and display_name
+    // This ensures these fields are set regardless of Shopify success/failure
+    // Use upsert to handle both insert and update cases
+    
+    // First, check if profile exists and what the current state is
+    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, customer_number, display_name, role, status')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+    
+    console.log('Profile check before upsert:', {
+      exists: !!existingProfile,
+      currentValues: existingProfile,
+      checkError: profileCheckError,
+      userId: authData.user.id,
+    });
+    
+    const { error: initialProfileError, data: upsertResult } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: authData.user.id,
+        customer_number: customerNumber,
+        display_name: company,
+        role: 'partner',
+        status: 'pending',
+      }, {
+        onConflict: 'id'
+      })
+      .select();
+
+    if (initialProfileError) {
+      console.error('Initial profile upsert error:', initialProfileError);
+      console.error('Error details:', {
+        code: initialProfileError.code,
+        message: initialProfileError.message,
+        details: initialProfileError.details,
+        hint: initialProfileError.hint,
+      });
+      console.error('Attempted values:', {
+        userId: authData.user.id,
+        customer_number: customerNumber,
+        display_name: company,
+      });
+    } else {
+      console.log('Profile upserted successfully:', {
+        result: upsertResult,
+        customer_number: customerNumber,
+        display_name: company,
+      });
+      
+      // Verify the values were actually saved
+      const { data: verifyProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('customer_number, display_name')
+        .eq('id', authData.user.id)
+        .single();
+      
+      console.log('Verified profile values after upsert:', verifyProfile);
+    }
+
     // Create customer in Shopify (Admin API)
     let shopifyCustomerId: number | null = null;
     try {
@@ -101,7 +202,7 @@ export async function POST(req: Request) {
           address2: address.address2,
           city: address.city,
           province: address.province,
-          country: address.country,
+          country: normalizeCountryForShopify(address.country),
           zip: address.zip,
           phone: phone,
         }] : undefined,
@@ -113,6 +214,8 @@ export async function POST(req: Request) {
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .update({
+          customer_number: customerNumber,
+          display_name: company,
           shopify_customer_id: shopifyCustomerId,
           phone: phone || null,
           address: address ? {
@@ -121,7 +224,7 @@ export async function POST(req: Request) {
             address2: address.address2,
             city: address.city,
             province: address.province,
-            country: address.country,
+            country: normalizeCountryForShopify(address.country),
             zip: address.zip,
             phone: phone,
           } : null,
@@ -136,8 +239,29 @@ export async function POST(req: Request) {
 
       if (profileError) {
         console.error('Profile update error:', profileError);
+        console.error('Update data:', {
+          userId: authData.user.id,
+          customer_number: customerNumber,
+          display_name: company,
+          shopify_customer_id: shopifyCustomerId,
+        });
+        
+        // Try to verify what's actually in the database
+        const { data: currentProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('customer_number, display_name, shopify_customer_id')
+          .eq('id', authData.user.id)
+          .single();
+        
+        console.error('Current profile values:', currentProfile);
         // Don't fail the registration if profile update fails
         // The user can still use the system and we can sync later
+      } else {
+        console.log('Profile updated successfully:', {
+          customer_number: customerNumber,
+          display_name: company,
+          shopify_customer_id: shopifyCustomerId,
+        });
       }
 
     } catch (shopifyError: any) {
@@ -152,6 +276,31 @@ export async function POST(req: Request) {
       // Don't fail the registration if Shopify creation fails
       // The user can still use the system and we can create the customer later via admin interface
       // shopifyCustomerId remains null, which will be visible in admin panel
+      
+      // Still update profile with customer_number and display_name even if Shopify fails
+      // Use upsert to ensure the profile exists
+      const { error: fallbackProfileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          customer_number: customerNumber,
+          display_name: company,
+          role: 'partner',
+          status: 'pending',
+        }, {
+          onConflict: 'id'
+        });
+
+      if (fallbackProfileError) {
+        console.error('Fallback profile upsert error:', fallbackProfileError);
+        console.error('Attempted values:', {
+          customer_number: customerNumber,
+          display_name: company,
+          userId: authData.user.id,
+        });
+      } else {
+        console.log('Fallback profile upsert successful');
+      }
     }
 
     // Return success response
