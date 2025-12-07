@@ -192,7 +192,7 @@ export async function POST(req: Request) {
         phone: phone || undefined,
         verified_email: false,
         accepts_marketing: false,
-        note: `Partnerportal-Kunde. Kundennummer: ${customerNumber}, Unternehmen: ${company}`,
+        note: customerNumber,
         tags: `partnerportal,${company.replace(/\s+/g, '-').toLowerCase()}`,
         addresses: address ? [{
           first_name: firstName,
@@ -231,7 +231,7 @@ export async function POST(req: Request) {
           shopify_verified: false,
           shopify_accepts_marketing: false,
           shopify_tags: `partnerportal,${company.replace(/\s+/g, '-').toLowerCase()}`,
-          shopify_note: `Partnerportal-Kunde. Kundennummer: ${customerNumber}, Unternehmen: ${company}`,
+          shopify_note: customerNumber,
           role: 'partner',
           status: 'pending',
         })
