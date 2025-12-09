@@ -99,8 +99,12 @@ export async function PATCH(
     // Check if status is changing from 'pending' to 'active'
     const isActivatingUser = status === 'active' && currentProfile.status === 'pending';
 
+    // Check if customer_number is being changed
+    const newCustomerNumber = customer_number?.trim() || null;
+    const isCustomerNumberChanging = customer_number !== undefined;
+
     // Build update object with only provided fields
-    const updateData: { status?: string; display_name?: string | null; customer_number?: string | null; shopify_verified?: boolean } = {};
+    const updateData: { status?: string; display_name?: string | null; customer_number?: string | null; shopify_verified?: boolean; shopify_note?: string | null } = {};
     if (status !== undefined) {
       updateData.status = status;
     }
@@ -108,7 +112,9 @@ export async function PATCH(
       updateData.display_name = display_name?.trim() || null;
     }
     if (customer_number !== undefined) {
-      updateData.customer_number = customer_number?.trim() || null;
+      updateData.customer_number = newCustomerNumber;
+      // Also update shopify_note to keep Supabase in sync
+      updateData.shopify_note = newCustomerNumber;
     }
 
     // If activating user, also set shopify_verified to true
@@ -139,19 +145,31 @@ export async function PATCH(
       );
     }
 
-    // If activating user and Shopify customer exists, update Shopify verified_email
-    if (isActivatingUser && currentProfile.shopify_customer_id) {
+    // Shopify sync: Build update object for Shopify
+    const shopifyUpdateData: { verified_email?: boolean; note?: string } = {};
+
+    // If activating user, set verified_email to true
+    if (isActivatingUser) {
+      shopifyUpdateData.verified_email = true;
+    }
+
+    // If customer_number changed, update Shopify note
+    if (isCustomerNumberChanging) {
+      shopifyUpdateData.note = newCustomerNumber || '';
+    }
+
+    // If there's something to update in Shopify and customer exists
+    if (Object.keys(shopifyUpdateData).length > 0 && currentProfile.shopify_customer_id) {
       try {
-        await updateShopifyCustomer(currentProfile.shopify_customer_id, {
-          verified_email: true
-        });
-        console.log(`Shopify customer ${currentProfile.shopify_customer_id} verified_email set to true`);
+        await updateShopifyCustomer(currentProfile.shopify_customer_id, shopifyUpdateData);
+        console.log(`Shopify customer ${currentProfile.shopify_customer_id} updated:`, shopifyUpdateData);
       } catch (shopifyError: any) {
         // Log error but don't fail the request - Supabase was already updated
-        console.error('Error updating Shopify customer verified status:', shopifyError);
+        console.error('Error updating Shopify customer:', shopifyError);
         console.error('Shopify update failed for customer:', {
           shopify_customer_id: currentProfile.shopify_customer_id,
           userId: userId,
+          updateData: shopifyUpdateData,
           error: shopifyError.message
         });
       }
