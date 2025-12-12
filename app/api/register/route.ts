@@ -44,6 +44,18 @@ function normalizeCountryForShopify(country?: string): string {
   return countryMapping[normalized] || country; // Fallback: Original zurückgeben
 }
 
+// Robuste E-Mail-Validierung (identisch zum Frontend)
+function isValidEmail(email: string): boolean {
+  // Regex prüft:
+  // - Mindestens ein Zeichen vor dem @
+  // - @ Zeichen vorhanden
+  // - Mindestens ein Zeichen nach dem @ und vor dem Punkt
+  // - Punkt vorhanden
+  // - Mindestens 2 Zeichen nach dem letzten Punkt (TLD)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  return emailRegex.test(email.trim());
+}
+
 export async function POST(req: Request) {
   try {
     const { 
@@ -62,6 +74,14 @@ export async function POST(req: Request) {
     if (!firstName || !lastName || !company || !customerNumber || !email || !password) {
       return NextResponse.json(
         { error: "Alle Pflichtfelder müssen ausgefüllt werden" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Bitte geben Sie eine gültige E-Mail-Adresse ein (z.B. name@firma.de)." },
         { status: 400 }
       );
     }

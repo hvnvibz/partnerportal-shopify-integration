@@ -52,6 +52,18 @@ export default function RegistrationPage() {
     }
   };
 
+  // Robuste E-Mail-Validierung
+  const isValidEmail = (email: string): boolean => {
+    // Regex prüft:
+    // - Mindestens ein Zeichen vor dem @
+    // - @ Zeichen vorhanden
+    // - Mindestens ein Zeichen nach dem @ und vor dem Punkt
+    // - Punkt vorhanden
+    // - Mindestens 2 Zeichen nach dem letzten Punkt (TLD)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    return emailRegex.test(email.trim());
+  };
+
   const validateForm = () => {
     if (!formData.firstName.trim()) {
       setError('Bitte geben Sie Ihren Vornamen ein.');
@@ -71,6 +83,10 @@ export default function RegistrationPage() {
     }
     if (!formData.email.trim()) {
       setError('Bitte geben Sie Ihre E-Mail-Adresse ein.');
+      return false;
+    }
+    if (!isValidEmail(formData.email)) {
+      setError('Bitte geben Sie eine gültige E-Mail-Adresse ein (z.B. name@firma.de).');
       return false;
     }
     if (!formData.password) {
