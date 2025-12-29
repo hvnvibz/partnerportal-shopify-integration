@@ -235,6 +235,11 @@ export default function EinstellungenPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <h1 className="text-xl md:text-2xl font-bold text-blue-900">Einstellungen</h1>
+          </header>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-900" />
@@ -253,7 +258,7 @@ export default function EinstellungenPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-2xl font-bold text-blue-900">Einstellungen</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-blue-900">Einstellungen</h1>
         </header>
         <div className="container mx-auto py-12 px-4 md:px-8">
           <div className="max-w-4xl mx-auto space-y-8">

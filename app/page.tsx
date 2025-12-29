@@ -1,6 +1,6 @@
 "use client";
 import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { ShoppingBag, Wrench, Video, FileText } from "lucide-react"
 import { useUser } from "@/lib/useUser";
@@ -42,33 +42,34 @@ export default function DashboardPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="container mx-auto py-12 px-0 md:pl-8 md:pr-0">
+        {/* Mobile Header mit Burger-Menü */}
+        <header className="flex md:hidden h-14 shrink-0 items-center gap-2 border-b px-4 sticky top-0 bg-background z-40">
+          <SidebarTrigger className="-ml-1" />
+          <span className="font-semibold text-lg text-blue-900">INDUWA Partnerportal</span>
+        </header>
+        <div className="container mx-auto py-8 md:py-12 px-4 md:px-0 md:pl-8 md:pr-0">
           {/* Hero Section */}
-          <div className="flex flex-col md:flex-row items-center md:items-stretch gap-12 mb-16 overflow-x-visible relative">
-            <div className="flex-1 flex flex-col justify-center text-center md:text-left z-10 md:pl-0 pl-4 md:justify-start md:mt-0 mt-[-2.5rem]">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 mb-12 md:mb-16 overflow-hidden">
+            <div className="flex-1 flex flex-col justify-center text-center md:text-left order-2 md:order-1">
               {/* Personalisierte Ansprache */}
               {!loading && profile?.display_name && (
-                <div
-                  className="mb-6 px-4 py-2 inline-block border-2 border-blue-600 rounded-xl bg-white/80 shadow-sm"
-                  style={{ marginBottom: '4.8rem' }}
-                >
-                  <span className="text-xl text-blue-900 font-normal" style={{ fontSize: '1.25rem' }}>Willkommen Firma </span>
-                  <span className="text-xl text-blue-900 font-bold" style={{ fontSize: '1.25rem' }}>{profile.display_name}</span>
+                <div className="mb-4 md:mb-6 px-4 py-2 inline-block border-2 border-blue-600 rounded-xl bg-white/80 shadow-sm self-center md:self-start">
+                  <span className="text-base md:text-xl text-blue-900 font-normal">Willkommen Firma </span>
+                  <span className="text-base md:text-xl text-blue-900 font-bold">{profile.display_name}</span>
                 </div>
               )}
-              <h1 className="text-4xl font-extrabold text-blue-900 mb-4 leading-tight tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-900 mb-3 md:mb-4 leading-tight tracking-tight">
                 Anlagen, Ersatzteile, Service, Expertise – sofort verfügbar
               </h1>
-              <p className="text-xl text-gray-600 max-w-xl mb-6">
+              <p className="text-base md:text-xl text-gray-600 max-w-xl mb-4 md:mb-6">
                 Ihr zentraler Zugang zu Shop, Service, Support und digitalen Handbüchern für alle INDUWA-Produkte.
               </p>
             </div>
-            <div className="flex-1 flex justify-end items-center overflow-visible absolute right-0 top-1/2 -translate-y-1/2 h-full md:static md:translate-y-0">
+            <div className="flex-1 w-full flex justify-center md:justify-end items-center order-1 md:order-2">
               <img
                 src="/signin-bg.avif"
                 alt="INDUWA visual"
-                className="object-contain h-64 md:h-96 w-full max-w-none"
-                style={{ objectPosition: 'center', overflow: 'visible' }}
+                className="object-contain w-full h-48 sm:h-56 md:h-96 max-w-md md:max-w-none"
                 loading="eager"
               />
             </div>
