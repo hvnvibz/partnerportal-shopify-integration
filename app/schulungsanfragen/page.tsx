@@ -33,14 +33,14 @@ export default function SchulungsanfragenPage() {
           </Breadcrumb>
           <Cart />
         </header>
-        <div className="container mx-auto py-12">
+        <div className="container mx-auto py-6 md:py-12 px-4">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
-              <p className="text-lg text-blue-900 font-medium mb-4">Schulung & Fortbildung</p>
-              <h1 className="text-4xl font-bold mb-4">
+            <div className="text-center mb-8 md:mb-12">
+              <p className="text-base md:text-lg text-blue-900 font-medium mb-2 md:mb-4">Schulung & Fortbildung</p>
+              <h1 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4">
                 Professionelle Schulungen für Ihre Wasseraufbereitungssysteme
               </h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-base md:text-xl text-muted-foreground">
                 Erweitern Sie Ihr Know-how mit unseren maßgeschneiderten Schulungen. Für Fachkräfte und interessierte Anwender!
               </p>
             </div>

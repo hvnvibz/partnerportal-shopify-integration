@@ -118,8 +118,8 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
+      <div className="border rounded-lg overflow-x-auto">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>
@@ -135,7 +135,7 @@ export function OrderHistory({ orders, loading }: OrderHistoryProps) {
                   )}
                 </Button>
               </TableHead>
-              <TableHead className="min-w-[300px]">Artikel</TableHead>
+              <TableHead className="min-w-[200px]">Artikel</TableHead>
               <TableHead>
                 <Button
                   variant="ghost"

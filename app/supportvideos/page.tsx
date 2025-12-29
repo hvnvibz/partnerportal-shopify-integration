@@ -53,39 +53,39 @@ export default function SupportvideosPage() {
           </Breadcrumb>
           <Cart />
         </header>
-        <div className="px-[5%] py-12">
+        <div className="px-4 md:px-[5%] py-6 md:py-12">
           <div className="mx-auto">
-            <div className="text-center mb-12">
-              <p className="text-lg text-blue-900 font-medium mb-4">Hilfe & Support</p>
-              <h1 className="text-4xl font-bold mb-4">
+            <div className="text-center mb-8 md:mb-12">
+              <p className="text-base md:text-lg text-blue-900 font-medium mb-2 md:mb-4">Hilfe & Support</p>
+              <h1 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4">
                 Supportvideos für Ihre Wasseraufbereitungsanlagen
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto">
                 Unsere Supportvideos zeigen Ihnen, wie Sie Ihre Anlagen optimal nutzen, warten und gängige Probleme selbst beheben können.
               </p>
             </div>
             {/* Tabfilter */}
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-6 md:mb-8">
               <button
-                className={`px-4 py-2 rounded ${filter === 'ALLE' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base ${filter === 'ALLE' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
                 onClick={() => setFilter('ALLE')}
               >
                 Alle Kategorien
               </button>
               <button
-                className={`px-4 py-2 rounded ${filter === 'INBETRIEBNAHME' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base ${filter === 'INBETRIEBNAHME' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
                 onClick={() => setFilter('INBETRIEBNAHME')}
               >
                 Inbetriebnahme
               </button>
               <button
-                className={`px-4 py-2 rounded ${filter === 'WARTUNG' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base ${filter === 'WARTUNG' ? 'bg-blue-900 text-white' : 'bg-gray-200'}`}
                 onClick={() => setFilter('WARTUNG')}
               >
                 Service/Wartung
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12">
               {filteredVideos.length === 0 ? (
                 <div className="col-span-full text-center text-muted-foreground">Keine Videos gefunden oder ein Fehler ist aufgetreten.</div>
               ) : (

@@ -452,10 +452,10 @@ export default function AdminUsersPage() {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <div className="container mx-auto p-6">
+        <div className="container mx-auto p-4 md:p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Benutzerverwaltung</h1>
-            <p className="text-gray-600">Verwalten Sie Benutzerrollen und -status</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Benutzerverwaltung</h1>
+            <p className="text-sm md:text-base text-gray-600">Verwalten Sie Benutzerrollen und -status</p>
           </div>
 
       {/* Filters */}
@@ -507,8 +507,9 @@ export default function AdminUsersPage() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="border rounded-lg">
-          <Table>
+        <div className="border rounded-lg overflow-x-auto">
+          <p className="md:hidden text-xs text-gray-500 p-2 bg-gray-50 border-b">↔ Horizontal scrollen für mehr Spalten</p>
+          <Table className="min-w-[1000px]">
             <TableHeader>
               <TableRow>
                 <TableHead>E-Mail</TableHead>
