@@ -100,127 +100,186 @@ export default function ProductCrossSell({ products }: ProductCrossSellProps) {
   if (!products || products.length === 0) return null;
 
   return (
-    <div className="mt-8 border rounded-lg p-6" style={{ backgroundColor: '#FFFCF2' }}>
-      <h3 className="font-bold text-2xl text-black mb-8">Wird oft zusammen gekauft</h3>
-      <div className="flex items-start gap-10 overflow-x-auto">
-        {products.map((product, idx) => (
-          <div
-            key={product.id}
-            className={`relative min-w-[180px] max-w-[200px] bg-white rounded-lg border p-4 flex flex-col items-center shadow-sm transition-opacity duration-150 ${selectedIds.includes(product.id) ? '' : 'opacity-70'}`}
-            style={{ minHeight: 280 }}
-          >
-            <input
-              type="checkbox"
-              checked={selectedIds.includes(product.id)}
-              onChange={() => toggleProduct(product.id)}
-              className="absolute bottom-2 right-2 z-10 w-6 h-6 accent-yellow-500"
-              aria-label="Produkt auswählen"
-              disabled={mode !== 'all'}
-            />
-            <div className="text-xs font-medium text-center mb-2 line-clamp-2 min-h-[2.5em]">{product.title}</div>
-            
-            <div className="w-20 h-20 mb-4 relative">
-              {product.featuredImage ? (
-                <Image src={product.featuredImage.url} alt={product.featuredImage.altText || product.title} fill className="object-contain rounded" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded"><Plus className="text-gray-300 w-8 h-8" /></div>
-              )}
-            </div>
-            
-            {mode === 'all' ? (
-              <div className="w-full text-center mb-2">
-                {(() => {
-                  const selectedVariantId = selectedVariants[product.id];
-                  const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId)?.node;
-                  const price = selectedVariant ? Number.parseFloat(selectedVariant.price.amount) : Number.parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
-                  const compare = selectedVariant?.compareAtPrice ? Number.parseFloat(selectedVariant.compareAtPrice.amount) : undefined;
-                  const priceStr = price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-                  const compareStr = compare !== undefined ? compare.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €" : undefined;
-                  return compare && compare > price ? (
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <span className="text-gray-500 line-through text-xs">{compareStr}</span>
-                      <span className="font-bold text-sm">{priceStr}</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold text-sm">{priceStr}</span>
-                  );
-                })()}
+    <div className="mt-6 md:mt-8 border rounded-lg p-4 md:p-6" style={{ backgroundColor: '#FFFCF2' }}>
+      <h3 className="font-bold text-lg md:text-2xl text-black mb-4 md:mb-8">Wird oft zusammen gekauft</h3>
+      <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-10 md:overflow-x-auto">
+        {/* Mobile: Produkte als Liste */}
+        <div className="flex flex-col md:hidden gap-3 w-full">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className={`relative bg-white rounded-lg border p-3 flex items-center gap-3 shadow-sm transition-opacity duration-150 ${selectedIds.includes(product.id) ? '' : 'opacity-70'}`}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(product.id)}
+                onChange={() => toggleProduct(product.id)}
+                className="w-5 h-5 accent-yellow-500 flex-shrink-0"
+                aria-label="Produkt auswählen"
+                disabled={mode !== 'all'}
+              />
+              <div className="w-14 h-14 relative flex-shrink-0">
+                {product.featuredImage ? (
+                  <Image src={product.featuredImage.url} alt={product.featuredImage.altText || product.title} fill className="object-contain rounded" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded"><Plus className="text-gray-300 w-6 h-6" /></div>
+                )}
               </div>
-            ) : mode === 'list' ? (
-              <div className="w-full text-center font-bold text-sm mb-2">
-                {(() => {
-                  // show compare-at if available for selected variant, else nothing
-                  const selectedVariantId = selectedVariants[product.id];
-                  const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId);
-                  const compareAt = selectedVariant?.node.compareAtPrice ? Number.parseFloat(selectedVariant.node.compareAtPrice.amount) : (product.compareAtPriceRange ? Number.parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : NaN);
-                  return isNaN(compareAt) ? "" : (compareAt.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €");
-                })()}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium line-clamp-2">{product.title}</div>
+                {mode === 'all' && (
+                  <div className="text-sm font-bold mt-1">
+                    {(() => {
+                      const selectedVariantId = selectedVariants[product.id];
+                      const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId)?.node;
+                      const price = selectedVariant ? Number.parseFloat(selectedVariant.price.amount) : Number.parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+                      return price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+                    })()}
+                  </div>
+                )}
               </div>
-            ) : null}
-            
-            {/* Variant-Dropdown für Produkte mit mehreren Varianten */}
-            {product.variants.edges.length > 1 && (
-              <div className="w-full mb-6">
-                <Select
-                  value={selectedVariants[product.id] || ""}
-                  onValueChange={(variantId) => handleVariantChange(product.id, variantId)}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  className="border rounded w-6 h-6 flex items-center justify-center text-gray-700 bg-white"
+                  onClick={() => setQuantity(product.id, (quantities[product.id] || 1) - 1)}
+                  disabled={quantities[product.id] <= 1 || mode !== 'all'}
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className="w-5 text-center text-sm font-medium">{quantities[product.id] || 1}</span>
+                <button
+                  type="button"
+                  className="border rounded w-6 h-6 flex items-center justify-center text-gray-700 bg-white"
+                  onClick={() => setQuantity(product.id, (quantities[product.id] || 1) + 1)}
                   disabled={mode !== 'all'}
                 >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Variante wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.variants.edges
-                      .filter(edge => edge.node.availableForSale)
-                      .map((edge) => (
-                        <SelectItem key={edge.node.id} value={edge.node.id}>
-                          {edge.node.title}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                  <Plus className="w-3 h-3" />
+                </button>
               </div>
-            )}
-            {/* Mengen-Auswahl am unteren Rand */}
-            <div className="absolute left-0 right-0 bottom-2 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
-                onClick={() => setQuantity(product.id, (quantities[product.id] || 1) - 1)}
-                disabled={quantities[product.id] <= 1 || mode !== 'all'}
-                aria-label="Menge verringern"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="w-6 text-center font-medium">{quantities[product.id] || 1}</span>
-              <button
-                type="button"
-                className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
-                onClick={() => setQuantity(product.id, (quantities[product.id] || 1) + 1)}
-                aria-label="Menge erhöhen"
-                disabled={mode !== 'all'}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
             </div>
-            {idx < products.length - 1 && (
-              <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 select-none pointer-events-none">
-                <span className="text-yellow-500 text-2xl font-bold">+</span>
+          ))}
+        </div>
+
+        {/* Desktop: Produkte horizontal */}
+        <div className="hidden md:flex items-start gap-10 overflow-x-auto">
+          {products.map((product, idx) => (
+            <div
+              key={product.id}
+              className={`relative min-w-[180px] max-w-[200px] bg-white rounded-lg border p-4 flex flex-col items-center shadow-sm transition-opacity duration-150 ${selectedIds.includes(product.id) ? '' : 'opacity-70'}`}
+              style={{ minHeight: 280 }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(product.id)}
+                onChange={() => toggleProduct(product.id)}
+                className="absolute bottom-2 right-2 z-10 w-6 h-6 accent-yellow-500"
+                aria-label="Produkt auswählen"
+                disabled={mode !== 'all'}
+              />
+              <div className="text-xs font-medium text-center mb-2 line-clamp-2 min-h-[2.5em]">{product.title}</div>
+              
+              <div className="w-20 h-20 mb-4 relative">
+                {product.featuredImage ? (
+                  <Image src={product.featuredImage.url} alt={product.featuredImage.altText || product.title} fill className="object-contain rounded" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded"><Plus className="text-gray-300 w-8 h-8" /></div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
-        <div className="flex flex-col justify-center items-start ml-8 min-w-[180px]">
+              
+              {mode === 'all' ? (
+                <div className="w-full text-center mb-2">
+                  {(() => {
+                    const selectedVariantId = selectedVariants[product.id];
+                    const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId)?.node;
+                    const price = selectedVariant ? Number.parseFloat(selectedVariant.price.amount) : Number.parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+                    const compare = selectedVariant?.compareAtPrice ? Number.parseFloat(selectedVariant.compareAtPrice.amount) : undefined;
+                    const priceStr = price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+                    const compareStr = compare !== undefined ? compare.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €" : undefined;
+                    return compare && compare > price ? (
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <span className="text-gray-500 line-through text-xs">{compareStr}</span>
+                        <span className="font-bold text-sm">{priceStr}</span>
+                      </div>
+                    ) : (
+                      <span className="font-bold text-sm">{priceStr}</span>
+                    );
+                  })()}
+                </div>
+              ) : mode === 'list' ? (
+                <div className="w-full text-center font-bold text-sm mb-2">
+                  {(() => {
+                    const selectedVariantId = selectedVariants[product.id];
+                    const selectedVariant = product.variants.edges.find(edge => edge.node.id === selectedVariantId);
+                    const compareAt = selectedVariant?.node.compareAtPrice ? Number.parseFloat(selectedVariant.node.compareAtPrice.amount) : (product.compareAtPriceRange ? Number.parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : NaN);
+                    return isNaN(compareAt) ? "" : (compareAt.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €");
+                  })()}
+                </div>
+              ) : null}
+              
+              {product.variants.edges.length > 1 && (
+                <div className="w-full mb-6">
+                  <Select
+                    value={selectedVariants[product.id] || ""}
+                    onValueChange={(variantId) => handleVariantChange(product.id, variantId)}
+                    disabled={mode !== 'all'}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Variante wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {product.variants.edges
+                        .filter(edge => edge.node.availableForSale)
+                        .map((edge) => (
+                          <SelectItem key={edge.node.id} value={edge.node.id}>
+                            {edge.node.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="absolute left-0 right-0 bottom-2 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={() => setQuantity(product.id, (quantities[product.id] || 1) - 1)}
+                  disabled={quantities[product.id] <= 1 || mode !== 'all'}
+                  aria-label="Menge verringern"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-6 text-center font-medium">{quantities[product.id] || 1}</span>
+                <button
+                  type="button"
+                  className="border rounded-md w-7 h-7 flex items-center justify-center text-gray-700 bg-white hover:bg-gray-100"
+                  onClick={() => setQuantity(product.id, (quantities[product.id] || 1) + 1)}
+                  aria-label="Menge erhöhen"
+                  disabled={mode !== 'all'}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {idx < products.length - 1 && (
+                <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 select-none pointer-events-none">
+                  <span className="text-yellow-500 text-2xl font-bold">+</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        {/* Gesamt und Button */}
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-3 md:ml-8 md:min-w-[180px] mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0">
           {mode === 'all' && (
-            <>
-              <div className="text-gray-700 text-sm mb-2">Gesamtpreis:</div>
-              <div className="text-xl font-bold mb-4">
+            <div className="flex md:flex-col items-center md:items-start gap-2 md:gap-0">
+              <div className="text-gray-700 text-sm md:mb-2">Gesamtpreis:</div>
+              <div className="text-lg md:text-xl font-bold md:mb-4">
                 {totalPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
               </div>
-            </>
+            </div>
           )}
           <Button
-            className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded transition"
+            className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-4 md:px-6 py-2 rounded transition w-full md:w-auto text-sm md:text-base"
             onClick={addAllToCart}
             disabled={selectedIds.length === 0 || adding || mode !== 'all'}
           >

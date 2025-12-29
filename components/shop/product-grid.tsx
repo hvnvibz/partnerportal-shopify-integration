@@ -54,15 +54,16 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
   }, [])
 
   // Custom Breakpoints: xl = 1350px, 2xl = 1920px (siehe tailwind.config.js)
+  // Mobile: 2-spaltig, ab sm: 2-spaltig, ab md: 3-spaltig, ab xl: 4-spaltig, ab 2xl: 5-spaltig
   const gridClass =
-    "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
 
   // Dedupliziere Produkte anhand ihrer ID
   const uniqueProducts = [...new Map(products.map(product => [product.id, product])).values()]
     .filter(product => product.price && product.price.amount);
 
   return (
-    <div className={`grid ${gridClass} gap-6`}>
+    <div className={`grid ${gridClass} gap-3 md:gap-6`}>
       {uniqueProducts.map((product) => {
         if (!product.price || !product.price.amount) return null;
         return (
@@ -72,13 +73,13 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
             className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
           >
             {/* Wrapper für Sale-Tag mit fixer Mindesthöhe */}
-            <div className="min-h-[2.2rem] flex items-start bg-transparent">
+            <div className="min-h-[1.8rem] md:min-h-[2.2rem] flex items-start bg-transparent">
               {mode === 'all' && product.compareAtPrice && product.compareAtPrice.amount ? (
-                <div className="bg-yellow-400 font-semibold rounded mt-3 mx-3 mb-2 self-start" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>
-                  {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Wiederverkaufsrabatt
+                <div className="bg-yellow-400 font-semibold rounded mt-2 mx-2 md:mt-3 md:mx-3 mb-1 md:mb-2 self-start text-[0.55rem] md:text-[0.65rem] px-1.5 py-1 md:px-2 md:py-1">
+                  {Math.round((1 - Number(product.price.amount) / Number(product.compareAtPrice.amount)) * 100)}% Rabatt
                 </div>
               ) : (
-                <div className="invisible mt-3 mx-3 mb-2" style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}>&nbsp;</div>
+                <div className="invisible mt-2 mx-2 md:mt-3 md:mx-3 mb-1 md:mb-2 text-[0.55rem] md:text-[0.65rem] px-1.5 py-1 md:px-2 md:py-1">&nbsp;</div>
               )}
             </div>
             <div className="aspect-square relative overflow-hidden bg-white">
@@ -88,45 +89,45 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
                   alt={product.featuredImage.altText || product.title}
                   fill
                   className="object-contain transition-transform group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-white">
-                  <span className="text-gray-400">Kein Bild</span>
+                  <span className="text-gray-400 text-xs md:text-base">Kein Bild</span>
                 </div>
               )}
             </div>
             
-            <div className="flex flex-col flex-grow p-4">
-              <div className="mb-2">
-                <h3 className="font-semibold line-clamp-2" style={{ fontSize: '0.8rem' }}>{product.title}</h3>
+            <div className="flex flex-col flex-grow p-2 md:p-4">
+              <div className="mb-1 md:mb-2">
+                <h3 className="font-semibold line-clamp-2 text-[0.7rem] md:text-[0.8rem]">{product.title}</h3>
                 {product.sku && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[0.6rem] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
                     Art.-Nr.: {product.sku}
                   </p>
                 )}
               </div>
-              <div className="mt-auto pt-2">
+              <div className="mt-auto pt-1 md:pt-2">
                 {mode === 'hidden' ? (
-                  <div className="h-6"></div>
+                  <div className="h-4 md:h-6"></div>
                 ) : (
                   <>
                     {mode === 'list' ? (
                       product.compareAtPrice && product.compareAtPrice.amount ? (
-                        <span className="font-semibold">{formatPrice(product.compareAtPrice.amount ?? "0")}</span>
+                        <span className="font-semibold text-xs md:text-sm">{formatPrice(product.compareAtPrice.amount ?? "0")}</span>
                       ) : (
-                        <div className="h-6"></div>
+                        <div className="h-4 md:h-6"></div>
                       )
                     ) : (
                       product.compareAtPrice && product.compareAtPrice.amount ? (
-                        <div className="flex gap-2 items-center">
-                          <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
-                          <span className="text-gray-500 line-through text-xs">
+                        <div className="flex flex-col md:flex-row gap-0.5 md:gap-2 md:items-center">
+                          <span className="font-semibold text-xs md:text-sm">{formatPrice(product.price.amount ?? "0")}</span>
+                          <span className="text-gray-500 line-through text-[0.6rem] md:text-xs">
                             {formatPrice(product.compareAtPrice.amount ?? "0")}
                           </span>
                         </div>
                       ) : (
-                        <span className="font-semibold">{formatPrice(product.price.amount ?? "0")}</span>
+                        <span className="font-semibold text-xs md:text-sm">{formatPrice(product.price.amount ?? "0")}</span>
                       )
                     )}
                   </>

@@ -9,8 +9,8 @@ interface RelatedProductsProps {
 export default function RelatedProducts({ products, columns = 4 }: RelatedProductsProps) {
   if (!products || products.length === 0) return null;
   return (
-    <div className="mt-16">
-      <h2 className="font-bold text-2xl text-black mb-8 pl-6">Weitere Produkte entdecken</h2>
+    <div className="mt-8 md:mt-16">
+      <h2 className="font-bold text-lg md:text-2xl text-black mb-4 md:mb-8 pl-0 md:pl-6">Weitere Produkte entdecken</h2>
       <ProductGrid products={products.filter(p => !p.hide_from_listing)} columns={columns} />
     </div>
   );

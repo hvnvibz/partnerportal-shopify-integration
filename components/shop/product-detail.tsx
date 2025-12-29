@@ -287,25 +287,20 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-4 md:mb-8">
         <Link href="/shop" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="mr-1 h-4 w-4" />
           Zurück zum Shop
         </Link>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-[45%_55%]">
-        <div className="bg-white border border-gray-200 rounded-lg p-8">
+      <div className="grid gap-6 md:gap-8 md:grid-cols-[45%_55%]">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-8">
           {/* Galerie-Logik */}
           {product.images && product.images.length > 0 ? (
-            <div className="flex flex-col items-center" style={{ minWidth: 320, maxWidth: 400, margin: '0 auto' }}>
+            <div className="flex flex-col items-center w-full max-w-[400px] mx-auto">
               <div
-                className="relative flex items-center justify-center cursor-pointer group"
-                style={{
-                  width: 320,
-                  height: 320,
-                  margin: '0 auto',
-                }}
+                className="relative flex items-center justify-center cursor-pointer group w-full aspect-square max-w-[320px]"
                 onClick={openZoomModal}
                 role="button"
                 tabIndex={0}
@@ -323,43 +318,43 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                   style={{ objectFit: "contain", width: '100%', height: '100%', borderRadius: 8 }}
                   width={320}
                   height={320}
-                  sizes="320px"
+                  sizes="(max-width: 768px) 100vw, 320px"
                   priority
                 />
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
-                  <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <ZoomIn className="h-6 w-6 md:h-8 md:w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </div>
               </div>
               
               {/* Zoom Button */}
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-3 md:mt-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={openZoomModal}
-                  className="flex items-center gap-2 bg-white hover:bg-gray-50"
+                  className="flex items-center gap-2 bg-white hover:bg-gray-50 text-xs md:text-sm"
                   aria-label="Bild vergrößern"
                 >
-                  <ZoomIn className="h-4 w-4" />
+                  <ZoomIn className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   Bild vergrößern
                 </Button>
               </div>
               
-              <div className="flex gap-2 justify-center mt-6 w-full" style={{ minHeight: 67, alignItems: 'flex-end' }}>
+              <div className="flex gap-1.5 md:gap-2 justify-center mt-4 md:mt-6 w-full overflow-x-auto pb-2">
                 {product.images.map((img, idx) => (
                   <button
                     key={img.url}
-                    className={`border rounded-md p-1 bg-white ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
-                    style={{ width: 67, aspectRatio: '1/1', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}
+                    className={`border rounded-md p-0.5 md:p-1 bg-white flex-shrink-0 ${selectedImageIdx === idx ? 'border-blue-500' : 'border-gray-200'} transition-all`}
+                    style={{ width: 52, height: 52 }}
                     onClick={() => setSelectedImageIdx(idx)}
                     aria-label={`Bild ${idx + 1} anzeigen`}
                   >
                     <Image
                       src={img.url}
                       alt={img.altText || product.title}
-                      width={58}
-                      height={58}
+                      width={48}
+                      height={48}
                       style={{ objectFit: "contain", width: '100%', height: '100%' }}
                       className="rounded"
                     />
@@ -368,7 +363,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
               </div>
             </div>
           ) : product.featuredImage ? (
-            <div className="relative cursor-pointer group" style={{ width: "100%", minHeight: 400, minWidth: 400, maxWidth: 480, margin: "0 auto", height: 480 }}>
+            <div className="relative cursor-pointer group w-full aspect-square max-w-[480px] mx-auto">
               <Image
                 src={product.featuredImage.url || "/placeholder.svg"}
                 alt={product.featuredImage.altText || product.title}
@@ -380,42 +375,42 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
               />
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
-                <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                <ZoomIn className="h-6 w-6 md:h-8 md:w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
               </div>
             </div>
           ) : (
-            <div className="aspect-square bg-muted flex items-center justify-center" style={{ minHeight: 400, minWidth: 400 }}>No image available</div>
+            <div className="aspect-square bg-muted flex items-center justify-center text-sm md:text-base">Kein Bild verfügbar</div>
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div>
-            <h1 className="text-2xl font-bold">{product.title}</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{product.title}</h1>
             {product.id && (
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">
                 Artikelnummer: {selectedVariant?.sku || product.id.replace("gid://shopify/Product/", "")}
               </p>
             )}
           </div>
 
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-wrap items-baseline gap-2">
             {isHidden ? (
-              <span className="text-2xl font-bold text-gray-500 italic">Preis auf Anfrage</span>
+              <span className="text-xl md:text-2xl font-bold text-gray-500 italic">Preis auf Anfrage</span>
             ) : isListOnly ? (
               comparePrice ? (
-                <span className="text-2xl font-bold">{formatPrice(comparePrice)}</span>
+                <span className="text-xl md:text-2xl font-bold">{formatPrice(comparePrice)}</span>
               ) : (
-                <span className="text-2xl font-bold text-gray-500 italic">Listenpreis nicht verfügbar</span>
+                <span className="text-xl md:text-2xl font-bold text-gray-500 italic">Listenpreis nicht verfügbar</span>
               )
             ) : (
               <>
-                <span className="text-2xl font-bold">{formatPrice(variantPrice)}</span>
+                <span className="text-xl md:text-2xl font-bold">{formatPrice(variantPrice)}</span>
                 {comparePrice && (
-                  <span className="text-lg text-muted-foreground line-through">{formatPrice(comparePrice)}</span>
+                  <span className="text-base md:text-lg text-muted-foreground line-through">{formatPrice(comparePrice)}</span>
                 )}
                 {onSale && (
-                  <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
-                    {discountPercentage}% Wiederverkaufsrabatt ({formatPrice(discountAmount)})
+                  <span className="bg-yellow-100 text-yellow-800 text-[0.65rem] md:text-xs font-medium px-1.5 md:px-2 py-0.5 md:py-1 rounded">
+                    {discountPercentage}% Rabatt ({formatPrice(discountAmount)})
                   </span>
                 )}
               </>
@@ -443,7 +438,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
 
           {/* Upsell Section - direkt unter der Beschreibung, nur wenn Produkte vorhanden */}
           {showUpsells && (
-            <div className="mt-8">
+            <div className="mt-4 md:mt-8">
               <ProductUpsell 
                 upsell1aProducts={upsell1aProducts || []}
                 upsell2aProducts={upsell2aProducts || []}
@@ -479,38 +474,38 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
             </div>
           )}
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center border rounded-md">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
+            <div className="flex items-center border rounded-md self-start">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-none"
+                className="h-9 w-9 md:h-10 md:w-10 rounded-none"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 disabled={isAddingToCart || isHidden || isListOnly}
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
-              <span className="w-10 text-center">{quantity}</span>
+              <span className="w-9 md:w-10 text-center text-sm md:text-base">{quantity}</span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-none"
+                className="h-9 w-9 md:h-10 md:w-10 rounded-none"
                 onClick={() => setQuantity(quantity + 1)}
                 disabled={isAddingToCart || isHidden || isListOnly}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
             </div>
 
             <Button
-              className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white"
+              className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white text-sm md:text-base"
               size="lg"
               onClick={addToCart}
               disabled={isAddingToCart || !selectedVariant?.availableForSale || isHidden || isListOnly}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {isHidden || isListOnly
-                ? (isListOnly ? "Nur Listenpreise aktiv" : "Preis auf Anfrage") 
+                ? (isListOnly ? "Nur Listenpreise" : "Preis auf Anfrage") 
                 : isAddingToCart 
                   ? "Wird hinzugefügt..." 
                   : selectedVariant?.availableForSale 
@@ -524,7 +519,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
 
       {/* Cross-Selling Bereich als eigene Section vor Related Products */}
       {crossSell.length > 0 && (
-        <section className="mt-16 mb-8">
+        <section className="mt-8 md:mt-16 mb-6 md:mb-8">
           <ProductCrossSell products={crossSell} />
         </section>
       )}
