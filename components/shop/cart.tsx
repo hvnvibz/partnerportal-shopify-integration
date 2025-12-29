@@ -267,13 +267,13 @@ export function Cart() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-3xl">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-3xl flex flex-col h-full">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>Warenkorb</SheetTitle>
         </SheetHeader>
 
         {cartItems.length === 0 ? (
-          <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
+          <div className="flex flex-1 flex-col items-center justify-center space-y-4">
             <ShoppingCart className="h-16 w-16 text-muted-foreground" />
             <p className="text-lg font-medium">Ihr Warenkorb ist leer</p>
             {hasBackup && (
@@ -297,8 +297,8 @@ export function Cart() {
             </SheetClose>
           </div>
         ) : (
-          <>
-            <div className="flex flex-col gap-5 overflow-y-auto py-4 max-h-[60vh]">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col gap-4 md:gap-5 overflow-y-auto flex-1 py-4 pr-2">
               {cartItems.map((item) => (
                 <div key={item.id} className="flex items-center gap-4">
                   <div className="relative h-16 w-16 overflow-hidden rounded-md border">
@@ -352,30 +352,29 @@ export function Cart() {
                 </div>
               ))}
             </div>
-            <Separator />
-            <div className="space-y-4 py-4">
+            <div className="flex-shrink-0 border-t pt-4 space-y-3 md:space-y-4">
               {/* Notizfeld für den Warenkorb */}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="cart-note" className="font-medium text-sm">Notiz zur Bestellung</label>
+              <div className="flex flex-col gap-1.5 md:gap-2">
+                <label htmlFor="cart-note" className="font-medium text-xs md:text-sm">Notiz zur Bestellung</label>
                 <textarea
                   id="cart-note"
-                  className="border rounded-md p-2 text-sm min-h-[60px]"
+                  className="border rounded-md p-2 text-xs md:text-sm min-h-[50px] md:min-h-[60px]"
                   placeholder="Haben Sie einen Hinweis, Projektnummer oder Kommissionsnamen für uns?"
                   value={cartNote}
                   onChange={e => setCartNote(e.target.value)}
                   maxLength={26}
                 />
-                <div className="text-xs text-gray-500 text-right">
+                <div className="text-[0.65rem] md:text-xs text-gray-500 text-right">
                   {cartNote.length}/26 Zeichen
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium">Gesamt netto</span>
-                <span className="font-medium">{formatPrice(totalPrice)}</span>
+                <span className="font-medium text-sm md:text-base">Gesamt netto</span>
+                <span className="font-medium text-sm md:text-base">{formatPrice(totalPrice)}</span>
               </div>
-              <SheetFooter className="flex flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
-                  className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90"
+                  className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-sm md:text-base"
                   onClick={proceedToCheckout}
                   disabled={isCheckingOut}
                 >
@@ -388,12 +387,12 @@ export function Cart() {
                     "Zur Kasse"
                   )}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={clearCartAndBackup}>
+                <Button variant="outline" className="flex-1 text-sm md:text-base" onClick={clearCartAndBackup}>
                   Warenkorb leeren
                 </Button>
-              </SheetFooter>
+              </div>
             </div>
-          </>
+          </div>
         )}
       </SheetContent>
     </Sheet>

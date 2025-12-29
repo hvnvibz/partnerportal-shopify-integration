@@ -474,7 +474,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
             <div className="flex items-center border rounded-md self-start">
               <Button
                 variant="ghost"
@@ -498,7 +498,7 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
             </div>
 
             <Button
-              className="flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white text-sm md:text-base"
+              className="w-full md:flex-1 bg-[#8abfdf] hover:bg-[#8abfdf]/90 text-white text-sm md:text-base"
               size="lg"
               onClick={addToCart}
               disabled={isAddingToCart || !selectedVariant?.availableForSale || isHidden || isListOnly}
