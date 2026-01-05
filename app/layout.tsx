@@ -18,6 +18,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  // Wichtig für iPhone Notch/Dynamic Island - erlaubt Rendering unter System-UI
+  viewportFit: 'cover',
 }
 
 export const metadata: Metadata = {
@@ -32,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="de" className={inter.variable}>
       <head>
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />

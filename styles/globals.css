@@ -7,8 +7,15 @@ body {
 }
 
 @layer utilities {
+  /* text-wrap: balance wird von Firefox nicht unterstützt */
   .text-balance {
     text-wrap: balance;
+  }
+  
+  @supports not (text-wrap: balance) {
+    .text-balance {
+      text-wrap: unset;
+    }
   }
 }
 

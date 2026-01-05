@@ -142,3 +142,241 @@
   }
 }
 
+/* ==========================================================================
+   MOBILE BROWSER COMPATIBILITY FIXES
+   Unterstützt: Android 10+, iOS 13+, Chrome 80+, Safari 13+, Firefox 90+
+   ========================================================================== */
+
+/* 
+ * 1. VIEWPORT HEIGHT FALLBACKS (svh/dvh)
+ * Problem: Chrome < 108 auf Android unterstützt svh/dvh nicht
+ */
+@supports not (min-height: 100svh) {
+  .min-h-svh {
+    min-height: 100vh !important;
+  }
+  .h-svh {
+    height: 100vh !important;
+  }
+  .min-h-dvh {
+    min-height: 100vh !important;
+  }
+  .h-dvh {
+    height: 100vh !important;
+  }
+  
+  /* calc()-basierte svh Werte */
+  [class*="min-h-\[calc(100svh"] {
+    min-height: calc(100vh - 1rem) !important;
+  }
+  
+  :root {
+    --viewport-height: 100vh;
+  }
+}
+
+@supports (min-height: 100svh) {
+  :root {
+    --viewport-height: 100svh;
+  }
+}
+
+/*
+ * 2. BACKDROP-FILTER FALLBACK (Safari < 15.4)
+ * Problem: Safari benötigt -webkit- Prefix
+ */
+.backdrop-blur-md,
+.backdrop-blur-sm,
+.backdrop-blur-lg,
+.backdrop-blur {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Fallback: Wenn backdrop-filter nicht unterstützt wird, nutze soliden Hintergrund */
+@supports not (backdrop-filter: blur(1px)) {
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-lg,
+  .backdrop-blur {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+  }
+}
+
+/*
+ * 3. :has() SELECTOR FALLBACK (Firefox < 121, Safari < 15.4)
+ * Problem: :has() wird von älteren Browsern nicht unterstützt
+ * Lösung: Grundlegende Styles ohne :has() anwenden
+ */
+@supports not selector(:has(*)) {
+  /* Sidebar wrapper - Standard bg ohne :has() Bedingung */
+  .group\/sidebar-wrapper {
+    background-color: hsl(var(--sidebar-background));
+  }
+  
+  /* Table cells mit Checkbox - Standard padding */
+  [role="cell"]:has([role="checkbox"]),
+  th:has([role="checkbox"]),
+  td:has([role="checkbox"]) {
+    padding-right: 0;
+  }
+}
+
+/*
+ * 4. IPHONE SAFE AREA INSETS (Notch, Dynamic Island, Home Indicator)
+ * Wichtig für iPhone X und neuer
+ */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
+/* Anwenden auf fixierte Elemente am unteren Rand */
+.fixed.bottom-0,
+[data-sidebar="sidebar"] {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+/* Mobile Navigation/Footer sollte Safe Area berücksichtigen */
+@media (max-width: 768px) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  }
+  
+  .pt-safe {
+    padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+}
+
+/*
+ * 5. FLEXBOX GAP FALLBACK (Safari < 14.1)
+ * Problem: gap in Flexbox wird von älteren Safari nicht unterstützt
+ * Hinweis: Tailwind nutzt bereits meist korrekte Fallbacks
+ */
+@supports not (gap: 1rem) {
+  .flex.gap-1 > * + * { margin-left: 0.25rem; }
+  .flex.gap-2 > * + * { margin-left: 0.5rem; }
+  .flex.gap-3 > * + * { margin-left: 0.75rem; }
+  .flex.gap-4 > * + * { margin-left: 1rem; }
+  .flex.gap-6 > * + * { margin-left: 1.5rem; }
+  .flex.gap-8 > * + * { margin-left: 2rem; }
+  
+  .flex-col.gap-1 > * + * { margin-top: 0.25rem; margin-left: 0; }
+  .flex-col.gap-2 > * + * { margin-top: 0.5rem; margin-left: 0; }
+  .flex-col.gap-3 > * + * { margin-top: 0.75rem; margin-left: 0; }
+  .flex-col.gap-4 > * + * { margin-top: 1rem; margin-left: 0; }
+  .flex-col.gap-6 > * + * { margin-top: 1.5rem; margin-left: 0; }
+  .flex-col.gap-8 > * + * { margin-top: 2rem; margin-left: 0; }
+}
+
+/*
+ * 6. ASPECT-RATIO FALLBACK (Safari < 15, Chrome < 88)
+ * Problem: aspect-ratio CSS property nicht unterstützt
+ */
+@supports not (aspect-ratio: 1 / 1) {
+  .aspect-square {
+    position: relative;
+  }
+  .aspect-square::before {
+    content: "";
+    display: block;
+    padding-top: 100%;
+  }
+  .aspect-square > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .aspect-video {
+    position: relative;
+  }
+  .aspect-video::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%;
+  }
+  .aspect-video > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/*
+ * 7. INSET SHORTHAND FALLBACK (Safari < 14.1)
+ * Problem: inset: 0 wird nicht unterstützt
+ */
+@supports not (inset: 0) {
+  .inset-0 {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .inset-y-0 {
+    top: 0;
+    bottom: 0;
+  }
+  .inset-x-0 {
+    left: 0;
+    right: 0;
+  }
+}
+
+/*
+ * 8. TEXT-WRAP BALANCE FALLBACK (Firefox nicht unterstützt)
+ */
+@supports not (text-wrap: balance) {
+  .text-balance {
+    text-wrap: unset;
+    /* Kein perfekter Ersatz, aber besser als broken */
+  }
+}
+
+/*
+ * 9. TOUCH OPTIMIERUNGEN für Mobile
+ */
+@media (hover: none) and (pointer: coarse) {
+  /* Größere Touch-Targets auf Touch-Geräten */
+  button, 
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Verhindere unbeabsichtigte Hover-States auf Touch-Geräten */
+  .hover\:bg-sidebar-accent:hover {
+    background-color: inherit;
+  }
+  
+  /* Aktiviere Hover-Effekte nur bei aktivem Touch */
+  .hover\:bg-sidebar-accent:active {
+    background-color: hsl(var(--sidebar-accent));
+  }
+}
+
+/*
+ * 10. SCROLL VERHALTEN auf iOS
+ * Verhindert "Rubber-Band" Scrolling wo unerwünscht
+ */
+.overflow-hidden {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth Scrolling für Browser die es unterstützen */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
