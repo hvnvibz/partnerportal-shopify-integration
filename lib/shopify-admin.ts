@@ -682,11 +682,41 @@ export async function searchProductsAdminPaginated(
 }
 
 /**
- * Fetch ALL products from Shopify Admin API (handles pagination automatically)
+ * Fetch ALL products from Shopify Admin API that are published to "Partnerportal" sales channel
+ * Uses GraphQL Admin API for efficient filtering by publication/sales channel
  * Caches results for 5 minutes to avoid excessive API calls
  */
 let productsCache: { data: any[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// GraphQL Admin API helper
+async function shopifyAdminGraphQL(query: string, variables: any = {}) {
+  const url = `${getShopifyStoreUrl()}/admin/api/2024-01/graphql.json`;
+  const token = getShopifyAccessToken();
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-Shopify-Access-Token': token,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Shopify GraphQL API error: ${response.status} - ${errorText}`);
+  }
+
+  const json = await response.json();
+  
+  if (json.errors) {
+    console.error('[GraphQL Errors]', json.errors);
+    throw new Error(json.errors.map((e: any) => e.message).join(', '));
+  }
+
+  return json.data;
+}
 
 async function fetchAllProductsAdmin(): Promise<any[]> {
   // Check cache first
@@ -695,12 +725,148 @@ async function fetchAllProductsAdmin(): Promise<any[]> {
     return productsCache.data;
   }
 
+  // Try GraphQL API first (with sales channel filter), fall back to REST API
+  try {
+    const products = await fetchProductsViaGraphQL();
+    if (products.length > 0) {
+      productsCache = { data: products, timestamp: Date.now() };
+      return products;
+    }
+  } catch (error) {
+    console.log('[Admin API] GraphQL failed, falling back to REST API:', (error as Error).message);
+  }
+
+  // Fallback: REST API (loads all active products)
+  return await fetchProductsViaREST();
+}
+
+/**
+ * Fetch products via GraphQL Admin API with sales channel filter
+ * Requires `read_publications` access scope
+ */
+async function fetchProductsViaGraphQL(): Promise<any[]> {
+  const allProducts: any[] = [];
+  let cursor: string | null = null;
+  let hasNextPage = true;
+  let pageCount = 0;
+
+  console.log('[Admin API/GraphQL] Fetching products published to Partnerportal...');
+
+  const query = `
+    query getProducts($cursor: String) {
+      products(first: 250, after: $cursor, query: "status:active") {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        edges {
+          node {
+            id
+            title
+            handle
+            status
+            bodyHtml
+            productType
+            tags
+            createdAt
+            featuredImage {
+              url
+              altText
+            }
+            variants(first: 10) {
+              edges {
+                node {
+                  id
+                  sku
+                  price
+                  compareAtPrice
+                }
+              }
+            }
+            resourcePublicationsV2(first: 10) {
+              edges {
+                node {
+                  publication {
+                    name
+                  }
+                  isPublished
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  while (hasNextPage) {
+    pageCount++;
+    
+    const data = await shopifyAdminGraphQL(query, { cursor });
+    
+    if (data.products?.edges?.length > 0) {
+      const partnerportalProducts = data.products.edges
+        .filter((edge: any) => {
+          const publications = edge.node.resourcePublicationsV2?.edges || [];
+          return publications.some((pub: any) => 
+            pub.node.isPublished && 
+            pub.node.publication?.name?.toLowerCase().includes('partnerportal')
+          );
+        })
+        .map((edge: any) => transformGraphQLProduct(edge.node));
+      
+      allProducts.push(...partnerportalProducts);
+      console.log(`[Admin API/GraphQL] Page ${pageCount}: ${partnerportalProducts.length} Partnerportal products (Total: ${allProducts.length})`);
+    }
+
+    hasNextPage = data.products?.pageInfo?.hasNextPage || false;
+    cursor = data.products?.pageInfo?.endCursor || null;
+
+    if (hasNextPage) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  console.log(`[Admin API/GraphQL] Total Partnerportal products: ${allProducts.length}`);
+  return allProducts;
+}
+
+/**
+ * Transform GraphQL product to REST API-like format
+ */
+function transformGraphQLProduct(node: any): any {
+  return {
+    id: node.id.replace('gid://shopify/Product/', ''),
+    title: node.title,
+    handle: node.handle,
+    status: node.status?.toLowerCase(),
+    body_html: node.bodyHtml,
+    product_type: node.productType,
+    tags: node.tags?.join(', ') || '',
+    created_at: node.createdAt,
+    image: node.featuredImage ? {
+      src: node.featuredImage.url,
+      alt: node.featuredImage.altText,
+    } : null,
+    variants: node.variants?.edges?.map((v: any) => ({
+      id: v.node.id,
+      sku: v.node.sku,
+      price: v.node.price,
+      compare_at_price: v.node.compareAtPrice,
+    })) || [],
+  };
+}
+
+/**
+ * Fetch products via REST Admin API (fallback, loads all active products)
+ */
+async function fetchProductsViaREST(): Promise<any[]> {
   const allProducts: any[] = [];
   let pageInfo: string | null = null;
   let hasNextPage = true;
   let pageCount = 0;
 
-  console.log('[Admin API] Fetching all products for search...');
+  console.log('[Admin API/REST] Fetching all active products (fallback)...');
 
   while (hasNextPage) {
     pageCount++;
@@ -728,28 +894,24 @@ async function fetchAllProductsAdmin(): Promise<any[]> {
     
     if (data.products && data.products.length > 0) {
       allProducts.push(...data.products);
-      console.log(`[Admin API] Page ${pageCount}: ${data.products.length} products (Total: ${allProducts.length})`);
+      console.log(`[Admin API/REST] Page ${pageCount}: ${data.products.length} products (Total: ${allProducts.length})`);
     }
 
-    // Check for pagination in Link header
     const linkHeader = response.headers.get('link') || '';
     const nextPageMatch = linkHeader.match(/<[^>]*page_info=([^&>]+)[^>]*>; rel="next"/);
     
     if (nextPageMatch && data.products && data.products.length === 250) {
       pageInfo = decodeURIComponent(nextPageMatch[1]);
       hasNextPage = true;
-      // Rate limiting: Wait 500ms between requests (Shopify allows 2 req/sec)
       await new Promise(resolve => setTimeout(resolve, 500));
     } else {
       hasNextPage = false;
     }
   }
 
-  console.log(`[Admin API] Total products fetched: ${allProducts.length}`);
-
-  // Update cache
+  console.log(`[Admin API/REST] Total products fetched: ${allProducts.length}`);
+  
   productsCache = { data: allProducts, timestamp: Date.now() };
-
   return allProducts;
 }
 
