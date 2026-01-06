@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ShopFilters } from "@/components/shop/shop-filters"
 import { getProducts, getCollections, getFallbackProducts, getProductTypes } from "@/lib/shopify-storefront"
+import { searchProductsAdminPaginated } from "@/lib/shopify-admin"
 import { ShopContent } from "@/components/shop/shop-content"
 import { Cart } from "@/components/shop/cart"
 import { PriceVisibilityDropdown } from "@/components/shop/price-visibility-dropdown"
@@ -53,6 +54,9 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
     return fallback;
   };
 
+  // Konstante für konsistente Seitengröße
+  const PRODUCTS_PER_PAGE = 24;
+
   const sort = getParam("sort", "PRICE-desc");
   const [sortKey, sortDirection] = sort.split("-");
   const reverse = sortDirection === "desc";
@@ -62,46 +66,71 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
   const productType = getParam("productType", "");
   const cursorRaw = getParam("cursor");
   const cursor = cursorRaw && cursorRaw !== "undefined" && cursorRaw !== "null" && cursorRaw !== "" ? cursorRaw : undefined;
+  // Page number for Admin API search (cursor is used as page number for search)
+  const page = cursor ? parseInt(cursor, 10) : 1;
 
   // Fetch collections and product types for the filter sidebar
   const collections = await getCollections()
   const productTypes = await getProductTypes()
 
-  // Build filter query for Shopify API
-  let filterQuery = ""
-
-  // Remove collection filter from query string logic
-  // Add product type filter
-  if (productType) {
-    filterQuery += `product_type:"${productType}" `
-  }
-
-  // Add search query (inkl. SKU)
-  if (query) {
-    filterQuery += `(title:*${query}* OR tag:*${query}* OR variants.sku:${query}) `
-  }
-
-  // Hide products marked with hide_product_grid metafield
-  filterQuery += `NOT metafields.custom.hide_product_grid:true `
-
-  console.log("Final Filter Query:", filterQuery.trim());
-  console.log("Collection Handle:", collectionHandle);
-
   // Fetch initial products with filters
   let productsData
   
   try {
-    // Get the first page products
-    productsData = await getProducts({
-      perPage: 12,
-      sortKey: sortKey.toUpperCase() as any,
-      reverse,
-      query: filterQuery.trim(),
-      cursor: cursor as string | undefined,
-      collectionHandle, // pass collectionHandle directly
-    });
-    
-    console.log("ShopPage: productsData", productsData);
+    // Wenn eine Suchanfrage vorhanden ist, nutze Admin API (unterstützt SKU-Suche)
+    if (hasQuery) {
+      console.log(`[ShopPage] Suche via Admin API: "${query}" (Seite ${page})`);
+      
+      const adminResults = await searchProductsAdminPaginated(query, {
+        limit: PRODUCTS_PER_PAGE,
+        page: page,
+        sortKey: sortKey.toUpperCase(),
+        reverse,
+      });
+
+      // Filtere nach productType wenn angegeben
+      let filteredProducts = adminResults.products;
+      if (productType) {
+        filteredProducts = filteredProducts.filter(p => 
+          p.productType?.toLowerCase() === productType.toLowerCase()
+        );
+      }
+
+      productsData = {
+        products: filteredProducts,
+        hasNextPage: adminResults.hasNextPage,
+        endCursor: adminResults.endCursor,
+        totalCount: adminResults.totalCount,
+      };
+      
+      console.log(`[ShopPage] Admin API Ergebnisse: ${filteredProducts.length} von ${adminResults.totalCount} Produkten`);
+    } else {
+      // Ohne Suchanfrage: Storefront API für Collection-Browsing (performanter)
+      let filterQuery = ""
+
+      // Add product type filter
+      if (productType) {
+        filterQuery += `product_type:"${productType}" `
+      }
+
+      // Hide products marked with hide_product_grid metafield
+      filterQuery += `NOT metafields.custom.hide_product_grid:true `
+
+      console.log("Final Filter Query:", filterQuery.trim());
+      console.log("Collection Handle:", collectionHandle);
+
+      // Get the first page products via Storefront API
+      productsData = await getProducts({
+        perPage: PRODUCTS_PER_PAGE,
+        sortKey: sortKey.toUpperCase() as any,
+        reverse,
+        query: filterQuery.trim(),
+        cursor: cursor as string | undefined,
+        collectionHandle,
+      });
+      
+      console.log("ShopPage: productsData", productsData);
+    }
   } catch (error) {
     console.error("Error fetching products:", error)
     productsData = await getFallbackProducts()

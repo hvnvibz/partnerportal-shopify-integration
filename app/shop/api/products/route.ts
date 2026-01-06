@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProducts } from '@/lib/shopify-storefront'
+import { searchProductsAdminPaginated } from '@/lib/shopify-admin'
 
 // Deaktiviere das Caching für diesen Endpunkt
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+// Konstante für konsistente Seitengröße
+const PRODUCTS_PER_PAGE = 24;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -16,28 +20,52 @@ export async function GET(request: NextRequest) {
   const productType = searchParams.get('productType') || ""
   const query = searchParams.get('query') || ""
   const cursor = searchParams.get('cursor') || null
-  
-  // Build filter query for Shopify API
-  let filterQuery = ""
-
-  // Remove collection filter from query string logic
-  // Add product type filter
-  if (productType) {
-    filterQuery += `product_type:"${productType}" `
-  }
-
-  // Add search query
-  if (query) {
-    filterQuery += `(title:*${query}* OR tag:*${query}*) `
-  }
-
-  // Hide products marked with hide_product_grid metafield
-  filterQuery += `NOT metafields.custom.hide_product_grid:true `
+  // Page number for Admin API search (cursor is used as page number for search)
+  const page = cursor ? parseInt(cursor, 10) : 1;
 
   try {
-    // Fetch products with filters
+    // Wenn eine Suchanfrage vorhanden ist, nutze Admin API (unterstützt SKU-Suche)
+    if (query && query.trim().length > 0) {
+      console.log(`[Shop API] Suche via Admin API: "${query}" (Seite ${page})`);
+      
+      const adminResults = await searchProductsAdminPaginated(query, {
+        limit: PRODUCTS_PER_PAGE,
+        page: page,
+        sortKey: sortKey.toUpperCase(),
+        reverse,
+      });
+
+      // Filtere nach productType wenn angegeben
+      let filteredProducts = adminResults.products;
+      if (productType) {
+        filteredProducts = filteredProducts.filter(p => 
+          p.productType?.toLowerCase() === productType.toLowerCase()
+        );
+      }
+
+      return NextResponse.json({
+        products: filteredProducts,
+        hasNextPage: adminResults.hasNextPage,
+        endCursor: adminResults.endCursor,
+        totalCount: adminResults.totalCount,
+      });
+    }
+
+    // Ohne Suchanfrage: Storefront API für Collection-Browsing (performanter)
+    // Build filter query for Shopify Storefront API
+    let filterQuery = ""
+
+    // Add product type filter
+    if (productType) {
+      filterQuery += `product_type:"${productType}" `
+    }
+
+    // Hide products marked with hide_product_grid metafield
+    filterQuery += `NOT metafields.custom.hide_product_grid:true `
+
+    // Fetch products with filters via Storefront API
     const productsData = await getProducts({
-      perPage: 12,
+      perPage: PRODUCTS_PER_PAGE,
       sortKey: sortKey.toUpperCase() as any,
       reverse,
       query: filterQuery.trim(),

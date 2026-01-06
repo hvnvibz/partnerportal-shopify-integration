@@ -483,3 +483,313 @@ export function formatCustomerForSupabase(customer: ShopifyCustomer) {
     shopify_synced_at: new Date().toISOString(),
   };
 }
+
+// =============================================================================
+// Product Search Functions (Admin API)
+// =============================================================================
+
+/**
+ * Product type returned by Admin API search
+ * Compatible with Storefront API format for seamless integration
+ */
+export interface AdminProduct {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  featuredImage: {
+    url: string;
+    altText: string;
+  } | null;
+  availableForSale: boolean;
+  productType: string;
+  tags: string[];
+  price: {
+    amount: string;
+    currencyCode: string;
+  };
+  compareAtPrice: {
+    amount: string;
+    currencyCode: string;
+  } | null;
+  sku: string;
+  hide_from_listing?: boolean;
+}
+
+/**
+ * Search products via Admin API - supports SKU search
+ * This function searches products by title and SKU using the Admin API
+ * 
+ * @param query - Search query (can be title, SKU, or partial match)
+ * @param limit - Maximum number of results (default: 50)
+ * @returns Array of products in Storefront-compatible format
+ */
+export async function searchProductsAdmin(query: string, limit: number = 50): Promise<AdminProduct[]> {
+  try {
+    // Admin API supports searching in title
+    // For SKU search, we need to fetch products and filter by variant SKU
+    const response = await shopifyAdminFetch(
+      `products.json?limit=${limit}&status=active`
+    );
+
+    if (!response.products || response.products.length === 0) {
+      return [];
+    }
+
+    const normalizedQuery = query.toLowerCase().trim();
+
+    // Filter products that match the query in title or any variant SKU
+    const matchingProducts = response.products.filter((product: any) => {
+      // Check title match
+      const titleMatch = product.title?.toLowerCase().includes(normalizedQuery);
+      
+      // Check SKU match in any variant
+      const skuMatch = product.variants?.some((variant: any) => 
+        variant.sku?.toLowerCase().includes(normalizedQuery)
+      );
+
+      // Check tags match
+      const tagsMatch = product.tags?.toLowerCase().includes(normalizedQuery);
+
+      return titleMatch || skuMatch || tagsMatch;
+    });
+
+    // Transform to Storefront-compatible format
+    return matchingProducts.map((product: any) => {
+      const firstVariant = product.variants?.[0];
+      const price = firstVariant?.price || '0';
+      const compareAtPrice = firstVariant?.compare_at_price;
+      
+      return {
+        id: `gid://shopify/Product/${product.id}`,
+        title: product.title,
+        handle: product.handle,
+        description: product.body_html?.replace(/<[^>]*>/g, '') || '',
+        featuredImage: product.image ? {
+          url: product.image.src,
+          altText: product.image.alt || product.title,
+        } : null,
+        availableForSale: product.status === 'active',
+        productType: product.product_type || '',
+        tags: product.tags?.split(', ').filter(Boolean) || [],
+        price: {
+          amount: price,
+          currencyCode: 'EUR',
+        },
+        compareAtPrice: compareAtPrice && parseFloat(compareAtPrice) > parseFloat(price) ? {
+          amount: compareAtPrice,
+          currencyCode: 'EUR',
+        } : null,
+        sku: firstVariant?.sku || '',
+        hide_from_listing: false,
+      };
+    });
+  } catch (error) {
+    console.error('Error searching products via Admin API:', error);
+    return [];
+  }
+}
+
+/**
+ * Search products with pagination support via Admin API
+ * Searches ALL products in title, SKU, and tags - not just the first page!
+ * 
+ * @param query - Search query
+ * @param options - Pagination and sorting options
+ */
+export async function searchProductsAdminPaginated(
+  query: string,
+  options: {
+    limit?: number;
+    page?: number; // Page number for client-side pagination of filtered results
+    sortKey?: string;
+    reverse?: boolean;
+  } = {}
+): Promise<{
+  products: AdminProduct[];
+  hasNextPage: boolean;
+  endCursor: string | null;
+  totalCount: number;
+}> {
+  const { limit = 24, page = 1, sortKey = 'title', reverse = false } = options;
+  
+  try {
+    // Fetch ALL products from Admin API (with pagination through all pages)
+    const allProducts = await fetchAllProductsAdmin();
+    
+    if (allProducts.length === 0) {
+      return { products: [], hasNextPage: false, endCursor: null, totalCount: 0 };
+    }
+
+    const normalizedQuery = query.toLowerCase().trim();
+
+    // Filter products that match the query in title, SKU, or tags
+    const matchingProducts = allProducts.filter((product: any) => {
+      const titleMatch = product.title?.toLowerCase().includes(normalizedQuery);
+      const skuMatch = product.variants?.some((variant: any) => 
+        variant.sku?.toLowerCase().includes(normalizedQuery)
+      );
+      const tagsMatch = product.tags?.toLowerCase().includes(normalizedQuery);
+      return titleMatch || skuMatch || tagsMatch;
+    });
+
+    // Sort products
+    const sortedProducts = [...matchingProducts].sort((a: any, b: any) => {
+      let comparison = 0;
+      switch (sortKey.toUpperCase()) {
+        case 'TITLE':
+          comparison = (a.title || '').localeCompare(b.title || '');
+          break;
+        case 'PRICE':
+          const priceA = parseFloat(a.variants?.[0]?.price || '0');
+          const priceB = parseFloat(b.variants?.[0]?.price || '0');
+          comparison = priceA - priceB;
+          break;
+        case 'CREATED_AT':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'BEST_SELLING':
+          // Shopify doesn't provide sales data via REST API, fallback to title
+          comparison = (a.title || '').localeCompare(b.title || '');
+          break;
+        default:
+          comparison = (a.title || '').localeCompare(b.title || '');
+      }
+      return reverse ? -comparison : comparison;
+    });
+
+    // Client-side pagination of filtered results
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedProducts = sortedProducts.slice(startIndex, endIndex);
+    const hasNextPage = endIndex < sortedProducts.length;
+
+    // Transform to Storefront-compatible format
+    const products: AdminProduct[] = paginatedProducts.map((product: any) => 
+      transformAdminProduct(product)
+    );
+
+    return {
+      products,
+      hasNextPage,
+      endCursor: hasNextPage ? String(page + 1) : null, // Use page number as cursor
+      totalCount: sortedProducts.length,
+    };
+  } catch (error) {
+    console.error('Error searching products via Admin API:', error);
+    return { products: [], hasNextPage: false, endCursor: null, totalCount: 0 };
+  }
+}
+
+/**
+ * Fetch ALL products from Shopify Admin API (handles pagination automatically)
+ * Caches results for 5 minutes to avoid excessive API calls
+ */
+let productsCache: { data: any[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function fetchAllProductsAdmin(): Promise<any[]> {
+  // Check cache first
+  if (productsCache && Date.now() - productsCache.timestamp < CACHE_TTL) {
+    console.log(`[Admin API] Using cached products (${productsCache.data.length} products)`);
+    return productsCache.data;
+  }
+
+  const allProducts: any[] = [];
+  let pageInfo: string | null = null;
+  let hasNextPage = true;
+  let pageCount = 0;
+
+  console.log('[Admin API] Fetching all products for search...');
+
+  while (hasNextPage) {
+    pageCount++;
+    let endpoint = 'products.json?limit=250&status=active';
+    if (pageInfo) {
+      endpoint = `products.json?limit=250&page_info=${encodeURIComponent(pageInfo)}`;
+    }
+
+    const url = `${getShopifyStoreUrl()}/admin/api/2024-01/${endpoint}`;
+    const token = getShopifyAccessToken();
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Shopify Admin API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.products && data.products.length > 0) {
+      allProducts.push(...data.products);
+      console.log(`[Admin API] Page ${pageCount}: ${data.products.length} products (Total: ${allProducts.length})`);
+    }
+
+    // Check for pagination in Link header
+    const linkHeader = response.headers.get('link') || '';
+    const nextPageMatch = linkHeader.match(/<[^>]*page_info=([^&>]+)[^>]*>; rel="next"/);
+    
+    if (nextPageMatch && data.products && data.products.length === 250) {
+      pageInfo = decodeURIComponent(nextPageMatch[1]);
+      hasNextPage = true;
+      // Rate limiting: Wait 500ms between requests (Shopify allows 2 req/sec)
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } else {
+      hasNextPage = false;
+    }
+  }
+
+  console.log(`[Admin API] Total products fetched: ${allProducts.length}`);
+
+  // Update cache
+  productsCache = { data: allProducts, timestamp: Date.now() };
+
+  return allProducts;
+}
+
+/**
+ * Transform Admin API product to Storefront-compatible format
+ */
+function transformAdminProduct(product: any): AdminProduct {
+  const firstVariant = product.variants?.[0];
+  const price = firstVariant?.price || '0';
+  const compareAtPrice = firstVariant?.compare_at_price;
+  
+  return {
+    id: `gid://shopify/Product/${product.id}`,
+    title: product.title,
+    handle: product.handle,
+    description: product.body_html?.replace(/<[^>]*>/g, '') || '',
+    featuredImage: product.image ? {
+      url: product.image.src,
+      altText: product.image.alt || product.title,
+    } : null,
+    availableForSale: product.status === 'active',
+    productType: product.product_type || '',
+    tags: product.tags?.split(', ').filter(Boolean) || [],
+    price: {
+      amount: price,
+      currencyCode: 'EUR',
+    },
+    compareAtPrice: compareAtPrice && parseFloat(compareAtPrice) > parseFloat(price) ? {
+      amount: compareAtPrice,
+      currencyCode: 'EUR',
+    } : null,
+    sku: firstVariant?.sku || '',
+    hide_from_listing: false,
+  };
+}
+
+/**
+ * Clear the products cache (useful after product updates)
+ */
+export function clearProductsCache(): void {
+  productsCache = null;
+  console.log('[Admin API] Products cache cleared');
+}
