@@ -76,10 +76,19 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
   // Fetch initial products with filters
   let productsData
   
+  // Prüfe ob die Suche wie eine SKU/Artikelnummer aussieht
+  // SKU-Muster: Nur Zahlen, oder Buchstaben+Zahlen ohne Leerzeichen, max 20 Zeichen
+  const looksLikeSku = (q: string) => {
+    const trimmed = q.trim();
+    if (trimmed.length === 0 || trimmed.length > 20) return false;
+    // Enthält mindestens eine Zahl und keine Leerzeichen
+    return /^\S+$/.test(trimmed) && /\d/.test(trimmed);
+  };
+
   try {
-    // Wenn eine Suchanfrage vorhanden ist, nutze Admin API (unterstützt SKU-Suche)
-    if (hasQuery) {
-      console.log(`[ShopPage] Suche via Admin API: "${query}" (Seite ${page})`);
+    // Wenn die Suche wie eine SKU aussieht, nutze Admin API (unterstützt SKU-Suche)
+    if (hasQuery && looksLikeSku(query)) {
+      console.log(`[ShopPage] SKU-Suche via Admin API: "${query}" (Seite ${page})`);
       
       const adminResults = await searchProductsAdminPaginated(query, {
         limit: PRODUCTS_PER_PAGE,
@@ -104,6 +113,27 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
       };
       
       console.log(`[ShopPage] Admin API Ergebnisse: ${filteredProducts.length} von ${adminResults.totalCount} Produkten`);
+    } else if (hasQuery) {
+      // Normale Textsuche: Storefront API (schneller, kein Timeout-Risiko)
+      console.log(`[ShopPage] Textsuche via Storefront API: "${query}"`);
+      
+      let filterQuery = `(title:*${query}* OR tag:*${query}*) `;
+      
+      if (productType) {
+        filterQuery += `product_type:"${productType}" `;
+      }
+      filterQuery += `NOT metafields.custom.hide_product_grid:true `;
+      
+      productsData = await getProducts({
+        perPage: PRODUCTS_PER_PAGE,
+        sortKey: sortKey.toUpperCase() as any,
+        reverse,
+        query: filterQuery.trim(),
+        cursor: cursor as string | undefined,
+        collectionHandle: "",
+      });
+      
+      console.log(`[ShopPage] Storefront API Ergebnisse: ${productsData.products?.length || 0} Produkte`);
     } else {
       // Ohne Suchanfrage: Storefront API für Collection-Browsing (performanter)
       let filterQuery = ""

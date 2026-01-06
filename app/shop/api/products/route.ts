@@ -23,10 +23,20 @@ export async function GET(request: NextRequest) {
   // Page number for Admin API search (cursor is used as page number for search)
   const page = cursor ? parseInt(cursor, 10) : 1;
 
+  // Prüfe ob die Suche wie eine SKU/Artikelnummer aussieht
+  // SKU-Muster: Nur Zahlen, oder Buchstaben+Zahlen ohne Leerzeichen, max 20 Zeichen
+  const looksLikeSku = (q: string) => {
+    const trimmed = q.trim();
+    if (trimmed.length === 0 || trimmed.length > 20) return false;
+    // Enthält mindestens eine Zahl und keine Leerzeichen
+    return /^\S+$/.test(trimmed) && /\d/.test(trimmed);
+  };
+
   try {
-    // Wenn eine Suchanfrage vorhanden ist, nutze Admin API (unterstützt SKU-Suche)
-    if (query && query.trim().length > 0) {
-      console.log(`[Shop API] Suche via Admin API: "${query}" (Seite ${page})`);
+    // Wenn die Suche wie eine SKU aussieht, nutze Admin API (unterstützt SKU-Suche)
+    // Für normale Textsuchen nutze die schnellere Storefront API
+    if (query && query.trim().length > 0 && looksLikeSku(query)) {
+      console.log(`[Shop API] SKU-Suche via Admin API: "${query}" (Seite ${page})`);
       
       const adminResults = await searchProductsAdminPaginated(query, {
         limit: PRODUCTS_PER_PAGE,
@@ -49,6 +59,29 @@ export async function GET(request: NextRequest) {
         endCursor: adminResults.endCursor,
         totalCount: adminResults.totalCount,
       });
+    }
+    
+    // Normale Textsuche: Storefront API (schneller, kein Timeout-Risiko)
+    if (query && query.trim().length > 0) {
+      console.log(`[Shop API] Textsuche via Storefront API: "${query}"`);
+      
+      let filterQuery = `(title:*${query}* OR tag:*${query}*) `;
+      
+      if (productType) {
+        filterQuery += `product_type:"${productType}" `;
+      }
+      filterQuery += `NOT metafields.custom.hide_product_grid:true `;
+      
+      const productsData = await getProducts({
+        perPage: PRODUCTS_PER_PAGE,
+        sortKey: sortKey.toUpperCase() as any,
+        reverse,
+        query: filterQuery.trim(),
+        cursor: cursor as string | null,
+        collectionHandle: "",
+      });
+      
+      return NextResponse.json(productsData);
     }
 
     // Ohne Suchanfrage: Storefront API für Collection-Browsing (performanter)
