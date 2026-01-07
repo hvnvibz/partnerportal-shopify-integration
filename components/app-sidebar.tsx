@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings, LogOut, DoorOpen, UserCog, Package } from "lucide-react"
+import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings, LogOut, DoorOpen, UserCog, Package, ChevronRight, Headphones } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
 import AppSidebarLogout from "@/components/AppSidebarLogout"
@@ -54,47 +62,33 @@ export function AppSidebar() {
     {
       title: "Shop",
       icon: ShoppingBag,
-      href: "/shop",
+      children: [
+        { title: "Shop", href: "/shop" },
+        { title: "Bestellungen", href: "/bestellungen" },
+      ],
     },
     {
-      title: "Bestellungen",
-      icon: Package,
-      href: "/bestellungen",
+      title: "Anfragen",
+      icon: FileText,
+      children: [
+        { title: "Anfrage Eigenwasser", href: "/anfrage-eigenwasser" },
+        { title: "Anfrage Enthärtung", href: "/anfrage-enthartung" },
+      ],
+    },
+    {
+      title: "Support & Service",
+      icon: Headphones,
+      children: [
+        { title: "Supportvideos", href: "/supportvideos" },
+        { title: "Schulungsanfragen", href: "/schulungsanfragen" },
+        { title: "Wartung & Service", href: "/wartung-service" },
+        { title: "Digitale Handbücher", href: "/produkthandbuecher" },
+      ],
     },
     {
       title: "Produktkatalog",
       icon: FileText,
       href: "/produktkatalog",
-    },
-    {
-      title: "Anfrage Eigenwasser",
-      icon: FileText,
-      href: "/anfrage-eigenwasser",
-    },
-    {
-      title: "Anfrage Enthärtung",
-      icon: FileText,
-      href: "/anfrage-enthartung",
-    },
-    {
-      title: "Supportvideos",
-      icon: Video,
-      href: "/supportvideos",
-    },
-    {
-      title: "Schulungsanfragen",
-      icon: BookOpen,
-      href: "/schulungsanfragen",
-    },
-    {
-      title: "Wartung & Service",
-      icon: Wrench,
-      href: "/wartung-service",
-    },
-    {
-      title: "Digitale Handbücher",
-      icon: FileText,
-      href: "/produkthandbuecher",
     },
   ]
 
@@ -129,20 +123,59 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                className={`h-12 px-6 ${pathname === item.href ? "bg-gray-200 text-gray-800" : ""}`}
-              >
-                <Link href={item.href} className="flex items-center gap-3 text-base">
-                  <item.icon className="h-5 w-5" />
-                  <span className="ml-1">{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {menuItems.map((item) => {
+            // Check if this item has children (collapsible group)
+            if ('children' in item && item.children) {
+              const isChildActive = item.children.some(child => pathname === child.href)
+              return (
+                <Collapsible key={item.title} defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        className={`h-12 px-6 ${isChildActive ? "bg-gray-100" : ""}`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="ml-1 flex-1 text-base">{item.title}</span>
+                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.children.map((child) => (
+                          <SidebarMenuSubItem key={child.href}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={pathname === child.href}
+                            >
+                              <Link href={child.href}>
+                                <span>{child.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )
+            }
+            
+            // Simple link item (no children)
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  className={`h-12 px-6 ${pathname === item.href ? "bg-gray-200 text-gray-800" : ""}`}
+                >
+                  <Link href={item.href!} className="flex items-center gap-3 text-base">
+                    <item.icon className="h-5 w-5" />
+                    <span className="ml-1">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarContent>
       <div className="mt-auto pb-4 border-t border-gray-200">
