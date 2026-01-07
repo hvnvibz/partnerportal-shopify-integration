@@ -78,6 +78,12 @@ export function Cart() {
   // Calculate total price
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+  // Free shipping threshold
+  const FREE_SHIPPING_THRESHOLD = 200
+  const shippingProgress = Math.min((totalPrice / FREE_SHIPPING_THRESHOLD) * 100, 100)
+  const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - totalPrice
+  const isFreeShipping = totalPrice >= FREE_SHIPPING_THRESHOLD
+
   // Total items count
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -368,6 +374,38 @@ export function Cart() {
                   {cartNote.length}/26 Zeichen
                 </div>
               </div>
+              
+              {/* Versandkostenhinweis mit Progress-Balken */}
+              <div className="space-y-2 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#8abfdf] transition-all duration-300 rounded-full"
+                      style={{ width: `${shippingProgress}%` }}
+                    />
+                  </div>
+                  {isFreeShipping ? (
+                    <span className="text-sm text-green-600 font-medium">✓</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatPrice(totalPrice)} / {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-center">
+                  {isFreeShipping ? (
+                    <span className="text-green-600 font-medium">Versandkostenfrei!*</span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Noch {formatPrice(remainingForFreeShipping)} bis versandkostenfrei*
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  * gilt nur für Paketgrößen
+                </p>
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm md:text-base">Gesamt netto</span>
                 <span className="font-medium text-sm md:text-base">{formatPrice(totalPrice)}</span>
