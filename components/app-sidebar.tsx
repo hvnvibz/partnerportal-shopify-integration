@@ -63,12 +63,12 @@ export function AppSidebar() {
       title: "Shop",
       icon: ShoppingBag,
       children: [
-        { title: "Shop", href: "/shop" },
+        { title: "Alle Produkte", href: "/shop" },
         { title: "Bestellungen", href: "/bestellungen" },
       ],
     },
     {
-      title: "Anfragen",
+      title: "Produktanfragen",
       icon: FileText,
       children: [
         { title: "Anfrage Eigenwasser", href: "/anfrage-eigenwasser" },
@@ -146,6 +146,7 @@ export function AppSidebar() {
                             <SidebarMenuSubButton
                               asChild
                               isActive={pathname === child.href}
+                              className="text-base"
                             >
                               <Link href={child.href}>
                                 <span>{child.title}</span>
