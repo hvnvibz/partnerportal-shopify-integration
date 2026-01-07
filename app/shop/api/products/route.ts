@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProducts } from '@/lib/shopify-storefront'
-import { searchProductsAdminPaginated } from '@/lib/shopify-admin'
 
 // Deaktiviere das Caching für diesen Endpunkt
 export const dynamic = 'force-dynamic'
@@ -20,73 +19,16 @@ export async function GET(request: NextRequest) {
   const productType = searchParams.get('productType') || ""
   const query = searchParams.get('query') || ""
   const cursor = searchParams.get('cursor') || null
-  // Page number for Admin API search (cursor is used as page number for search)
-  const page = cursor ? parseInt(cursor, 10) : 1;
-
-  // Prüfe ob die Suche wie eine SKU/Artikelnummer aussieht
-  // SKU-Muster: Nur Zahlen, oder Buchstaben+Zahlen ohne Leerzeichen, max 20 Zeichen
-  const looksLikeSku = (q: string) => {
-    const trimmed = q.trim();
-    if (trimmed.length === 0 || trimmed.length > 20) return false;
-    // Enthält mindestens eine Zahl und keine Leerzeichen
-    return /^\S+$/.test(trimmed) && /\d/.test(trimmed);
-  };
 
   try {
-    // Wenn die Suche wie eine SKU aussieht, nutze Admin API (unterstützt SKU-Suche)
-    // Für normale Textsuchen nutze die schnellere Storefront API
-    if (query && query.trim().length > 0 && looksLikeSku(query)) {
-      console.log(`[Shop API] SKU-Suche via Admin API: "${query}" (Seite ${page})`);
-      
-      const adminResults = await searchProductsAdminPaginated(query, {
-        limit: PRODUCTS_PER_PAGE,
-        page: page,
-        sortKey: sortKey.toUpperCase(),
-        reverse,
-      });
-
-      // Filtere nach productType wenn angegeben
-      let filteredProducts = adminResults.products;
-      if (productType) {
-        filteredProducts = filteredProducts.filter(p => 
-          p.productType?.toLowerCase() === productType.toLowerCase()
-        );
-      }
-
-      return NextResponse.json({
-        products: filteredProducts,
-        hasNextPage: adminResults.hasNextPage,
-        endCursor: adminResults.endCursor,
-        totalCount: adminResults.totalCount,
-      });
-    }
-    
-    // Normale Textsuche: Storefront API (schneller, kein Timeout-Risiko)
-    if (query && query.trim().length > 0) {
-      console.log(`[Shop API] Textsuche via Storefront API: "${query}"`);
-      
-      let filterQuery = `(title:*${query}* OR tag:*${query}*) `;
-      
-      if (productType) {
-        filterQuery += `product_type:"${productType}" `;
-      }
-      filterQuery += `NOT metafields.custom.hide_product_grid:true `;
-      
-      const productsData = await getProducts({
-        perPage: PRODUCTS_PER_PAGE,
-        sortKey: sortKey.toUpperCase() as any,
-        reverse,
-        query: filterQuery.trim(),
-        cursor: cursor as string | null,
-        collectionHandle: "",
-      });
-      
-      return NextResponse.json(productsData);
-    }
-
-    // Ohne Suchanfrage: Storefront API für Collection-Browsing (performanter)
     // Build filter query for Shopify Storefront API
     let filterQuery = ""
+
+    // Suche in Titel und Tags (SKUs werden als Tags hinterlegt)
+    if (query && query.trim().length > 0) {
+      console.log(`[Shop API] Suche via Storefront API: "${query}"`);
+      filterQuery += `(title:*${query}* OR tag:*${query}*) `;
+    }
 
     // Add product type filter
     if (productType) {
@@ -103,7 +45,7 @@ export async function GET(request: NextRequest) {
       reverse,
       query: filterQuery.trim(),
       cursor: cursor as string | null,
-      collectionHandle, // pass collectionHandle directly
+      collectionHandle: query ? "" : collectionHandle, // Bei Suche keine Collection
     });
     
     // Return the results as JSON
