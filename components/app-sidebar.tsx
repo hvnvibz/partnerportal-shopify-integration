@@ -32,6 +32,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [search, setSearch] = useState("")
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ "Shop": true })
   const { user, profile, role, loading } = useUser();
 
   // Debug logging for role
@@ -127,8 +128,14 @@ export function AppSidebar() {
             // Check if this item has children (collapsible group)
             if ('children' in item && item.children) {
               const isChildActive = item.children.some(child => pathname === child.href)
+              const isOpen = openGroups[item.title] ?? false
               return (
-                <Collapsible key={item.title} defaultOpen className="group/collapsible">
+                <Collapsible 
+                  key={item.title} 
+                  open={isOpen}
+                  onOpenChange={(open) => setOpenGroups(prev => ({ ...prev, [item.title]: open }))}
+                  className="group/collapsible"
+                >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
