@@ -69,6 +69,11 @@ export function AppSidebar() {
       ],
     },
     {
+      title: "Produktkatalog",
+      icon: FileText,
+      href: "/produktkatalog",
+    },
+    {
       title: "Produktanfragen",
       icon: FileText,
       children: [
@@ -85,11 +90,6 @@ export function AppSidebar() {
         { title: "Wartung & Service", href: "/wartung-service" },
         { title: "Digitale Handbücher", href: "/produkthandbuecher" },
       ],
-    },
-    {
-      title: "Produktkatalog",
-      icon: FileText,
-      href: "/produktkatalog",
     },
   ]
 
