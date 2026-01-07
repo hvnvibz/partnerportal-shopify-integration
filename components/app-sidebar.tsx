@@ -135,7 +135,7 @@ export function AppSidebar() {
                         className={`h-12 px-6 ${isChildActive ? "bg-gray-100" : ""}`}
                       >
                         <item.icon className="h-5 w-5" />
-                        <span className="ml-1 flex-1 text-base">{item.title}</span>
+                        <span className="flex-1">{item.title}</span>
                         <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -146,7 +146,6 @@ export function AppSidebar() {
                             <SidebarMenuSubButton
                               asChild
                               isActive={pathname === child.href}
-                              className="text-base"
                             >
                               <Link href={child.href}>
                                 <span>{child.title}</span>
@@ -169,9 +168,9 @@ export function AppSidebar() {
                   isActive={pathname === item.href}
                   className={`h-12 px-6 ${pathname === item.href ? "bg-gray-200 text-gray-800" : ""}`}
                 >
-                  <Link href={item.href!} className="flex items-center gap-3 text-base">
+                  <Link href={item.href!} className="flex items-center gap-3">
                     <item.icon className="h-5 w-5" />
-                    <span className="ml-1">{item.title}</span>
+                    <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
