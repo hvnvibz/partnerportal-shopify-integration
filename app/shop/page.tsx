@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ShopFilters } from "@/components/shop/shop-filters"
 import { getProducts, getCollections, getFallbackProducts, getProductTypes } from "@/lib/shopify-storefront"
-import { searchProductsAdminPaginated } from "@/lib/shopify-admin"
 import { ShopContent } from "@/components/shop/shop-content"
 import { Cart } from "@/components/shop/cart"
 import { PriceVisibilityDropdown } from "@/components/shop/price-visibility-dropdown"
@@ -66,9 +65,6 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
   const productType = getParam("productType", "");
   const cursorRaw = getParam("cursor");
   const cursor = cursorRaw && cursorRaw !== "undefined" && cursorRaw !== "null" && cursorRaw !== "" ? cursorRaw : undefined;
-  // Page number for Admin API search (cursor is used as page number for search)
-  const page = cursor ? parseInt(cursor, 10) : 1;
-
   // Fetch collections and product types for the filter sidebar
   const collections = await getCollections()
   const productTypes = await getProductTypes()
@@ -76,44 +72,8 @@ export default async function ShopPage({ searchParams }: { searchParams: any }) 
   // Fetch initial products with filters
   let productsData
   
-  // Prüfe ob die Suche wie eine SKU/Artikelnummer aussieht
-  // SKU-Muster: Nur Zahlen, oder Buchstaben+Zahlen ohne Leerzeichen, max 20 Zeichen
-  const looksLikeSku = (q: string) => {
-    const trimmed = q.trim();
-    if (trimmed.length === 0 || trimmed.length > 20) return false;
-    // Enthält mindestens eine Zahl und keine Leerzeichen
-    return /^\S+$/.test(trimmed) && /\d/.test(trimmed);
-  };
-
   try {
-    // Wenn die Suche wie eine SKU aussieht, nutze Admin API (unterstützt SKU-Suche)
-    if (hasQuery && looksLikeSku(query)) {
-      console.log(`[ShopPage] SKU-Suche via Admin API: "${query}" (Seite ${page})`);
-      
-      const adminResults = await searchProductsAdminPaginated(query, {
-        limit: PRODUCTS_PER_PAGE,
-        page: page,
-        sortKey: sortKey.toUpperCase(),
-        reverse,
-      });
-
-      // Filtere nach productType wenn angegeben
-      let filteredProducts = adminResults.products;
-      if (productType) {
-        filteredProducts = filteredProducts.filter(p => 
-          p.productType?.toLowerCase() === productType.toLowerCase()
-        );
-      }
-
-      productsData = {
-        products: filteredProducts,
-        hasNextPage: adminResults.hasNextPage,
-        endCursor: adminResults.endCursor,
-        totalCount: adminResults.totalCount,
-      };
-      
-      console.log(`[ShopPage] Admin API Ergebnisse: ${filteredProducts.length} von ${adminResults.totalCount} Produkten`);
-    } else if (hasQuery) {
+    if (hasQuery) {
       // Normale Textsuche: Storefront API (schneller, kein Timeout-Risiko)
       console.log(`[ShopPage] Textsuche via Storefront API: "${query}"`);
       
