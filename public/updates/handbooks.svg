@@ -1,0 +1,23 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="url(#grad4)"/>
+  <defs>
+    <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDF2F8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FCE7F3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Book Stack -->
+  <rect x="320" y="200" width="160" height="20" rx="2" fill="#DB2777" fill-opacity="0.3" transform="rotate(-5 320 200)"/>
+  <rect x="315" y="180" width="170" height="25" rx="3" fill="#DB2777" fill-opacity="0.5" transform="rotate(3 315 180)"/>
+  <rect x="310" y="155" width="180" height="30" rx="4" fill="#DB2777" fill-opacity="0.7"/>
+  <!-- Open Book -->
+  <path d="M340 280 Q400 260 400 280 Q400 340 340 360 Q340 300 340 280 Z" fill="white" stroke="#DB2777" stroke-width="2"/>
+  <path d="M460 280 Q400 260 400 280 Q400 340 460 360 Q460 300 460 280 Z" fill="white" stroke="#DB2777" stroke-width="2"/>
+  <line x1="400" y1="280" x2="400" y2="360" stroke="#DB2777" stroke-width="2"/>
+  <!-- Lines on book -->
+  <line x1="355" y1="300" x2="385" y2="295" stroke="#DB2777" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="355" y1="315" x2="385" y2="310" stroke="#DB2777" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="415" y1="295" x2="445" y2="300" stroke="#DB2777" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="415" y1="310" x2="445" y2="315" stroke="#DB2777" stroke-width="1.5" stroke-opacity="0.5"/>
+  <text x="400" y="450" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#DB2777" font-weight="600">Digitale Handbuecher</text>
+</svg>

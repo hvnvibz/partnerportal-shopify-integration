@@ -1,0 +1,19 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="url(#grad3)"/>
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEF3C7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDE68A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Image Frame -->
+  <rect x="300" y="140" width="200" height="160" rx="12" fill="white" stroke="#D97706" stroke-width="3"/>
+  <!-- Mountain Icon -->
+  <path d="M320 270 L360 210 L390 250 L420 200 L480 270 Z" fill="#D97706" fill-opacity="0.3"/>
+  <circle cx="340" cy="180" r="15" fill="#D97706" fill-opacity="0.5"/>
+  <!-- Zoom Icon -->
+  <circle cx="460" cy="280" r="35" fill="white" stroke="#D97706" stroke-width="4"/>
+  <circle cx="455" cy="275" r="18" fill="none" stroke="#D97706" stroke-width="3"/>
+  <line x1="468" y1="288" x2="485" y2="305" stroke="#D97706" stroke-width="4" stroke-linecap="round"/>
+  <text x="400" y="450" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#D97706" font-weight="600">Produktbild-Zoom</text>
+</svg>

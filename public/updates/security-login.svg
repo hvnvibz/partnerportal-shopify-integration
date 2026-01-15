@@ -1,0 +1,13 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="url(#grad1)"/>
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#EEF2FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0E7FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Shield Icon -->
+  <path d="M400 120 L480 160 L480 280 C480 340 440 380 400 400 C360 380 320 340 320 280 L320 160 Z" fill="#4F46E5" fill-opacity="0.2" stroke="#4F46E5" stroke-width="4"/>
+  <path d="M370 260 L390 280 L430 240" stroke="#4F46E5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="400" y="450" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#4F46E5" font-weight="600">Sicherheit beim Login</text>
+</svg>

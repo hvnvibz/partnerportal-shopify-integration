@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Partner Portal',
+  title: 'Partnerportal | INDUWA',
   description: 'Kundenzugang für Partner',
   generator: 'v0.dev',
 }

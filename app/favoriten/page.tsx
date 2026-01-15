@@ -62,7 +62,7 @@ import {
 } from "lucide-react";
 import { useFavorites, FavoriteList, FavoriteItem, FAVORITES_UPDATED_EVENT } from "@/hooks/use-favorites";
 import { useUser } from "@/lib/useUser";
-import { CART_UPDATED_EVENT, type CartItem } from "@/components/shop/cart";
+import { Cart, CART_UPDATED_EVENT, type CartItem } from "@/components/shop/cart";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Format price helper
@@ -724,6 +724,9 @@ export default function FavoritenPage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            <div className="flex items-center gap-4">
+              <Cart />
+            </div>
           </header>
           <FavoritenContent />
         </SidebarInset>
