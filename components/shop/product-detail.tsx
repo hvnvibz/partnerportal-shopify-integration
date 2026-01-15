@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown, ZoomIn } from "lucide-react"
+import { ChevronLeft, ShoppingCart, Plus, Minus, ChevronDown, ZoomIn, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductGrid } from "@/components/shop/product-grid"
 import ProductUpsell from "@/components/shop/product-upsell"
@@ -21,6 +21,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import ProductCrossSell from "@/components/shop/product-cross-sell"
 import RelatedProducts from "@/components/shop/related-products"
 import { ImageZoomModal } from "@/components/shop/image-zoom-modal"
+import { FavoriteButton } from "@/components/shop/favorite-button"
 
 interface ProductDetailProps {
   product: Product
@@ -513,6 +514,14 @@ export function ProductDetail({ product, relatedProducts, upsell1aProducts, upse
                     : "Nicht verfügbar"
               }
             </Button>
+            
+            {/* Favorite Button */}
+            <FavoriteButton
+              productId={product.id}
+              productHandle={product.handle}
+              productTitle={product.title}
+              variant="button"
+            />
           </div>
         </div>
       </div>

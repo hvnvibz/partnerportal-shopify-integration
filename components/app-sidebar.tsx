@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings, LogOut, DoorOpen, UserCog, Package, ChevronRight, Headphones } from "lucide-react"
+import { Home, ShoppingBag, FileText, Video, GraduationCap, Wrench, Search, BookOpen, LayoutDashboard, ShoppingCart, Settings, LogOut, DoorOpen, UserCog, Package, ChevronRight, Headphones, Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -65,6 +65,7 @@ export function AppSidebar() {
       icon: ShoppingBag,
       children: [
         { title: "Alle Produkte", href: "/shop" },
+        { title: "Favoriten", href: "/favoriten" },
         { title: "Bestellungen", href: "/bestellungen" },
       ],
     },

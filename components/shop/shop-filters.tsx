@@ -1,9 +1,12 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Filter } from "lucide-react"
+import { Filter, Heart, ArrowRight, Loader2 } from "lucide-react"
+import { useFavorites } from "@/hooks/use-favorites"
+import { useUser } from "@/lib/useUser"
 
 // Define the INDUWA blue color
 const INDUWA_BLUE = "#8abfdf"
@@ -25,6 +28,8 @@ export function ShopFilters({
 }: ShopFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams() || { toString: () => "", get: () => undefined };
+  const { user } = useUser();
+  const { lists, loading: listsLoading } = useFavorites();
 
   function handleCollectionChange(collectionHandle: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -75,6 +80,52 @@ export function ShopFilters({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Produktanlagen & Zubehör</h2>
       </div>
+
+      {/* Favoriten Section - nur für eingeloggte Benutzer */}
+      {user && (
+        <>
+          <div>
+            <h3 className="text-sm font-medium mb-3 flex items-center">
+              <Heart className="h-4 w-4 mr-2 text-red-500" />
+              Meine Favoriten
+            </h3>
+            {listsLoading ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+              </div>
+            ) : lists.length === 0 ? (
+              <p className="text-xs text-gray-500 mb-2">
+                Noch keine Favoriten-Listen erstellt.
+              </p>
+            ) : (
+              <div className="space-y-1 max-h-32 overflow-y-auto pr-2">
+                {lists.map((list) => (
+                  <Link
+                    key={list.id}
+                    href={`/favoriten?list=${list.id}`}
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs rounded-md border hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="truncate">{list.name}</span>
+                    <span className="text-gray-400 ml-2">({list.item_count})</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <Link href="/favoriten">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 text-xs"
+              >
+                <Heart className="h-3 w-3 mr-2" />
+                Alle Favoriten anzeigen
+                <ArrowRight className="h-3 w-3 ml-auto" />
+              </Button>
+            </Link>
+          </div>
+          <Separator />
+        </>
+      )}
 
       <div>
         <h3 className="text-sm font-medium mb-3 flex items-center">

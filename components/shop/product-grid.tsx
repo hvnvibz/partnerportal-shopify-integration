@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { FavoriteButton } from "@/components/shop/favorite-button"
 
 // Hilfsfunktion zum Formatieren von Preisen
 function formatPrice(amount: string | number): string {
@@ -17,9 +18,10 @@ function formatPrice(amount: string | number): string {
 interface ProductGridProps {
   products: any[]
   columns?: number
+  showFavorites?: boolean
 }
 
-export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
+export function ProductGrid({ products, columns = 3, showFavorites = true }: ProductGridProps) {
   const [mode, setMode] = useState<"all" | "list" | "hidden">("all")
 
   // Lade den gespeicherten Zustand beim Mount
@@ -67,11 +69,23 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
       {uniqueProducts.map((product) => {
         if (!product.price || !product.price.amount) return null;
         return (
-          <Link
-            href={`/shop/${product.handle}`}
+          <div
             key={product.id}
             className="group bg-white relative flex flex-col h-full overflow-hidden rounded-md border shadow-sm hover:shadow-md transition-shadow"
           >
+            {/* Favorite Button - positioned absolute in top right */}
+            {showFavorites && (
+              <div className="absolute top-2 right-2 z-10">
+                <FavoriteButton
+                  productId={product.id}
+                  productHandle={product.handle}
+                  productTitle={product.title}
+                  variant="icon-small"
+                />
+              </div>
+            )}
+            
+            <Link href={`/shop/${product.handle}`} className="flex flex-col h-full">
             {/* Wrapper für Sale-Tag mit fixer Mindesthöhe */}
             <div className="min-h-[1.8rem] md:min-h-[2.2rem] flex items-start bg-transparent">
               {mode === 'all' && product.compareAtPrice && product.compareAtPrice.amount ? (
@@ -134,7 +148,8 @@ export function ProductGrid({ products, columns = 3 }: ProductGridProps) {
                 )}
               </div>
             </div>
-          </Link>
+            </Link>
+          </div>
         );
       })}
     </div>

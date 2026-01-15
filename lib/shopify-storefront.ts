@@ -718,6 +718,105 @@ export async function getProductTypes(): Promise<string[]> {
   }
 }
 
+// Get multiple products by their Shopify GIDs
+export async function getProductsByIds(ids: string[]): Promise<ShopifyProduct[]> {
+  if (!ids || ids.length === 0) {
+    return [];
+  }
+
+  try {
+    // Shopify Storefront API allows fetching multiple products using the "nodes" query
+    const data = await shopifyFetch({
+      query: `
+        query getProductsByIds($ids: [ID!]!) {
+          nodes(ids: $ids) {
+            ... on Product {
+              id
+              title
+              handle
+              description
+              featuredImage {
+                url
+                altText
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+                maxVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+              compareAtPriceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+                maxVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    title
+                    sku
+                    availableForSale
+                    price {
+                      amount
+                      currencyCode
+                    }
+                    compareAtPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                }
+              }
+              availableForSale
+            }
+          }
+        }
+      `,
+      variables: { ids },
+    });
+
+    if (!data.nodes) {
+      return [];
+    }
+
+    // Filter out null results and map to our product format
+    return data.nodes
+      .filter((node: any) => node !== null && node.id)
+      .map((node: any) => {
+        const hasCompareAtPrice =
+          node.compareAtPriceRange?.minVariantPrice?.amount > 0 &&
+          Number(node.compareAtPriceRange.minVariantPrice.amount) > Number(node.priceRange.minVariantPrice.amount);
+
+        return {
+          id: node.id,
+          title: node.title,
+          handle: node.handle,
+          description: node.description,
+          featuredImage: node.featuredImage,
+          availableForSale: node.availableForSale,
+          price: node.priceRange?.minVariantPrice,
+          compareAtPrice: hasCompareAtPrice ? node.compareAtPriceRange.minVariantPrice : null,
+          sku: node.variants?.edges?.[0]?.node?.sku || "",
+          priceRange: node.priceRange,
+          variants: node.variants,
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching products by IDs:', error);
+    return [];
+  }
+}
+
 // Fallback products for when the API fails
 export async function getFallbackProducts(): Promise<ProductsResponse> {
   return {
